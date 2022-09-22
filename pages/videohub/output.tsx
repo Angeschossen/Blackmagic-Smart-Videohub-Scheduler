@@ -1,0 +1,154 @@
+import { Scheduler } from "@aldabil/react-scheduler";
+import { SelectOption } from "@aldabil/react-scheduler/dist/components/inputs/SelectInput";
+import { EventActions, ProcessedEvent } from "@aldabil/react-scheduler/dist/types";
+import React from "react";
+import prisma from "../../database/prisma";
+import { retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
+import { getPostHeader } from "./main";
+import { Videohub } from "../../components/Videohub";
+
+
+const fetchRemote = async (query: string, videohub: number, output: number): Promise<ProcessedEvent[] | void> => {
+    let start_string = query.substring(7);
+    const index = start_string.indexOf("&end=");
+    const end_string = start_string.substring(index + 5);
+    start_string = start_string.substring(0, index);
+
+    return fetch("/api/events/get", getPostHeader({ videohub: videohub, output: output, start: start_string, end: end_string })).then(async res => {
+        const events: OutputEvent[] = await res.json();
+        const processed: ProcessedEvent[] = [];
+        events.forEach(e => {
+            const ev: ProcessedEvent = {
+                event_id: e.id,
+                title: e.input.toString(),
+                start: new Date(e.start),
+                end: new Date(e.end),
+            };
+
+            processed.push(ev);
+        });
+
+        return processed;
+    });
+};
+
+export interface OutputEvent {
+    id: number
+    videohub: number,
+    output: number,
+    input: number,
+    start: Date,
+    end: Date,
+}
+
+const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: number, output: number): Promise<ProcessedEvent> => {
+    const e: OutputEvent = {
+        id: event.event_id ? Number(event.event_id) : -1,
+        videohub: videohub,
+        output: output,
+        input: Number(event.title),
+        start: event.start,
+        end: event.end,
+    };
+
+    return fetch('/api/events/update', getPostHeader(e)).then(async res => {
+        const json = await res.json();
+        return {
+            event_id: json.id,
+            title: json.input,
+            start: new Date(json.start),
+            end: new Date(json.end),
+        };
+    });
+}
+
+const handleDelete = async (deletedId: string | number, videohub: number): Promise<string | number | void> => {
+    return fetch('/api/events/delete', getPostHeader({ id: deletedId, videohub: videohub })).then(async res => {
+        const json = await res.json();
+        return json.id;
+    });
+}
+
+interface OutputProps {
+    videohub: number,
+    output: number,
+    videohubs: Videohub[],
+}
+
+export async function getServerSideProps(context: any) {
+    /*
+    context.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=120'
+    )*/
+  
+    const hubs: Videohub[] = await retrieveVideohubsServerSide();
+    return {
+      props: {
+        videohub: Number(context.query.videohub),
+        output: Number(context.query.output),
+        videohubs: JSON.parse(JSON.stringify(hubs))
+      },
+    }
+  }
+
+class OutputView extends React.Component<OutputProps, {}> {
+
+    private videohub: Videohub;
+    constructor(props: OutputProps) {
+        super(props);
+
+        this.videohub = props.videohubs[0];
+    }
+
+    getInputChoices(): Array<SelectOption> {
+        const options: Array<SelectOption> = [];
+
+        for (const output of this.videohub.outputs) {
+            options.push({
+                id: output.id,
+                text: output.label,
+                value: output.id,
+            })
+        }
+
+        return options;
+    }
+
+    render() {
+        return <div><div style={{ margin: 20, maxWidth: '100%' }}><Scheduler
+            remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
+            onConfirm={(e, a) => {
+                return handleConfirm(e, a, this.props.videohub, this.props.output);
+            }}
+            onDelete={(id) => handleDelete(id, this.props.videohub)}
+            view={"week"}
+            week={
+                {
+                    weekDays: [0, 1, 2, 3, 4, 5, 6],
+                    weekStartOn: 1,
+                    startHour: 0,
+                    endHour: 23,
+                    step: 60,
+                }
+            }
+            fields={[
+                {
+                    name: "title",
+                    type: "select",
+                    options: this.getInputChoices(),
+                    config: {
+                        label: "Input", required: true, errMsg: "Please select an Input."
+                    }
+                }
+            ]}
+            selectedDate={new Date()}
+            onEventDrop={(_date, updated, old) => {
+                updated.event_id = old.event_id;
+                return handleConfirm(updated, "edit", this.props.videohub, this.props.output);
+            }}
+        /></div></div>;
+    }
+}
+
+export default OutputView;
