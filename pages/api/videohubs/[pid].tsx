@@ -3,28 +3,33 @@ import { formatISO } from 'date-fns';
 import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
-import { IVideohub, Videohub } from '../../../components/Videohub';
+import { Videohub } from '../../../components/Videohub';
 
 let videohubs: Videohub[] = [];
 
 
-export async function retrieveVideohubsServerSide() {
-    return await prisma.videohub.findMany().then(r => {
-        const arr: Videohub[] = [];
-        for (const hub of r) {
-            let h: IVideohub | undefined = getVideohub(hub.id) as IVideohub;
-            if (h == undefined) {
-                const n: IVideohub = new IVideohub(hub.id, hub.ip, hub.name);
-                h = n;
-
-                videohubs.push(n);
-            }
-
-            h.connect();
-            arr.push(h);
+export async function retrieveVideohubsServerSide(includeInputs: boolean, includeOutputs: boolean) {
+    return await prisma.videohub.findMany({
+        include: {
+            inputs: includeInputs,
+            outputs: includeOutputs
         }
+    }).then(r => {
+        return r as Videohub[];
+    });
+}
 
-        return arr;
+export async function retrieveVideohubServerSide(id: number, includeInputs: boolean, includeOutputs: boolean) {
+    return await prisma.videohub.findMany({
+        where: {
+            id: id,
+        },
+        include: {
+            inputs: includeInputs,
+            outputs: includeOutputs
+        }
+    }).then(r => {
+        return r as Videohub[];
     });
 }
 
@@ -36,7 +41,7 @@ export default async function handler(
     const { pid } = req.query;
     switch (pid) {
         case "get": {
-            return await retrieveVideohubsServerSide().then(arr=>{
+            return await retrieveVideohubsServerSide(true, true).then(arr => {
                 res.status(200).json(arr);
             })
         }

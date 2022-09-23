@@ -88,8 +88,8 @@ export default async function handler(
             if (id === -1) {
                 e = prisma.event.create({
                     data: {
-                        output: body.output,
-                        input: body.input,
+                        output_id: body.output,
+                        input_id: body.input,
                         start: date_start,
                         end: date_end,
                         videohub_id: videohub_id,
@@ -101,8 +101,8 @@ export default async function handler(
                         id: id,
                     },
                     data: {
-                        output: body.output,
-                        input: body.input,
+                        output_id: body.output,
+                        input_id: body.input,
                         start: date_start,
                         end: date_end,
                     }
@@ -116,7 +116,7 @@ export default async function handler(
             const id: number = body.id;
             e = prisma.event.delete({
                 where: {
-                    id: id
+                    id: id,
                 }
             });
 
@@ -135,12 +135,8 @@ export default async function handler(
                 where: {
                     AND: [
                         {
-                            videohub_id: {
-                                equals: videohub_id
-                            },
-                             output:{
-                                equals: output
-                            }
+                            videohub_id: videohub_id,
+                            output_id: output,
                         },
                         {
                             OR: [

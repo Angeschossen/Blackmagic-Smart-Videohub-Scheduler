@@ -5,7 +5,7 @@ import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 export interface TableInput {
     onClickEdit: (item: any) => void,
     getData: () => any[] | undefined,
-    shouldForceRefresh: ()=>boolean,
+    shouldForceRefresh: () => boolean,
     onClick?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
 }
 
@@ -74,12 +74,27 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
             this.shimmerColumns = buildColumns([{ Loading: '' }]);
         }
 
+
+        // remove internal id field
+        let index: number = 0;
+        let found: boolean = false;
+        for(; index < this.shimmerColumns.length; index++){
+            if(this.shimmerColumns[index].key == "id"){
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            this.shimmerColumns.splice(index, 1);
+        }
+
         // refreshes view
         this.setState({
             items: items
         }, () => {
-            setTimeout(this.loadData, this.props.shouldForceRefresh()?1000:30000);
             console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
+            setTimeout(this.loadData, this.props.shouldForceRefresh() ? 1000 : 30000);
         });
     }
 

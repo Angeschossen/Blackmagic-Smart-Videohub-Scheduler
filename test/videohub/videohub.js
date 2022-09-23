@@ -2,9 +2,15 @@ const net = require('net');
 const fs = require('fs');
 
 
-const server = net.createServer(function(socket) {
-	const file = fs.readFileSync('./sample-response.txt', 'utf-8');
-	socket.write(file.toString() +'\r\n');
+const mode = "routing";
+const server = net.createServer(function (socket) {
+	let file = fs.readFileSync(`./initial.txt`, 'utf-8');
+	socket.write(file.toString() + '\r\n');
+
+	if (mode != "initial") {
+		file = fs.readFileSync(`./${mode}.txt`, 'utf-8');
+		socket.write(file.toString() + '\r\n');
+	}
 
 	//socket.pipe(socket);
 });

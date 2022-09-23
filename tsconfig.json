@@ -17,6 +17,6 @@
     "sourceMap": true,
     "outDir": "dist",
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "server.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "server.tsx"],
   "exclude": ["node_modules"]
 }

@@ -32,7 +32,7 @@ export async function getServerSideProps(context: any) {
     'public, s-maxage=60, stale-while-revalidate=120'
   )*/
 
-  const hubs: Videohub[] = await retrieveVideohubsServerSide();
+  const hubs: Videohub[] = await retrieveVideohubsServerSide(true, true);
   return {
     props: {
       videohubs: JSON.parse(JSON.stringify(hubs))
@@ -46,7 +46,7 @@ function getItems(videohub: Videohub): any[] {
     cloned.push({
       id: output.id,
       Output: output.label,
-      Input: (output.current_input == undefined ? "None" : output.current_input.label),
+      Input: (output.input_id == null ? "None" : videohub.inputs[output.input_id].label),
     });
   }
 
@@ -68,31 +68,30 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
       videohubs: props.videohubs,
       menuItems: this.generateMenuItems(props.videohubs),
     };
-    
+
     this.onClickEdit = this.onClickEdit.bind(this);
     this.retrieveData = this.retrieveData.bind(this);
     this.onSelectVideohub = this.onSelectVideohub.bind(this);
-    this.shouldRefresh = this.shouldRefresh.bind(this);
   }
 
   componentDidMount() {
-    this.retrieveData();
+    setTimeout(this.retrieveData, 25000);
   }
 
-  generateMenuItems(res: Videohub[]):IContextualMenuItem[]{
+  generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
     const menuItems: IContextualMenuItem[] = [];
-      for (const hub of res) {
-        menuItems.push({
-          key: hub.id.toString(),
-          text: hub.name,
-          iconProps: { iconName: 'Calendar' },
-          onClick: () => {
-            this.onSelectVideohub(hub);
-          }
-        });
-      }
+    for (const hub of res) {
+      menuItems.push({
+        key: hub.id.toString(),
+        text: hub.name,
+        iconProps: { iconName: 'Calendar' },
+        onClick: () => {
+          this.onSelectVideohub(hub);
+        }
+      });
+    }
 
-      return menuItems;
+    return menuItems;
   }
 
   retrieveData() {
@@ -114,7 +113,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
       this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res }, () => {
         console.log("Loaded videohubs");
-        setTimeout(this.retrieveData, videohub?.isLoaded ? 25000 : 1000);
+        setTimeout(this.retrieveData, 25000);
       });
     });
   }
@@ -125,10 +124,6 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
   onSelectVideohub(hub: Videohub) {
     this.setState({ currentVideohub: hub });
-  }
-
-  shouldRefresh(): boolean {
-    return this.state.currentVideohub == undefined || !this.state.currentVideohub.isLoaded;
   }
 
   // Here we use a Stack to simulate a command bar.
@@ -157,9 +152,9 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
             });
           }}
           onClickEdit={this.onClickEdit}
-          shouldForceRefresh={this.shouldRefresh}
+          shouldForceRefresh={() => this.state.videohubs.length == 0}
           getData={() => {
-            if (this.shouldRefresh()) {
+            if (this.state.currentVideohub === undefined) {
               return undefined;
             }
 

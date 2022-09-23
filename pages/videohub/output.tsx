@@ -3,7 +3,7 @@ import { SelectOption } from "@aldabil/react-scheduler/dist/components/inputs/Se
 import { EventActions, ProcessedEvent } from "@aldabil/react-scheduler/dist/types";
 import React from "react";
 import prisma from "../../database/prisma";
-import { retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
+import { retrieveVideohubServerSide, retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
 import { getPostHeader } from "./main";
 import { Videohub } from "../../components/Videohub";
 
@@ -82,10 +82,11 @@ export async function getServerSideProps(context: any) {
       'public, s-maxage=60, stale-while-revalidate=120'
     )*/
   
-    const hubs: Videohub[] = await retrieveVideohubsServerSide();
+    const hub:number = Number(context.query.videohub);
+    const hubs: Videohub[] = await retrieveVideohubServerSide(hub, true, true);
     return {
       props: {
-        videohub: Number(context.query.videohub),
+        videohub: hub,
         output: Number(context.query.output),
         videohubs: JSON.parse(JSON.stringify(hubs))
       },
