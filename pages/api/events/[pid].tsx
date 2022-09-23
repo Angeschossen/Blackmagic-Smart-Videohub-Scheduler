@@ -5,6 +5,7 @@ import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { convertDateToUTC } from '../../../utils/DateUtils';
+import { OutputEvent } from '../../videohub/output';
 
 export default async function handler(
     req: NextApiRequest,
@@ -20,8 +21,6 @@ export default async function handler(
     }
 
     const videohub_id = body.videohub_id;
-    console.log(body)
-    console.log("AAA: "+videohub_id)
     if (videohub_id === undefined) {
         res.status(405).json({ message: 'Videohub id required.' });
         return;
@@ -39,6 +38,7 @@ export default async function handler(
             console.log("Checking: Start: " + date_check_start)
             console.log("Checking: End: " + date_check_end)
 
+            const event: OutputEvent = body;
             if (!await prisma.event.findFirst({
                 where: {
                     AND: [
@@ -90,12 +90,11 @@ export default async function handler(
             if (id === -1) {
                 e = prisma.event.create({
                     data: {
-                        output_id: body.output,
-                        input_id: body.input,
+                        output_id: event.output_id,
+                        input_id: event.input_id,
                         start: date_start,
                         end: date_end,
                         videohub_id: videohub_id,
-                        title: body.title, 
                     }
                 });
             } else {
@@ -104,11 +103,10 @@ export default async function handler(
                         id: id,
                     },
                     data: {
-                        output_id: body.output,
-                        input_id: body.input,
+                        output_id: event.output_id,
+                        input_id: event.input_id,
                         start: date_start,
                         end: date_end,
-                        title: body.title,
                     }
                 });
             }
