@@ -39,13 +39,17 @@ export default async function handler(
             console.log("Checking: End: " + date_check_end)
 
             const event: OutputEvent = body;
-            if (!await prisma.event.findFirst({
+            if (!await prisma.event.findMany({
                 where: {
                     AND: [
                         {
                             id: {
-                                not: body.id,
+                                not: event.id,
                             }
+                        },
+                        {
+                            videohub_id: event.videohub_id,
+                            output_id: event.output_id
                         },
                         {
                             OR: [
@@ -79,8 +83,8 @@ export default async function handler(
                     ]
                 }
             }).then(r => {
-                console.log("Conflict: " + r);
-                return r == null;
+                console.log(r)
+                return true; // we allow max one another event
             })) {
                 res.status(409).json({ message: 'Event overlaps with another event' });
                 return;
