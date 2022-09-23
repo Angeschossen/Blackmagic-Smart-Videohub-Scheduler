@@ -11,7 +11,7 @@ const server = net.createServer(function (socket) {
 		console.log("Is not")
 		setInterval(() => {
 			file = fs.readFileSync(`./${mode}.txt`, 'utf-8');
-			socket.write(file.toString() + '\r\n');
+			//socket.write(file.toString() + '\r\n');
 		}, 5000);
 	}
 
