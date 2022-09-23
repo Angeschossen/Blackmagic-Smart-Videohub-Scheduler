@@ -20,7 +20,7 @@ export async function retrieveVideohubsServerSide(includeInputs: boolean, includ
 }
 
 export async function retrieveVideohubServerSide(id: number, includeInputs: boolean, includeOutputs: boolean) {
-    return await prisma.videohub.findMany({
+    return await prisma.videohub.findUnique({
         where: {
             id: id,
         },
@@ -29,7 +29,7 @@ export async function retrieveVideohubServerSide(id: number, includeInputs: bool
             outputs: includeOutputs
         }
     }).then(r => {
-        return r as Videohub[];
+        return r as Videohub;
     });
 }
 

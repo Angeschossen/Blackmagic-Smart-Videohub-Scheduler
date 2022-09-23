@@ -20,6 +20,7 @@ export default async function handler(
     }
 
     const videohub_id = body.videohub;
+    
     if (videohub_id === undefined) {
         res.status(405).json({ message: 'Videohub id required.' });
         return;

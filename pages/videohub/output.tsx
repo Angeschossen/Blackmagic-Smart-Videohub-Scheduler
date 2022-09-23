@@ -8,19 +8,20 @@ import { getPostHeader } from "./main";
 import { Videohub } from "../../components/Videohub";
 
 
-const fetchRemote = async (query: string, videohub: number, output: number): Promise<ProcessedEvent[] | void> => {
+const fetchRemote = async (query: string, videohub: Videohub, output: number): Promise<ProcessedEvent[] | void> => {
     let start_string = query.substring(7);
     const index = start_string.indexOf("&end=");
     const end_string = start_string.substring(index + 5);
     start_string = start_string.substring(0, index);
 
-    return fetch("/api/events/get", getPostHeader({ videohub: videohub, output: output, start: start_string, end: end_string })).then(async res => {
+    return fetch("/api/events/get", getPostHeader({ videohub: videohub.id, output: output, start: start_string, end: end_string })).then(async res => {
         const events: OutputEvent[] = await res.json();
         const processed: ProcessedEvent[] = [];
+
         events.forEach(e => {
             const ev: ProcessedEvent = {
                 event_id: e.id,
-                title: e.input.toString(),
+                title: videohub.inputs[e.input_id].label,
                 start: new Date(e.start),
                 end: new Date(e.end),
             };
@@ -34,9 +35,9 @@ const fetchRemote = async (query: string, videohub: number, output: number): Pro
 
 export interface OutputEvent {
     id: number
-    videohub: number,
-    output: number,
-    input: number,
+    videohub_id: number,
+    output_id: number,
+    input_id: number,
     start: Date,
     end: Date,
 }
@@ -44,9 +45,9 @@ export interface OutputEvent {
 const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: number, output: number): Promise<ProcessedEvent> => {
     const e: OutputEvent = {
         id: event.event_id ? Number(event.event_id) : -1,
-        videohub: videohub,
-        output: output,
-        input: Number(event.title),
+        videohub_id: videohub,
+        output_id: output,
+        input_id: Number(event.title),
         start: event.start,
         end: event.end,
     };
@@ -70,9 +71,8 @@ const handleDelete = async (deletedId: string | number, videohub: number): Promi
 }
 
 interface OutputProps {
-    videohub: number,
+    videohub: Videohub,
     output: number,
-    videohubs: Videohub[],
 }
 
 export async function getServerSideProps(context: any) {
@@ -82,30 +82,26 @@ export async function getServerSideProps(context: any) {
       'public, s-maxage=60, stale-while-revalidate=120'
     )*/
   
-    const hub:number = Number(context.query.videohub);
-    const hubs: Videohub[] = await retrieveVideohubServerSide(hub, true, true);
+    const id:number = Number(context.query.videohub);
+    const hub: Videohub = await retrieveVideohubServerSide(id, true, true);
     return {
       props: {
-        videohub: hub,
+        videohub: JSON.parse(JSON.stringify(hub)),
         output: Number(context.query.output),
-        videohubs: JSON.parse(JSON.stringify(hubs))
       },
     }
   }
 
 class OutputView extends React.Component<OutputProps, {}> {
 
-    private videohub: Videohub;
     constructor(props: OutputProps) {
         super(props);
-
-        this.videohub = props.videohubs[0];
     }
 
     getInputChoices(): Array<SelectOption> {
         const options: Array<SelectOption> = [];
 
-        for (const output of this.videohub.outputs) {
+        for (const output of this.props.videohub.outputs) {
             options.push({
                 id: output.id,
                 text: output.label,
@@ -120,9 +116,9 @@ class OutputView extends React.Component<OutputProps, {}> {
         return <div><div style={{ margin: 20, maxWidth: '100%' }}><Scheduler
             remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
             onConfirm={(e, a) => {
-                return handleConfirm(e, a, this.props.videohub, this.props.output);
+                return handleConfirm(e, a, this.props.videohub.id, this.props.output);
             }}
-            onDelete={(id) => handleDelete(id, this.props.videohub)}
+            onDelete={(id) => handleDelete(id, this.props.videohub.id)}
             view={"week"}
             week={
                 {
@@ -146,7 +142,7 @@ class OutputView extends React.Component<OutputProps, {}> {
             selectedDate={new Date()}
             onEventDrop={(_date, updated, old) => {
                 updated.event_id = old.event_id;
-                return handleConfirm(updated, "edit", this.props.videohub, this.props.output);
+                return handleConfirm(updated, "edit", this.props.videohub.id, this.props.output);
             }}
         /></div></div>;
     }
