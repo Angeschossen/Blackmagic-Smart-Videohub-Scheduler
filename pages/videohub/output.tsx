@@ -14,7 +14,12 @@ const fetchRemote = async (query: string, videohub: Videohub, output: number): P
     const end_string = start_string.substring(index + 5);
     start_string = start_string.substring(0, index);
 
-    return fetch("/api/events/get", getPostHeader({ videohub: videohub.id, output: output, start: start_string, end: end_string })).then(async res => {
+    return fetch("/api/events/get", getPostHeader({ 
+        videohub_id: videohub.id,
+         output: output, 
+         start: start_string, 
+         end: end_string })).then(async res => {
+
         const events: OutputEvent[] = await res.json();
         const processed: ProcessedEvent[] = [];
 
@@ -40,25 +45,23 @@ export interface OutputEvent {
     input_id: number,
     start: Date,
     end: Date,
-    title: string,
 }
 
-const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: number, output: number): Promise<ProcessedEvent> => {
+const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: Videohub, output: number): Promise<ProcessedEvent> => {
     const e: OutputEvent = {
         id: event.event_id ? Number(event.event_id) : -1,
-        videohub_id: videohub,
+        videohub_id: videohub.id,
         output_id: output,
-        input_id: Number(event.input) -1, // fix not selectable
+        input_id: Number(event.title) -1, // fix not selectable
         start: event.start,
         end: event.end,
-        title: 'Test',
     };
 
     return fetch('/api/events/update', getPostHeader(e)).then(async res => {
         const json = await res.json();
         return {
             event_id: json.id,
-            title: json.input,
+            title: videohub.inputs[json.input_id].label,
             start: new Date(json.start),
             end: new Date(json.end),
         };
@@ -103,15 +106,15 @@ class OutputView extends React.Component<OutputProps, {}> {
     getInputChoices(): Array<SelectOption> {
         const options: Array<SelectOption> = [];
 
-        for (const output of this.props.videohub.outputs) {
+        for (const input of this.props.videohub.inputs) {
+            const id = input.id + 1; // fix not selectable
+
             options.push({
-                id: output.id,
-                text: output.label,
-                value: output.id + 1, // fix not selectable
+                id: id,
+                text: input.label,
+                value: id,
             })
         }
-
-        console.log(options)
 
         return options;
     }
@@ -120,7 +123,7 @@ class OutputView extends React.Component<OutputProps, {}> {
         return <div><div style={{ margin: 20, maxWidth: '100%' }}><Scheduler
             remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
             onConfirm={(e, a) => {
-                return handleConfirm(e, a, this.props.videohub.id, this.props.output);
+                return handleConfirm(e, a, this.props.videohub, this.props.output);
             }}
             onDelete={(id) => handleDelete(id, this.props.videohub.id)}
             view={"week"}
@@ -135,7 +138,7 @@ class OutputView extends React.Component<OutputProps, {}> {
             }
             fields={[
                 {
-                    name: "input",
+                    name: "title",
                     type: "select",
                     options: this.getInputChoices(),
                     config: {
@@ -146,7 +149,7 @@ class OutputView extends React.Component<OutputProps, {}> {
             selectedDate={new Date()}
             onEventDrop={(_date, updated, old) => {
                 updated.event_id = old.event_id;
-                return handleConfirm(updated, "edit", this.props.videohub.id, this.props.output);
+                return handleConfirm(updated, "edit", this.props.videohub, this.props.output);
             }}
         /></div></div>;
     }
