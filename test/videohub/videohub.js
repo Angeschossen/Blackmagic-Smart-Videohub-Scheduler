@@ -8,8 +8,10 @@ const server = net.createServer(function (socket) {
 	socket.write(file.toString() + '\r\n');
 
 	if (mode != "initial") {
-		file = fs.readFileSync(`./${mode}.txt`, 'utf-8');
-		socket.write(file.toString() + '\r\n');
+		setInterval(() => {
+			file = fs.readFileSync(`./${mode}.txt`, 'utf-8');
+			socket.write(file.toString() + '\r\n');
+		}, 5000);
 	}
 
 	//socket.pipe(socket);

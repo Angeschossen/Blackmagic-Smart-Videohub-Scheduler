@@ -113,7 +113,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
       this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res }, () => {
         console.log("Loaded videohubs");
-        setTimeout(this.retrieveData, 25000);
+        setTimeout(this.retrieveData, res.length == 0 ? 1000 : 30000);
       });
     });
   }

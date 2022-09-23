@@ -86,7 +86,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         }
 
         if (found) {
-            this.shimmerColumns.splice(index, 1);
+            //this.shimmerColumns.splice(index, 1);
         }
 
         // refreshes view
@@ -94,7 +94,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
             items: items
         }, () => {
             console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
-            setTimeout(this.loadData, this.props.shouldForceRefresh() ? 1000 : 30000);
+            setTimeout(this.loadData, this.props.shouldForceRefresh() ? 1000 : 5000);
         });
     }
 
