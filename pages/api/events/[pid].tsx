@@ -19,8 +19,9 @@ export default async function handler(
         return;
     }
 
-    const videohub_id = body.videohub;
-    
+    const videohub_id = body.videohub_id;
+    console.log(body)
+    console.log("AAA: "+videohub_id)
     if (videohub_id === undefined) {
         res.status(405).json({ message: 'Videohub id required.' });
         return;
@@ -94,6 +95,7 @@ export default async function handler(
                         start: date_start,
                         end: date_end,
                         videohub_id: videohub_id,
+                        title: body.title, 
                     }
                 });
             } else {
@@ -106,6 +108,7 @@ export default async function handler(
                         input_id: body.input,
                         start: date_start,
                         end: date_end,
+                        title: body.title,
                     }
                 });
             }

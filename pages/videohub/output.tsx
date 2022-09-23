@@ -40,6 +40,7 @@ export interface OutputEvent {
     input_id: number,
     start: Date,
     end: Date,
+    title: string,
 }
 
 const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: number, output: number): Promise<ProcessedEvent> => {
@@ -47,9 +48,10 @@ const handleConfirm = async (event: ProcessedEvent, _action: EventActions, video
         id: event.event_id ? Number(event.event_id) : -1,
         videohub_id: videohub,
         output_id: output,
-        input_id: Number(event.title),
+        input_id: Number(event.input) -1, // fix not selectable
         start: event.start,
         end: event.end,
+        title: 'Test',
     };
 
     return fetch('/api/events/update', getPostHeader(e)).then(async res => {
@@ -105,9 +107,11 @@ class OutputView extends React.Component<OutputProps, {}> {
             options.push({
                 id: output.id,
                 text: output.label,
-                value: output.id,
+                value: output.id + 1, // fix not selectable
             })
         }
+
+        console.log(options)
 
         return options;
     }
@@ -131,7 +135,7 @@ class OutputView extends React.Component<OutputProps, {}> {
             }
             fields={[
                 {
-                    name: "title",
+                    name: "input",
                     type: "select",
                     options: this.getInputChoices(),
                     config: {
