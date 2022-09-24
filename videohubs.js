@@ -11,6 +11,10 @@ class Vhub {
         this.connecting = false;
     }
 
+    async test() {
+
+    }
+
     connect() {
         console.log("Attempting connection to videohub.");
 
@@ -29,8 +33,9 @@ class Vhub {
             this.client.write("Hello!");
         });
 
-        client.on("data", data => {
+        client.on("data", async data => {
             console.log("Received: " + data)
+            await this.test();
         })
 
         client.on("close", () => {
@@ -84,7 +89,7 @@ module.exports = {
     loadData: async function () {
         hubs = []
         hubs.push(new Vhub(1, "127.0.0.1", "Test"));
-    }, 
+    },
     connect: function () {
         for (const hub of hubs) {
             hub.reconnect();
