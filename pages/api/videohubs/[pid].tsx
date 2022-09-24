@@ -4,9 +4,14 @@ import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { Videohub } from '../../../components/Videohub';
+import * as vhubs from '../../../videohubs'
 
 let videohubs: Videohub[] = [];
-
+console.log("B")
+console.log(vhubs.get())
+vhubs.get()[0].id=2;
+console.log("Set to:")
+console.log(vhubs.get())
 
 export async function retrieveVideohubsServerSide(includeInputs: boolean, includeOutputs: boolean) {
     return await prisma.videohub.findMany({

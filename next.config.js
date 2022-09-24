@@ -1,3 +1,7 @@
+const myModule = require('./test.js');
+let val = myModule.hello(); // val is "Hello"   
+console.log(val);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

@@ -15,10 +15,11 @@ const server = net.createServer(function (socket) {
 		}, 5000);
 	}
 
+	/*
 	socket.on('data', function(data) {
 		console.log("Data IN:")
         console.log(data.toString());
-    });
+    });*/
 
 	socket.on('error', function(error){
 		console.log(error);

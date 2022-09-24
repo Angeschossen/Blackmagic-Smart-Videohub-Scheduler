@@ -6,12 +6,15 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { convertDateToUTC } from '../../../utils/DateUtils';
 import { OutputEvent } from '../../videohub/output';
+import * as vhubs from '../../../videohubs'
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
 
+    console.log("A")
+    console.log(vhubs.get());
     const { pid } = req.query;
     const body = req.body;
 
