@@ -7,6 +7,24 @@ import { retrieveVideohubServerSide, retrieveVideohubsServerSide } from "../api/
 import { getPostHeader } from "./main";
 import { Videohub } from "../../components/Videohub";
 
+const HOUR_SART= 0, HOUR_END = 23, DAY_STEP_MINUTES = 60;
+
+const RESOURCES = [
+    {
+      admin_id: 1,
+      title: "John",
+      mobile: "555666777",
+      avatar: "https://picsum.photos/200/300",
+      color: "#ab2d2d"
+    },
+    {
+      admin_id: 2,
+      title: "Sarah",
+      mobile: "545678354",
+      avatar: "https://picsum.photos/200/300",
+      color: "#58ab2d"
+    }
+];
 
 const fetchRemote = async (query: string, videohub: Videohub, output: number): Promise<ProcessedEvent[] | void> => {
     let start_string = query.substring(7);
@@ -14,11 +32,12 @@ const fetchRemote = async (query: string, videohub: Videohub, output: number): P
     const end_string = start_string.substring(index + 5);
     start_string = start_string.substring(0, index);
 
-    return fetch("/api/events/get", getPostHeader({ 
+    return fetch("/api/events/get", getPostHeader({
         videohub_id: videohub.id,
-         output: output, 
-         start: start_string, 
-         end: end_string })).then(async res => {
+        output: output,
+        start: start_string,
+        end: end_string
+    })).then(async res => {
 
         const events: OutputEvent[] = await res.json();
         const processed: ProcessedEvent[] = [];
@@ -39,22 +58,28 @@ const fetchRemote = async (query: string, videohub: Videohub, output: number): P
 };
 
 export interface OutputEvent {
-    id: number
+    id: number,
+    event_id: string|number,
     videohub_id: number,
     output_id: number,
     input_id: number,
     start: Date,
     end: Date,
+    day_of_week: number,
+    repeat_every_week: boolean,
 }
 
 const handleConfirm = async (event: ProcessedEvent, _action: EventActions, videohub: Videohub, output: number): Promise<ProcessedEvent> => {
     const e: OutputEvent = {
         id: event.event_id ? Number(event.event_id) : -1,
+        event_id: event.event_id,
         videohub_id: videohub.id,
         output_id: output,
-        input_id: Number(event.title) -1, // fix not selectable
+        input_id: Number(event.title) - 1, // fix not selectable
         start: event.start,
         end: event.end,
+        day_of_week: event.start.getDay(),
+        repeat_every_week: event.repeat,
     };
 
     return fetch('/api/events/update', getPostHeader(e)).then(async res => {
@@ -69,7 +94,7 @@ const handleConfirm = async (event: ProcessedEvent, _action: EventActions, video
 }
 
 const handleDelete = async (deletedId: string | number, videohub: number): Promise<string | number | void> => {
-    return fetch('/api/events/delete', getPostHeader({ id: deletedId, videohub: videohub })).then(async res => {
+    return fetch('/api/events/delete', getPostHeader({ id: deletedId, videohub_id: videohub })).then(async res => {
         const json = await res.json();
         return json.id;
     });
@@ -86,20 +111,20 @@ export async function getServerSideProps(context: any) {
       'Cache-Control',
       'public, s-maxage=60, stale-while-revalidate=120'
     )*/
-  
-    const id:number = Number(context.query.videohub);
-    const hub: Videohub|undefined = await retrieveVideohubServerSide(id, true, true);
-    if(hub == undefined){
+
+    const id: number = Number(context.query.videohub);
+    const hub: Videohub | undefined = await retrieveVideohubServerSide(id, true, true);
+    if (hub == undefined) {
         throw Error("Hub does not exist.");
     }
 
     return {
-      props: {
-        videohub: JSON.parse(JSON.stringify(hub)),
-        output: Number(context.query.output),
-      },
+        props: {
+            videohub: JSON.parse(JSON.stringify(hub)),
+            output: Number(context.query.output),
+        },
     }
-  }
+}
 
 class OutputView extends React.Component<OutputProps, {}> {
 
@@ -135,9 +160,16 @@ class OutputView extends React.Component<OutputProps, {}> {
                 {
                     weekDays: [0, 1, 2, 3, 4, 5, 6],
                     weekStartOn: 1,
-                    startHour: 0,
-                    endHour: 23,
-                    step: 60,
+                    startHour: HOUR_SART,
+                    endHour: HOUR_END,
+                    step: DAY_STEP_MINUTES,
+                }
+            }
+            day={
+                {
+                    startHour: HOUR_SART,
+                    endHour: HOUR_END,
+                    step: DAY_STEP_MINUTES,
                 }
             }
             fields={[
@@ -146,7 +178,26 @@ class OutputView extends React.Component<OutputProps, {}> {
                     type: "select",
                     options: this.getInputChoices(),
                     config: {
-                        label: "Input", required: true, errMsg: "Please select an Input."
+                        label: "Input", required: true, errMsg: "Please select an input."
+                    }
+                },
+                {
+                    name: "repeat",
+                    type: "select",
+                    options: [
+                        {
+                            id: 0,
+                            text: "No",
+                            value: false
+                        },
+                        {
+                            id: 1,
+                            text: "Yes",
+                            value: true,
+                        }
+                    ],
+                    config:{
+                        label: "Repeat every Week", required: false
                     }
                 }
             ]}

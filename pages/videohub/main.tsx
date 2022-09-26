@@ -107,9 +107,6 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   }
 
   componentDidMount() {
-    console.log(this.state.currentVideohub)
-    console.log(this.state.currentVideohub?.connected)
-
     this.retrieveData();
   }
 
