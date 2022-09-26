@@ -8,7 +8,6 @@ const handler = app.getRequestHandler()
 app.prepare().then(async _res => {
     await videohubs.loadData()
     videohubs.connect()
-    console.log(videohubs.getVideohubs())
 
     const server = express()
     server.all('*', handler)
