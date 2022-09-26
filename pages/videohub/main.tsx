@@ -75,7 +75,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   }
 
   componentDidMount() {
-    setTimeout(this.retrieveData, 25000);
+    this.retrieveData();
   }
 
   generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
@@ -95,7 +95,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   }
 
   retrieveData() {
-    console.log("Retrieving data.");
+    console.log("Retrieving videohubs.");
     retrieveVideohubs().then(res => {
       let videohub: Videohub | undefined;
       for (const hub of res) {
@@ -113,7 +113,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
       this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res }, () => {
         console.log("Loaded videohubs");
-        setTimeout(this.retrieveData, res.length == 0 ? 1000 : 30000);
+        setTimeout(this.retrieveData, 5000);
       });
     });
   }
@@ -152,7 +152,6 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
             });
           }}
           onClickEdit={this.onClickEdit}
-          shouldForceRefresh={() => this.state.videohubs.length == 0}
           getData={() => {
             if (this.state.currentVideohub === undefined) {
               return undefined;

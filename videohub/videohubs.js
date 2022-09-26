@@ -149,8 +149,8 @@ class Videohub {
         this.lastRequest = undefined;
     }
 
-    connect() {
-        this.info("Attempting connection to videohub.");
+    connect(count) {
+        this.info(`Attempting connection to videohub (#${count}).`);
 
         if (this.socket != undefined) {
             throw new Error("Already connected")
@@ -212,9 +212,10 @@ class Videohub {
 
         this.stopEventsCheck();
 
-        this.connecting = this.connect();
+        let count = 1;
+        this.connecting = this.connect(count++);
         this.connecting = setInterval(() => {
-            this.connect();
+            this.connect(count++);
         }, 5000);
     }
 
