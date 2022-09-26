@@ -1,13 +1,17 @@
+const { ThirtyFpsSharp } = require('@mui/icons-material');
 const { textAlign } = require('@mui/system');
 const { info } = require('console');
+const { es } = require('date-fns/locale');
 const net = require('net');
 const { threadId } = require('worker_threads');
 const prisma = require('../database/prisma');
+const dateutils = require('../utils/dateutils')
 
 const VIDEOHUB_PORT = 9990;
 
 const PROTOCOL_INPUT_LABELS = "INPUT LABELS:"
-const PROTOCOL_PREAMPLE = "PROTOCOL PREAMPLE:"
+const PROTOCOL_PREAMPLE = "PROTOCOL PREAMBLE:"
+const PROTOCOL_ACKNOWLEDGED = "ACK";
 const PROTOCOL_VIDEOHUB_DEVICE = "VIDEOHUB DEVICE:"
 const PROTOCOL_OUTPUT_LABELS = "OUTPUT LABELS:"
 const PROTOCOL_VIDEO_OUTPUT_ROUTING = "VIDEO OUTPUT ROUTING:"
@@ -82,22 +86,42 @@ class Input {
     }
 }
 
+class InputChangeRequest {
+    constructor(output_id, input_id, callback) {
+        this.output_id = output_id;
+        this.input_id = input_id;
+        this.callback = callback;
+    }
+
+    send(videohub) {
+        const send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}\n${this.output_id} ${this.input_id}\n\n`
+        videohub.info(`Sending routing update: ${send}`);
+        videohub.client.write(send);
+        videohub.info("Routing update sent.");
+    }
+}
 class Output {
     constructor(id, label) {
         this.id = id;
         this.label = label;
         this.input_id = undefined;
+        this.request = undefined;
     }
 
-    update_routing(videohub,input_id) {
+    updateRouting(videohub, input_id) {
         videohub.info(`Updating routing: ${input_id} -> ${this.id}`);
-
-        if (!videohub.validate_relation(this.id, input_id)) {
-            return false;
-        }
-
         this.input_id = input_id;
-        return true;
+        this.request = undefined;
+    }
+
+    sendRoutingUpdateRequest(videohub, input_id) {
+        this.request = new InputChangeRequest(this.id, input_id, () => {
+            this.updateRouting(videohub, input_id);
+            this.save(videohub);
+        });
+
+        videohub.lastRequest = this.request;
+        this.request.send(videohub);
     }
 
     async save(videohub) {
@@ -128,12 +152,7 @@ class Videohub {
         this.client = undefined;
         this.connecting = false;
         this.data = data;
-
-        this.info(data);
-    }
-
-    async test() {
-
+        this.lastRequest = undefined;
     }
 
     connect() {
@@ -147,7 +166,7 @@ class Videohub {
         client.connect({
             port: VIDEOHUB_PORT,
             host: this.data.ip,
-        }, () => {
+        }, async () => {
             this.info("Successfully connected.");
             this.client = client;
             this.clearReconnect()
@@ -173,6 +192,19 @@ class Videohub {
         client.on("error", console.error)
     }
 
+    isConnected() {
+        return this.client != undefined || this.connecting;
+    }
+
+    stopEventsCheck() {
+        this.info("Stopping check events.");
+
+        if (this.checkEventsId != undefined) {
+            clearTimeout(this.checkEventsId);
+            this.checkEventsId = undefined;
+        }
+    }
+
     reconnect() {
         if (false != this.connecting) {
             return;
@@ -183,6 +215,8 @@ class Videohub {
             this.client.destroy();
             this.client = undefined
         }
+
+        this.stopEventsCheck();
 
         this.connecting = this.connect();
         this.connecting = setInterval(() => {
@@ -198,31 +232,110 @@ class Videohub {
         console.warn(`[#${this.data.id}] ${msg}`)
     }
 
-    validate_relation(output_id, input_id) {
-        if (output_id >= this.data.outputs.length) {
-            this.warn("Output not loaded: " + output_id);
-            return false;
+    async checkEvents() {
+        this.info("Checking events...");
+
+        if (this.client == undefined) {
+            throw Error("Not connected");
         }
 
-        if (input_id >= this.data.inputs.length) {
-            this.warn("Input not loaded: " + input_id);
-            return false;
+        if (this.checkEventsId != undefined) {
+            throw Error("Check events already running.");
         }
 
-        return true;
+        const date_start = new Date();
+        const date_end = new Date(date_start.getTime() + (60 * 1000)); // plus 1 minute
+
+        const events = await prisma.client.event.findMany({
+            where: {
+                AND: [
+                    {
+                        videohub_id: this.data.id
+                    },
+                    {
+                        OR: [
+                            {
+                                AND: [
+                                    {
+                                        start: {
+                                            lte: date_start,
+                                        },
+                                        end: {
+                                            gte: date_end,
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                start: {
+                                    gte: date_start,
+                                    lte: date_end,
+                                }
+                            },
+                            {
+                                end: {
+                                    lte: date_end,
+                                    gte: date_start,
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        });
+
+        for (const event of events) {
+            const output_id = event.output_id;
+            let shortest_id = event.input_id;
+            let shortest_duration = event.end - event.start;
+
+            for (const e of events) {
+                if (output_id != e.output_id || e === event) {
+                    continue;
+                }
+
+                const duration = e.end - e.start;
+                if (duration < shortest_duration) {
+                    shortest_id = e.input_id;
+                    shortest_duration = duration;
+                }
+            }
+
+            const output = this.getOutput(output_id);
+            if (output.input_id === shortest_id) {
+                continue; // already up to date
+            }
+
+            output.sendRoutingUpdateRequest(this, shortest_id);
+        }
+
+        this.checkEventsId = setTimeout(async () => {
+            this.checkEventsId = undefined;
+            await this.checkEvents();
+        }, 60000);
     }
 
-    async update_routing(output_id, input_id) {
-        if (!this.validate_relation(output_id, input_id)) {
-            return false;
+    getOutput(id) {
+        if (id > this.data.outputs) {
+            throw Error("Output does not exist.: " + id);
         }
 
-        const output = this.data.outputs[output_id];
-        if (!output.update_routing(this, input_id)) {
-            return false;
+        return this.data.outputs[id];
+    }
+
+
+    getInput(id) {
+        if (id > this.data.inputs) {
+            throw Error("Input does not exist.: " + id);
         }
 
-        await output.save();
+        return this.data.inputs[id];
+    }
+
+    async updateRouting(output_id, input_id) {
+        const output = this.getOutput(output_id);
+        output.updateRouting(this, input_id);
+        await output.save(this);
     }
 
     async handle_received(text) {
@@ -236,10 +349,17 @@ class Videohub {
         } else if (text.startsWith(PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
             const lines = getCorrespondingLines(getLines(text), PROTOCOL_VIDEO_OUTPUT_ROUTING);
 
-            for (const line in lines) {
+            for (const line of lines) {
                 const data = line.split(" ");
-                await this.update_routing(Number(data[0]), Number(data[1]));
+                await this.updateRouting(Number(data[0]), Number(data[1]));
             }
+        } else if (text.startsWith(PROTOCOL_ACKNOWLEDGED)) {
+            if (this.lastRequest == undefined) {
+                throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
+            }
+
+            this.lastRequest.callback.call();
+
         } else {
             this.warn("Unknown message.");
         }
@@ -255,7 +375,7 @@ class Videohub {
 
         // inputs and outputs
         this.data.inputs = [];
-        getCorrespondingLines(lines, PROTOCOL_INPUT_LABELS).forEach(line=>{
+        getCorrespondingLines(lines, PROTOCOL_INPUT_LABELS).forEach(line => {
             const index = line.indexOf(" ");
 
             this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
@@ -270,18 +390,20 @@ class Videohub {
         // mapping
         for (const line of getCorrespondingLines(lines, PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
             const data = line.split(" ");
-
             const output_id = Number(data[0]);
             const input_id = Number(data[1]);
-            if(!this.validate_relation(output_id, input_id)){
-                continue;
-            }
 
-            const output = this.data.outputs[output_id];
-            //output.update_routing(input_id);
+            const output = this.getOutput(output_id);
+            output.updateRouting(this, input_id);
         }
 
         this.info("Loaded initial data.");
+        this.startEventsCheck();
+    }
+
+    async startEventsCheck() {
+        this.stopEventsCheck();
+        await this.checkEvents();
     }
 
     async save() {
@@ -330,12 +452,12 @@ module.exports = {
         return arr;
     },
     getVideohub: function (id) {
-        for(const hub of hubs){
-            if(hub.data.id === id){
+        for (const hub of hubs) {
+            if (hub.data.id === id) {
                 return hub.data;
             }
         }
- 
+
         return undefined;
     },
     loadData: async function () {
@@ -352,8 +474,12 @@ module.exports = {
             hubs.push(new Videohub(e));
         });
     },
-    connect: function () {
+    connect: async function () {
         for (const hub of hubs) {
+            if (hub.isConnected()) {
+                throw Error("Already connected");
+            }
+
             hub.reconnect();
         }
     }
