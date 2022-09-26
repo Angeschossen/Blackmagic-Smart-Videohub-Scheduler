@@ -1,11 +1,5 @@
-const { ThirtyFpsSharp } = require('@mui/icons-material');
-const { textAlign } = require('@mui/system');
-const { info } = require('console');
-const { es } = require('date-fns/locale');
 const net = require('net');
-const { threadId } = require('worker_threads');
 const prisma = require('../database/prisma');
-const dateutils = require('../utils/dateutils')
 
 const VIDEOHUB_PORT = 9990;
 
@@ -341,9 +335,8 @@ class Videohub {
     async handle_received(text) {
         if (text.startsWith(PROTOCOL_PREAMPLE)) {
             lines = getCorrespondingLines(getLines(text), PROTOCOL_PREAMPLE);
-            this.data.version = lines[1];
+            this.data.version = getConfigEntry(lines, 0);
         } else if (text.startsWith(PROTOCOL_VIDEOHUB_DEVICE)) {
-            this.info("Initial")
             this.loadInitial(text);
             await this.save();
         } else if (text.startsWith(PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
