@@ -182,6 +182,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
           />
         </Stack>
         <DayTable
+          editText='Schedule'
           onClick={(_e, item) => {
             if (this.state.currentVideohub == undefined) {
               throw Error("Videohub is undefined");

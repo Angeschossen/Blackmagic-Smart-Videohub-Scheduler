@@ -5,6 +5,7 @@ import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 export interface TableInput {
     onClickEdit: (item: any) => void,
     getData: () => any[] | undefined,
+    editText: string,
     onClick?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
 }
 
@@ -43,7 +44,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
                     if (this.props.onClick != undefined) {
                         this.props.onClick(e, item);
                     }
-                }}>{"Edit"}</Link>;
+                }}>{this.props.editText}</Link>;
         }
 
         return item[column.key as keyof TableItem];
@@ -85,7 +86,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         }
 
         if (found) {
-            //this.shimmerColumns.splice(index, 1);
+            this.shimmerColumns.splice(index, 1);
         }
 
         // refreshes view
