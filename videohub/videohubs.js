@@ -56,7 +56,7 @@ function getCorrespondingLines(lines, look) {
     return arr;
 }
 
-async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
+async function retrieveEvents(videohub_id, output_id, date_start, date_end, inclusive) {
     const filter_base = output_id == undefined ?
         {
             videohub_id: videohub_id,
@@ -72,20 +72,16 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
     const start_DayOfWeek = date_start.getDay();
     const end_DayOfWeek = date_end.getDay();
 
-    const filter_repeat = differenceDays >= 6 ?
-        {
-            repeat_every_week: true
+    const filter_repeat = differenceDays >= 6 ? {
+        repeat_every_week: true
+    } : {
+        repeat_every_week: true,
+        day_of_week: {
+            gte: start_DayOfWeek,
+            lte: end_DayOfWeek,
         }
-        :
-        {
-            repeat_every_week: true,
-            day_of_week: {
-                gte: start_DayOfWeek,
-                lte: end_DayOfWeek,
-            }
-        };
+    };
 
-    console.log(filter_repeat)
     const e = await prisma.client.event.findMany({
         where: {
             AND: [
@@ -94,30 +90,23 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
                     OR: [
                         filter_repeat,
                         {
-                            AND: [
-                                {
-                                    start: {
-                                        lte: date_start,
-                                    },
-                                    end: {
-                                        gte: date_end,
-                                    }
-                                }
-                            ]
+                            start: {
+                                lte: date_start,
+                            },
+                            end: {
+                                gte: date_end,
+                            }
                         },
                         {
-                            OR: [
-                                {
-                                    start: {
-                                        gte: date_start,
-                                        lte: date_end,
-                                    },
-                                    end: {
-                                        lte: date_end,
-                                        gte: date_start,
-                                    }
-                                }
-                            ]
+                            start: {
+                                gte: date_start,
+                                lte: date_end,
+                            },
+                            end: {
+                                lte: date_end,
+                                gte: date_start,
+                            }
+
                         },
                     ]
                 }
@@ -126,7 +115,7 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
     });
 
     const arr = [];
-    const weeks = Math.round(differenceDays / 7);
+    const weeks = Math.max(1, Math.round(differenceDays / 7));
     for (const event of e) {
         event.event_id = event.id;
 
@@ -138,13 +127,9 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
             let startIndex;
             if (!dateutils.isSameWeek(event_start, date_start)) { // adjust?
                 startIndex = 0;
-                console.log("IN: " + event_start + " " + event_end)
-
                 const event_duration = event_end.getTime() - event_start.getTime();
-                console.log(event_duration)
                 event_start = adjustDate(date_start, event_start, event.day_of_week);
                 event_end = new Date(event_start.getTime() + event_duration);
-                console.log("OUT: " + event_start + " " + event_end)
             } else {
                 startIndex = 0;
             }
@@ -159,14 +144,16 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
                 event_end = new Date(eventFinal.end);
                 event_start.setDate(event_start.getDate() + 7);
                 event_end.setDate(event_end.getDate() + 7);
-                arr.push(eventFinal);
+
+                if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
+                    arr.push(eventFinal);
+                }
             }
         } else {
             arr.push(event); // always add
         }
     }
 
-    console.log(arr)
     return arr;
 }
 
@@ -337,12 +324,11 @@ class Videohub {
         this.data.connected = false;
         this.stopEventsCheck();
 
-        /*
         let count = 1;
         this.connecting = this.connect(count++);
         this.connecting = setInterval(() => {
             this.connect(count++);
-        }, 5000); */
+        }, 5000);
     }
 
     info(msg) {
@@ -367,44 +353,7 @@ class Videohub {
         const date_start = new Date();
         const date_end = new Date(date_start.getTime() + (60 * 1000)); // plus 1 minute
 
-        const events = await prisma.client.event.findMany({
-            where: {
-                AND: [
-                    {
-                        videohub_id: this.data.id
-                    },
-                    {
-                        OR: [
-                            {
-                                AND: [
-                                    {
-                                        start: {
-                                            lte: date_start,
-                                        },
-                                        end: {
-                                            gte: date_end,
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                start: {
-                                    gte: date_start,
-                                    lte: date_end,
-                                }
-                            },
-                            {
-                                end: {
-                                    lte: date_end,
-                                    gte: date_start,
-                                }
-                            }
-                        ]
-                    }
-                ]
-            }
-        });
-
+        const events = await retrieveEvents(this.data.id, undefined, date_start, date_end, true);
         for (const event of events) {
             const output_id = event.output_id;
             let shortest_id = event.input_id;

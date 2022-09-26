@@ -11,7 +11,6 @@ export default async function handler(
     const { pid } = req.query;
     const body = req.body;
 
-    console.log(body)
     if (req.method !== 'POST') {
         res.status(405).json({ message: 'POST required' });
         return;
@@ -137,7 +136,7 @@ export default async function handler(
             console.log("Start: " + date_start);
             console.log("End: " + date_end);
 
-            e = await retrieveEvents(videohub_id, output, date_start, date_end);
+            e = await retrieveEvents(videohub_id, output, date_start, date_end, false);
             res.status(200).json(e); // since it returns and array
             return;
         }

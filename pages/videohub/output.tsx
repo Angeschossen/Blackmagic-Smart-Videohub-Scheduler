@@ -159,7 +159,7 @@ class OutputView extends React.Component<OutputProps, {}> {
             week={
                 {
                     weekDays: [0, 1, 2, 3, 4, 5, 6],
-                    weekStartOn: 1,
+                    weekStartOn: 0,
                     startHour: HOUR_SART,
                     endHour: HOUR_END,
                     step: DAY_STEP_MINUTES,
