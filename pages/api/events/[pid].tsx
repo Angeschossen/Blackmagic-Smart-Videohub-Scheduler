@@ -1,10 +1,5 @@
-import { ProcessedEvent } from '@aldabil/react-scheduler/dist/types'
-import { Boy } from '@mui/icons-material';
-import { formatISO } from 'date-fns';
-import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
-import { convertDateToUTC } from '../../../utils/DateUtils';
 import { OutputEvent } from '../../videohub/output';
 import * as vhubs from '../../../videohub/videohubs'
 
@@ -12,9 +7,6 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-
-    console.log("A")
-    console.log(vhubs.getVideohubs());
     const { pid } = req.query;
     const body = req.body;
 

@@ -7,12 +7,6 @@ import { Videohub } from '../../../components/Videohub';
 import * as videohubs from '../../../videohub/videohubs'
 
 export async function retrieveVideohubsServerSide(includeInputs: boolean, includeOutputs: boolean) {
-    console.log("B")
-    console.log(videohubs.getVideohubs())
-    //videohubs.getVideohubs()[0].id = 2;
-    console.log("Set to:")
-    console.log(videohubs.getVideohubs())
-
     return videohubs.getVideohubs() as Videohub[];
 }
 
