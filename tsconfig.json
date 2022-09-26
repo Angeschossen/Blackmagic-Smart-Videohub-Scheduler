@@ -17,6 +17,6 @@
     "sourceMap": true,
     "outDir": "dist",
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "server.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "server.tsx", "database/prisma.js"],
   "exclude": ["node_modules"]
 }

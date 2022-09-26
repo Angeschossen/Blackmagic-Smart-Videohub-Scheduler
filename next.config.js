@@ -4,11 +4,12 @@ const nextConfig = {
   swcMinify: true,
 }
 
+/*
 const cron = require('node-cron');
 
 cron.schedule('* * * * *', function () {
   console.log('Say scheduled hello')
-});
+});*/
 
 
 module.exports = (phase) => {

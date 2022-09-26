@@ -4,45 +4,26 @@ import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { Videohub } from '../../../components/Videohub';
-import * as vhubs from '../../../videohubs'
-
-let videohubs: Videohub[] = [];
-console.log("B")
-console.log(vhubs.get())
-vhubs.get()[0].id=2;
-console.log("Set to:")
-console.log(vhubs.get())
+import * as videohubs from '../../../videohub/videohubs'
 
 export async function retrieveVideohubsServerSide(includeInputs: boolean, includeOutputs: boolean) {
-    return await prisma.videohub.findMany({
-        include: {
-            inputs: includeInputs,
-            outputs: includeOutputs
-        }
-    }).then(r => {
-        return r as Videohub[];
-    });
+    console.log("B")
+    console.log(videohubs.getVideohubs())
+    //videohubs.getVideohubs()[0].id = 2;
+    console.log("Set to:")
+    console.log(videohubs.getVideohubs())
+
+    return videohubs.getVideohubs() as Videohub[];
 }
 
 export async function retrieveVideohubServerSide(id: number, includeInputs: boolean, includeOutputs: boolean) {
-    return await prisma.videohub.findUnique({
-        where: {
-            id: id,
-        },
-        include: {
-            inputs: includeInputs,
-            outputs: includeOutputs
-        }
-    }).then(r => {
-        return r as Videohub;
-    });
+    return videohubs.getVideohub(id) as unknown as Videohub;
 }
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-
     const { pid } = req.query;
     switch (pid) {
         case "get": {
@@ -54,14 +35,6 @@ export default async function handler(
         default: {
             res.status(405).json({ message: 'Invalid PID' });
             return;
-        }
-    }
-}
-
-function getVideohub(id: number) {
-    for (const hub of videohubs) {
-        if (hub.id === id) {
-            return hub;
         }
     }
 }
