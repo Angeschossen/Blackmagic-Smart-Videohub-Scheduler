@@ -1,8 +1,4 @@
-import { ProcessedEvent } from '@aldabil/react-scheduler/dist/types'
-import { formatISO } from 'date-fns';
-import id from 'date-fns/esm/locale/id/index.js';
 import type { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../database/prisma';
 import { Videohub } from '../../../components/Videohub';
 import * as videohubs from '../../../videohub/videohubs'
 
