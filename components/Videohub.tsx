@@ -1,7 +1,4 @@
-import { Socket } from "net";
 import { TableItem } from "./DataTable";
-
-const HUB_PORT: number = 9990;
 
 export interface Videohub extends TableItem {
     id: number,
@@ -10,6 +7,7 @@ export interface Videohub extends TableItem {
     version: string,
     inputs: Input[],
     outputs: Output[],
+    connected: boolean,
 }
 
 export interface Input extends TableItem {

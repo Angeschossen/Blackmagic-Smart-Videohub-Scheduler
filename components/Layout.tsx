@@ -1,4 +1,4 @@
-import {  IStackStyles, Stack } from "@fluentui/react";
+import { IStackStyles, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 import Navigation from "./Naviation";
 
@@ -10,7 +10,7 @@ const StackStyles: Partial<IStackStyles> = {
     right: 0,
     height: '100%',
     maxHeight: '100%'
-  } 
+  }
 }
 
 type LayoutProps = {
@@ -25,9 +25,13 @@ const Layout = (a: LayoutProps) => {
 
   return (
     <>
-      {ready ? <><Navigation /><Stack styles={StackStyles}>
-        {a.children}
-      </Stack></>
+      {ready ?
+        <Stack>
+          <Navigation />
+          <Stack styles={StackStyles}>
+            {a.children}
+          </Stack>
+        </Stack>
         : null}
     </>
   );

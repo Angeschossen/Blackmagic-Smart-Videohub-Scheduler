@@ -40,7 +40,8 @@ const links: INavLinkGroup[] = [
 const navigationsStyles: Partial<INavStyles> = {
     root: {
         height: '100%',
-        width: '200px',
+        maxWidth: '15vh',
+        minWidth: '12vh',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
@@ -55,7 +56,7 @@ const navigationsStyles: Partial<INavStyles> = {
 
 const Navigation = () => {
     return (
-        <div>
+        <div className="ms-Grid-col ms-sm6 ms-md4 ms-lg2">
             < Nav
                 groups={links}
                 initialSelectedKey={"key1"}

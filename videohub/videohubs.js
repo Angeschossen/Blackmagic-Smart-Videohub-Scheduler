@@ -147,6 +147,7 @@ class Videohub {
         this.connecting = false;
         this.data = data;
         this.lastRequest = undefined;
+        this.data.connected = false;
     }
 
     connect(count) {
@@ -163,6 +164,7 @@ class Videohub {
         }, async () => {
             this.info("Successfully connected.");
             this.client = client;
+            this.data.connected = true;
             this.clearReconnect()
             //this.client.write("Hello!");
         });
@@ -187,7 +189,7 @@ class Videohub {
     }
 
     isConnected() {
-        return this.client != undefined || this.connecting;
+        return this.client != undefined || this.connecting||this.data.connected;
     }
 
     stopEventsCheck() {
@@ -207,9 +209,10 @@ class Videohub {
         if (this.client != undefined) {
             this.client.removeAllListeners();
             this.client.destroy();
-            this.client = undefined
+            this.client = undefined;
         }
 
+        this.data.connected = false;
         this.stopEventsCheck();
 
         let count = 1;
