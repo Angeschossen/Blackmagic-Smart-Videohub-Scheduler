@@ -6,7 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { convertDateToUTC } from '../../../utils/DateUtils';
 import { OutputEvent } from '../../videohub/output';
-import * as vhubs from '../../../videohubs'
+import * as vhubs from '../../../videohub/videohubs'
 
 export default async function handler(
     req: NextApiRequest,
@@ -14,7 +14,7 @@ export default async function handler(
 ) {
 
     console.log("A")
-    console.log(vhubs.get());
+    console.log(vhubs.getVideohubs());
     const { pid } = req.query;
     const body = req.body;
 
@@ -42,7 +42,7 @@ export default async function handler(
             console.log("Checking: End: " + date_check_end)
 
             const event: OutputEvent = body;
-            if (!await prisma.event.findMany({
+            if (!await prisma.client.event.findMany({
                 where: {
                     AND: [
                         {
@@ -85,7 +85,7 @@ export default async function handler(
                         }
                     ]
                 }
-            }).then(r => {
+            }).then((r: any) => {
                 console.log(r)
                 return true; // we allow max one another event
             })) {
@@ -95,7 +95,7 @@ export default async function handler(
 
             const id: number = body.id;
             if (id === -1) {
-                e = prisma.event.create({
+                e = prisma.client.event.create({
                     data: {
                         output_id: event.output_id,
                         input_id: event.input_id,
@@ -105,7 +105,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prisma.event.update({
+                e = prisma.client.event.update({
                     where: {
                         id: id,
                     },
@@ -123,7 +123,7 @@ export default async function handler(
 
         case "delete": {
             const id: number = body.id;
-            e = prisma.event.delete({
+            e = prisma.client.event.delete({
                 where: {
                     id: id,
                 }
@@ -140,7 +140,7 @@ export default async function handler(
             console.log("Start: " + date_start);
             console.log("End: " + date_end);
 
-            e = prisma.event.findMany({
+            e = prisma.client.event.findMany({
                 where: {
                     AND: [
                         {
@@ -191,7 +191,7 @@ export default async function handler(
         }
     }
 
-    await e.then(r => {
+    await e.then((r: any) => {
         res.status(200).json(r);
     });
 }

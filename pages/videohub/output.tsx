@@ -88,7 +88,11 @@ export async function getServerSideProps(context: any) {
     )*/
   
     const id:number = Number(context.query.videohub);
-    const hub: Videohub = await retrieveVideohubServerSide(id, true, true);
+    const hub: Videohub|undefined = await retrieveVideohubServerSide(id, true, true);
+    if(hub == undefined){
+        throw Error("Hub does not exist.");
+    }
+
     return {
       props: {
         videohub: JSON.parse(JSON.stringify(hub)),
