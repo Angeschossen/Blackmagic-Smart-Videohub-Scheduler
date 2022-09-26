@@ -1,13 +1,32 @@
-import { Stack, CommandBarButton, IIconProps, IStackStyles, IContextualMenuItem } from '@fluentui/react';
+import { Stack, CommandBarButton, IIconProps, IStackStyles, IContextualMenuItem, ICommandBarItemProps, CommandBar, Button, IContextualMenuProps, MessageBar, MessageBarType } from '@fluentui/react';
 import React from 'react';
 import DayTable from '../../components/DayTable';
 import Router from 'next/router'
 import { retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 import { Output, Videohub } from '../../components/Videohub';
 
-const addIcon: IIconProps = { iconName: 'HardDriveGroup' };
+const addIcon: IIconProps = { iconName: 'Add' };
+const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
+const VideohubOffline = () => (
+  <MessageBar
+    messageBarType={MessageBarType.error}
+    isMultiline={false}
+    dismissButtonAriaLabel="Close"
+  >
+    The videohub is currently not reachable. Therefore, the videohub can't be controlled and shown data might be outdated.
+  </MessageBar>
+);
+
+const VideohubOnline = () => (
+  <MessageBar
+    messageBarType={MessageBarType.success}
+    isMultiline={false}
+  >
+    The videohub is reachable and can be controlled.
+  </MessageBar>
+);
 
 export function getPostHeader(e: any): RequestInit {
   return {
@@ -57,7 +76,9 @@ function getItems(videohub: Videohub): any[] {
 interface VideohubViewProps {
   videohubs: Videohub[]
 }
+
 class VideohubView extends React.Component<VideohubViewProps, { videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
+  private menuProps: IContextualMenuProps;
 
   constructor(props: VideohubViewProps) {
     super(props);
@@ -72,9 +93,23 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
     this.onClickEdit = this.onClickEdit.bind(this);
     this.retrieveData = this.retrieveData.bind(this);
     this.onSelectVideohub = this.onSelectVideohub.bind(this);
+
+    this.menuProps = {
+      items: [
+        {
+          key: 'push',
+          text: 'Pushbutton',
+          iconProps: { iconName: 'Add' },
+          onClick: (e, item) => { this.onClickAddPushButton() }
+        }
+      ]
+    };
   }
 
   componentDidMount() {
+    console.log(this.state.currentVideohub)
+    console.log(this.state.currentVideohub?.connected)
+
     this.retrieveData();
   }
 
@@ -122,6 +157,10 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
     this.setState({ currentEdit: output });
   }
 
+  onClickAddPushButton() {
+
+  }
+
   onSelectVideohub(hub: Videohub) {
     this.setState({ currentVideohub: hub });
   }
@@ -130,14 +169,19 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   // The real CommandBar control also uses CommandBarButtons internally.
   render() {
     return (
-      <div style={{ margin: '10px' }}>
+      <div style={{ margin: '1vh' }}>
         <Stack horizontal styles={stackStyles}>
           <CommandBarButton
-            iconProps={addIcon}
+            iconProps={videohubIcon}
             text={"Select Videohub"}
             menuProps={{
               items: this.state.menuItems
             }}
+          />
+          <CommandBarButton
+            iconProps={addIcon}
+            text="New item"
+            menuProps={this.menuProps}
           />
         </Stack>
         <DayTable
@@ -160,6 +204,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
             return getItems(this.state.currentVideohub as Videohub);
           }}
         />
+        {this.state.currentVideohub != undefined && !this.state.currentVideohub.connected ? <VideohubOffline /> : <VideohubOnline />}
       </div>
     );
   }
