@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { start } from 'repl';
 import prisma from '../../../database/prisma';
 import { OutputEvent } from '../../videohub/output';
+import { retrieveEvents } from '../../../videohub/videohubs'
 
 export default async function handler(
     req: NextApiRequest,
@@ -9,6 +11,7 @@ export default async function handler(
     const { pid } = req.query;
     const body = req.body;
 
+    console.log(body)
     if (req.method !== 'POST') {
         res.status(405).json({ message: 'POST required' });
         return;
@@ -77,7 +80,6 @@ export default async function handler(
                     ]
                 }
             }).then((r: any) => {
-                console.log(r)
                 return true; // we allow max one another event
             })) {
                 res.status(409).json({ message: 'Event overlaps with another event' });
@@ -93,6 +95,9 @@ export default async function handler(
                         start: date_start,
                         end: date_end,
                         videohub_id: videohub_id,
+
+                        repeat_every_week: event.repeat_every_week,
+                        day_of_week: date_start.getDay(),
                     }
                 });
             } else {
@@ -105,6 +110,7 @@ export default async function handler(
                         input_id: event.input_id,
                         start: date_start,
                         end: date_end,
+                        repeat_every_week: event.repeat_every_week,
                     }
                 });
             }
@@ -131,49 +137,9 @@ export default async function handler(
             console.log("Start: " + date_start);
             console.log("End: " + date_end);
 
-            e = prisma.client.event.findMany({
-                where: {
-                    AND: [
-                        {
-                            videohub_id: videohub_id,
-                            output_id: output,
-                        },
-                        {
-                            OR: [
-                                {
-                                    AND: [
-                                        {
-                                            start: {
-                                                lte: date_start,
-                                            },
-                                            end: {
-                                                gte: date_end,
-                                            }
-                                        }
-                                    ]
-
-                                },
-                                {
-                                    OR: [
-                                        {
-                                            start: {
-                                                gte: date_start,
-                                                lte: date_end,
-                                            },
-                                            end: {
-                                                lte: date_end,
-                                                gte: date_start,
-                                            }
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                }
-            });
-
-            break;
+            e = await retrieveEvents(videohub_id, output, date_start, date_end);
+            res.status(200).json(e); // since it returns and array
+            return;
         }
 
         default: {

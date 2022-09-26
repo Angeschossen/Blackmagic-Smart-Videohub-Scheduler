@@ -20,6 +20,9 @@ model Event {
   input_id    Int
   start       DateTime
   end         DateTime
+
+  day_of_week       Int
+  repeat_every_week Boolean?
 }
 
 model Videohub {

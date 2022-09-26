@@ -1,5 +1,7 @@
 const net = require('net');
+const { start } = require('repl');
 const prisma = require('../database/prisma');
+const dateutils = require('../utils/dateutils');
 
 const VIDEOHUB_PORT = 9990;
 
@@ -52,6 +54,126 @@ function getCorrespondingLines(lines, look) {
     }
 
     return arr;
+}
+
+async function retrieveEvents(videohub_id, output_id, date_start, date_end) {
+    const filter_base = output_id == undefined ?
+        {
+            videohub_id: videohub_id,
+        } :
+        {
+            videohub_id: videohub_id,
+            output_id: output_id,
+        };
+
+
+    const differenceDays = dateutils.dateDiffInDays(date_start, date_end);
+
+    const start_DayOfWeek = date_start.getDay();
+    const end_DayOfWeek = date_end.getDay();
+
+    const filter_repeat = differenceDays >= 6 ?
+        {
+            repeat_every_week: true
+        }
+        :
+        {
+            repeat_every_week: true,
+            day_of_week: {
+                gte: start_DayOfWeek,
+                lte: end_DayOfWeek,
+            }
+        };
+
+    console.log(filter_repeat)
+    const e = await prisma.client.event.findMany({
+        where: {
+            AND: [
+                filter_base,
+                {
+                    OR: [
+                        filter_repeat,
+                        {
+                            AND: [
+                                {
+                                    start: {
+                                        lte: date_start,
+                                    },
+                                    end: {
+                                        gte: date_end,
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            OR: [
+                                {
+                                    start: {
+                                        gte: date_start,
+                                        lte: date_end,
+                                    },
+                                    end: {
+                                        lte: date_end,
+                                        gte: date_start,
+                                    }
+                                }
+                            ]
+                        },
+                    ]
+                }
+            ]
+        }
+    });
+
+    const arr = [];
+    const weeks = Math.round(differenceDays / 7);
+    for (const event of e) {
+        event.event_id = event.id;
+
+        if (event.repeat_every_week != undefined) { // is repeat
+            let event_start = new Date(event.start);
+            let event_end = new Date(event.end);
+
+            // initial
+            let startIndex;
+            if (!dateutils.isSameWeek(event_start, date_start)) { // adjust?
+                startIndex = 0;
+                console.log("IN: " + event_start + " " + event_end)
+
+                const event_duration = event_end.getTime() - event_start.getTime();
+                console.log(event_duration)
+                event_start = adjustDate(date_start, event_start, event.day_of_week);
+                event_end = new Date(event_start.getTime() + event_duration);
+                console.log("OUT: " + event_start + " " + event_end)
+            } else {
+                startIndex = 0;
+            }
+
+            for (let i = startIndex; i < weeks; i++) {
+                const eventFinal = Object.assign({}, event);
+                eventFinal.event_id = event.id + "_" + (i + 1);
+                eventFinal.start = event_start;
+                eventFinal.end = event_end;
+
+                event_start = new Date(eventFinal.start);
+                event_end = new Date(eventFinal.end);
+                event_start.setDate(event_start.getDate() + 7);
+                event_end.setDate(event_end.getDate() + 7);
+                arr.push(eventFinal);
+            }
+        } else {
+            arr.push(event); // always add
+        }
+    }
+
+    console.log(arr)
+    return arr;
+}
+
+function adjustDate(fromDate, date, weekDay) {
+    const newDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+    dateutils.setDayOfWeek(newDate, weekDay);
+    return newDate;
 }
 
 class Input {
@@ -189,7 +311,7 @@ class Videohub {
     }
 
     isConnected() {
-        return this.client != undefined || this.connecting||this.data.connected;
+        return this.client != undefined || this.connecting || this.data.connected;
     }
 
     stopEventsCheck() {
@@ -215,11 +337,12 @@ class Videohub {
         this.data.connected = false;
         this.stopEventsCheck();
 
+        /*
         let count = 1;
         this.connecting = this.connect(count++);
         this.connecting = setInterval(() => {
             this.connect(count++);
-        }, 5000);
+        }, 5000); */
     }
 
     info(msg) {
@@ -479,6 +602,7 @@ module.exports = {
 
             hub.reconnect();
         }
-    }
+    },
+    retrieveEvents: retrieveEvents
 }
 
