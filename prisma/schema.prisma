@@ -26,34 +26,58 @@ model Event {
 }
 
 model Videohub {
-  id      Int      @id @default(autoincrement())
-  ip      String   @unique
-  name    String
-  version String
-  inputs  Input[]
-  outputs Output[]
-  events  Event[]
+  id                Int                @id @default(autoincrement())
+  ip                String             @unique
+  name              String
+  version           String
+  inputs            Input[]
+  outputs           Output[]
+  events            Event[]
+  pushbuttons       PushButton[]
+  pushbuttonactions PushButtonAction[]
 }
 
 model Input {
-  id          Int
-  videohub    Videohub @relation(fields: [videohub_id], references: [id])
-  videohub_id Int
-  label       String
-  outputs     Output[]
-  Event       Event[]
+  id                Int
+  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub_id       Int
+  label             String
+  outputs           Output[]
+  events            Event[]
+  pushbuttonactions PushButtonAction[]
 
   @@id([videohub_id, id], name: "videohubInput")
 }
 
 model Output {
-  id          Int
-  videohub    Videohub @relation(fields: [videohub_id], references: [id])
-  videohub_id Int
-  input       Input?   @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
-  input_id    Int?
-  label       String
-  Event       Event[]
+  id                Int
+  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub_id       Int
+  input             Input?             @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
+  input_id          Int?
+  label             String
+  Event             Event[]
+  pushbuttonactions PushButtonAction[]
 
   @@id([videohub_id, id], name: "videohubOutput")
+}
+
+model PushButtonAction {
+  id            Int        @id @default(autoincrement())
+  videohub      Videohub   @relation(fields: [videohub_id], references: [id])
+  videohub_id   Int
+  output        Output     @relation(fields: [videohub_id, output_id], references: [videohub_id, id])
+  output_id     Int
+  input         Input      @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
+  input_id      Int
+  pushbutton    PushButton @relation(fields: [pushbutton_id], references: [id])
+  pushbutton_id Int
+}
+
+model PushButton {
+  id                Int                @id @default(autoincrement())
+  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub_id       Int
+  label             String
+  actions PushButtonAction[]
 }

@@ -2,12 +2,22 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { Videohub } from '../../../components/Videohub';
 import * as videohubs from '../../../videohub/videohubs'
 
-export async function retrieveVideohubsServerSide(includeInputs: boolean, includeOutputs: boolean) {
+export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
 }
 
-export async function retrieveVideohubServerSide(id: number, includeInputs: boolean, includeOutputs: boolean) {
+export function retrieveVideohubServerSide(id: number) {
     return videohubs.getVideohub(id) as unknown as Videohub;
+}
+
+export function getVideohubFromQuery(query: any): Videohub {
+    const id: number = Number(query.videohub);
+    const hub: Videohub | undefined = retrieveVideohubServerSide(id);
+    if (hub == undefined) {
+        throw Error("Hub does not exist.");
+    }
+
+    return hub;
 }
 
 export default async function handler(
@@ -17,9 +27,8 @@ export default async function handler(
     const { pid } = req.query;
     switch (pid) {
         case "get": {
-            return await retrieveVideohubsServerSide(true, true).then(arr => {
-                res.status(200).json(arr);
-            })
+            res.status(200).json(retrieveVideohubsServerSide());
+            return;
         }
 
         default: {

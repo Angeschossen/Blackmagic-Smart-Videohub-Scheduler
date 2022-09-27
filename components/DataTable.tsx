@@ -3,10 +3,9 @@ import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKe
 import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 
 export interface TableInput {
-    onClickEdit: (item: any) => void,
+    onClickEdit?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
     getData: () => any[] | undefined,
     editText: string,
-    onClick?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
 }
 
 export interface TableItem {
@@ -41,8 +40,8 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
             return <Link
                 //data-selection-invoke={true}
                 onClick={e => {
-                    if (this.props.onClick != undefined) {
-                        this.props.onClick(e, item);
+                    if (this.props.onClickEdit != undefined) {
+                        this.props.onClickEdit(e, item);
                     }
                 }}>{this.props.editText}</Link>;
         }
