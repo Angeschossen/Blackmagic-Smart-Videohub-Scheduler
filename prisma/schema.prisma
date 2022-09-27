@@ -75,9 +75,9 @@ model PushButtonAction {
 }
 
 model PushButton {
-  id                Int                @id @default(autoincrement())
-  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
-  videohub_id       Int
-  label             String
-  actions PushButtonAction[]
+  id          Int                @id @default(autoincrement())
+  videohub    Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub_id Int
+  label       String             @unique
+  actions     PushButtonAction[]
 }

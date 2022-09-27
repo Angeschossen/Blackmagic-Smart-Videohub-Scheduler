@@ -1,6 +1,6 @@
 import { PrismaPromise } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PushButton } from '../../../components/interfaces/PushButton';
+import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prisma from '../../../database/prisma';
 
 export function retrievePushButtonsServerSide(videohubId: number) {
@@ -8,7 +8,7 @@ export function retrievePushButtonsServerSide(videohubId: number) {
         where: {
             videohub_id: videohubId,
         },
-        include:{
+        include: {
             actions: true,
         }
     }) as PrismaPromise<PushButton[]>;
@@ -31,6 +31,7 @@ export default async function handler(
     }
 
     const { pid } = req.query;
+    let e;
     switch (pid) {
         case "get": {
             return await retrievePushButtonsServerSide(videohub_id).then(arr => {
@@ -38,9 +39,67 @@ export default async function handler(
             });
         }
 
+        case "update": {
+            let pushButton: PushButton = body;
+            console.log(pushButton)
+            if (pushButton.id == -1) {
+                await prisma.client.pushButton.create({
+                    data: {
+                        videohub_id: videohub_id,
+                        label: pushButton.label,
+                    }
+                }).then(async r => {
+                    const result: PushButton = r as PushButton;
+
+                    // set ids
+                    const arr: PushbuttonAction[] =[];
+                    for (const action of pushButton.actions) {
+            
+                        const d = {
+                            input_id: action.input_id,
+                            output_id: action.output_id,
+                            pushbutton_id: result.id,
+                            videohub_id: videohub_id,
+                        };
+
+                        console.log(d)
+                        await prisma.client.pushButtonAction.create({
+                            data: d
+                        }).then(res => {
+                            arr.push(res as PushbuttonAction);
+                        });
+                    }
+
+                    result.actions = arr;
+                    res.status(200).json(result);
+                });
+
+                return;
+
+            } else {
+                e = prisma.client.pushButton.update({
+                    where: {
+                        id: pushButton.id,
+                    },
+                    data: {
+                        label: pushButton.label,
+                    },
+                    include: {
+                        actions: true,
+                    }
+                });
+            }
+
+            break;
+        }
+
         default: {
             res.status(405).json({ message: 'Invalid PID' });
             return;
         }
     }
+
+    await e.then((r: any) => {
+        res.status(200).json(r);
+    });
 }

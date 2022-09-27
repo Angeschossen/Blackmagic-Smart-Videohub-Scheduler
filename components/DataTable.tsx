@@ -20,7 +20,7 @@ const shimmeredDetailsListProps: IListProps = {
 class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }> {
 
     private shimmerColumns: IColumn[] = [];
-
+private mounted: boolean = false;
     constructor(props: TableInput) {
         super(props);
 
@@ -50,6 +50,11 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
     };
 
     componentDidMount() {
+        if(this.mounted){
+            return; 
+        }
+
+        this.mounted = true;
         this.loadData();
     }
 

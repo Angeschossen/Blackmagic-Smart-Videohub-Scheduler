@@ -7,6 +7,7 @@ import { Output, Videohub } from '../../components/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
 import { SelectVideohub } from '../../components/buttons/SelectVideohub';
+import { isAfter } from 'date-fns';
 
 const addIcon: IIconProps = { iconName: 'Add' };
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
@@ -63,7 +64,7 @@ interface VideohubViewProps {
 
 class VideohubView extends React.Component<VideohubViewProps, { videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
   private menuProps: IContextualMenuProps;
-
+  private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
     super(props);
 
@@ -92,6 +93,11 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   }
 
   componentDidMount() {
+    if (this.mounted) {
+      return;
+    }
+
+    this.mounted = true;
     this.retrieveData();
   }
 
