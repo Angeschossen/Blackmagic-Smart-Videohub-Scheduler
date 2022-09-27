@@ -1,7 +1,10 @@
 import { CommandBarButton, DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PropaneSharp } from "@mui/icons-material";
+import { PushButtonAction } from "@prisma/client";
 import { buttonProperties } from "office-ui-fabric-react";
 import React from "react";
+import { deepCopy } from "../../utils/commonutils";
+import { getPostHeader } from "../../utils/fetchutils";
 import { Confirmation, ConfirmationProps } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../Videohub";
@@ -17,17 +20,18 @@ interface InputProps extends IModalProps {
     optionsInput: IDropdownOption[],
     optionsOutput: IDropdownOption[],
     videohub: Videohub,
-    buttons: PushButton[],
     button?: PushButton,
+    buttons: PushButton[],
     close: () => void,
-    onConfirm: (name: string, actions: PushbuttonAction[]) => void,
+    onConfirm: (button: PushButton) => void,
+    onDelete: (buttonId: number) => void,
 }
 
 
 interface RoutingComponentProps {
     optionsInput: IDropdownOption[],
     optionsOutput: IDropdownOption[],
-    routing: Routing,
+    routing: PushbuttonAction,
     onSelectOutput: (index?: number) => void,
     onSelectInput: (index?: number) => void,
 }
@@ -42,7 +46,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
             <Dropdown
                 placeholder="Select an output"
                 label="Output"
-                selectedKey={this.props.routing == undefined ? undefined : this.props.routing.output}
+                defaultSelectedKey={this.props.routing == undefined ? undefined : this.props.routing.output_id}
                 options={this.props.optionsOutput}
                 styles={dropdownStyles}
                 onChange={(_event, _option, index) => {
@@ -52,7 +56,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
             <Dropdown
                 placeholder="Select an input"
                 label="Input"
-                selectedKey={this.props.routing == undefined ? undefined : this.props.routing.input}
+                defaultSelectedKey={this.props.routing == undefined ? undefined : this.props.routing.input_id}
                 options={this.props.optionsInput}
                 styles={dropdownStyles}
                 onChange={(_event, _option, index) => {
@@ -63,21 +67,25 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 }
 
-export interface Routing {
-    id: number,
-    output?: number,
-    input?: number,
-}
-
-export class EditPushButtonModal extends React.Component<InputProps, { label?: string, routings: Routing[] }> {
+export class EditPushButtonModal extends React.Component<InputProps, {}> {
 
     private routingComponents: RoutingComponent[] = [];
     private mounted: boolean = false;
+    private button: PushButton;
+    private label?: string;
+
     constructor(props: InputProps) {
         super(props);
 
-        this.state = { routings: [] };
-        this.addRoutingComponent = this.addRoutingComponent.bind(this);
+        this.button = props.button == undefined ? {
+            id: -1,
+            videohub_id: props.videohub.id,
+            label: undefined,
+            actions: []
+        } : deepCopy(props.button);
+
+        this.label = this.button.label;
+        this.addActionComponent = this.addActionComponent.bind(this);
         this.validateButtonLabel = this.validateButtonLabel.bind(this);
         this.setRouting = this.setRouting.bind(this);
     }
@@ -89,68 +97,82 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
 
         this.mounted = true;
 
-        if (this.props.button == undefined) {
-            this.addRoutingComponent(false, undefined, undefined, undefined);
-        } else {
-            for (const action of this.props.button.actions) {
-                this.addRoutingComponent(true, action.id, action.output_id, action.input_id);
+        if (this.button.actions.length != 0) {
+            for (const action of this.button.actions) {
+                this.addActionComponent(action);
             }
-
-            this.setState({ label: this.props.button.label });
+        } else {
+            this.addActionComponent(undefined);
         }
+
+        this.setState({ label: this.button.label });
     }
 
-    addRoutingComponent(push: boolean, id?: number, output?: number, input?: number) {
-        id = this.setRouting(push, id, output, input);
+    addActionComponent(action?: PushButtonAction) {
+        let key: number | undefined;
+        if (action == undefined) {
+            key = this.setRouting(undefined, undefined, undefined);
+            action = this.button.actions[key];
+        } else {
+            for (let i = 0; i < this.button.actions.length; i++) {
+                if (this.button.actions[i].id === action.id) {
+                    key = i;
+                    break;
+                }
+            }
+
+            if (key == undefined) {
+                throw Error("Could not find action.");
+            }
+        }
+
         this.routingComponents.push(new RoutingComponent({
-            routing: { id: id, input: input, output: output },
             optionsOutput: this.props.optionsOutput,
             optionsInput: this.props.optionsInput,
             onSelectOutput: (index?: number) => {
-                this.setRouting(false, id, index, undefined);
+                this.setRouting(key, index, undefined);
             },
+            routing: action,
             onSelectInput: (index?: number) => {
-                this.setRouting(false, id, undefined, index);
+                this.setRouting(key, undefined, index);
             }
         }));
     }
 
-    setRouting(push: boolean, routingId?: number, output?: number, input?: number): number {
-        const arr: Routing[] = this.state.routings.slice();
-
-        if (routingId == undefined || push) {
-            if (push) {
-                if (routingId == undefined) {
-                    throw Error("Routing id must be set if push true.");
-                }
-            } else {
-                routingId = arr.length;
-            }
-
-            arr.push({ id: routingId, output: output, input: input });
+    setRouting(index?: number, output?: number, input?: number): number {
+        console.log(index);
+        if (index == undefined) {
+            index = this.button.actions.length;
+            this.button.actions.push({
+                id: -1,
+                output_id: output == undefined ? -1 : output,
+                input_id: input == undefined ? -1 : input,
+                videohub_id: this.props.videohub.id,
+                pushbutton_id: this.button.id,
+            });
         } else {
+            const action: PushButtonAction = this.button.actions[index];
             if (output != undefined) {
-                arr[routingId].output = output;
+                action.output_id = output;
             }
 
             if (input != undefined) {
-                arr[routingId].input = input;
+                action.input_id = input;
             }
         }
 
-        this.setState({ routings: arr });
-        return routingId;
+        return index;
     }
 
-    validateButtonLabel(input: string): string {
+    validateButtonLabel(input: string): string | undefined {
         input = input.toLowerCase();
         for (const b of this.props.buttons) {
-            if (b.label.toLowerCase() === input && b != this.props.button) {
+            if (b.label.toLowerCase() === input && b.id != this.button.id) {
                 return "A button with this name already exists.";
             }
         }
 
-        return "";
+        return undefined;
     }
 
     render(): React.ReactNode {
@@ -159,13 +181,12 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                 <Stack tokens={stackTokens} styles={{ root: { margin: '1vh' } }}>
                     <TextField label="Required" required
                         onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
-                            this.setState({ label: val });
+                            this.label = val;
                         }}
-                        value={this.props.button == undefined ? undefined : this.props.button.label}
+                        defaultValue={this.button == undefined ? undefined : this.button.label}
                         validateOnLoad={false}
                         validateOnFocusOut={true}
                         onGetErrorMessage={(value: string) => {
-                            console.log("GGET")
                             return this.validateButtonLabel(value);
                         }}
                     />
@@ -176,40 +197,47 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                             </React.Fragment>
                         })}
                     </Stack>
-                    <DefaultButton text="Add another one" onClick={() => this.addRoutingComponent(false)} allowDisabledFocus />
+                    <DefaultButton text="Add routing" onClick={() => {
+                        this.addActionComponent(undefined);
+                        this.forceUpdate();
+                    }} allowDisabledFocus />
+                    {this.button.id != -1 && <DefaultButton text="Delete" style={{ backgroundColor: '#e8453a' }} onClick={() => {
+                        fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
+                            const json = await res.json();
+                            if (json.result) {
+                                this.props.onDelete(this.button.id);
+                                this.props.close();
+                            }
+                        });
+                    }} allowDisabledFocus />}
                     <Confirmation
                         onCancel={this.props.close}
                         onConfirm={() => {
-                            console.log(this.state);
-                            if (this.state.label != undefined) {
-                                if (!this.validateButtonLabel(this.state.label)) {
-                                    return;
+                            if (this.label == undefined) {
+                                return;
+                            }
+
+                            if (this.validateButtonLabel(this.label) != undefined) {
+                                return;
+                            }
+
+                            const actions: PushbuttonAction[] = [];
+                            for (const action of this.button.actions) {
+                                if (action.input_id == -1 || action.output_id == -1) {
+                                    continue;
                                 }
 
-                                if (this.props.button == null) {
-                                    const actions: PushbuttonAction[] = [];
-                                    for (const r of this.state.routings) {
-                                        if (r.input == undefined || r.output == undefined) {
-                                            continue;
-                                        }
+                                actions.push(action);
+                            }
 
-                                        actions.push({
-                                            id: -1,
-                                            pushbutton_id: -1,
-                                            videohub_id: this.props.videohub.id,
-                                            output_id: r.output,
-                                            input_id: r.input,
-                                        });
-                                    }
-
-                                    if (actions.length != 0) {
-                                        this.props.onConfirm(this.state.label, actions);
-                                    } else {
-                                        return;
-                                    }
-                                }else{
-                                    this.props.button.label = this.state.label;
-                                }
+                            console.log(actions)
+                            if (actions.length != 0) {
+                                this.button.label = this.label;
+                                this.button.actions = actions;
+                                console.log(this.button);
+                                this.props.onConfirm(this.button);
+                            } else {
+                                return;
                             }
 
 

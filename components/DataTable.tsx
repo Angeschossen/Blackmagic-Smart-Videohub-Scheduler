@@ -3,9 +3,14 @@ import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKe
 import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 
 export interface TableInput {
-    onClickEdit?: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
+    controlcolumns: ControlColumns[],
     getData: () => any[] | undefined,
-    editText: string,
+}
+
+export interface ControlColumns {
+    key: string,
+    onClick: (event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>, item: any) => void,
+    text: string,
 }
 
 export interface TableItem {
@@ -20,7 +25,7 @@ const shimmeredDetailsListProps: IListProps = {
 class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }> {
 
     private shimmerColumns: IColumn[] = [];
-private mounted: boolean = false;
+    private mounted: boolean = false;
     constructor(props: TableInput) {
         super(props);
 
@@ -36,22 +41,28 @@ private mounted: boolean = false;
             return <></>;
         }
 
-        if (column.key === 'edit' && this.props.onClickEdit != undefined) {
+        let control: ControlColumns | undefined;
+        for (const col of this.props.controlcolumns) {
+            if (col.key === column.key) {
+                control = col;
+                break;
+            }
+        }
+
+        if (control != undefined) {
             return <Link
                 //data-selection-invoke={true}
                 onClick={e => {
-                    if (this.props.onClickEdit != undefined) {
-                        this.props.onClickEdit(e, item);
-                    }
-                }}>{this.props.editText}</Link>;
+                    control?.onClick(e, item);
+                }}>{control.text}</Link>;
         }
 
         return item[column.key as keyof TableItem];
     };
 
     componentDidMount() {
-        if(this.mounted){
-            return; 
+        if (this.mounted) {
+            return;
         }
 
         this.mounted = true;
@@ -66,9 +77,9 @@ private mounted: boolean = false;
         if (items != undefined) {
             this.shimmerColumns = buildColumns(items);
 
-            if (this.props.onClickEdit != undefined) {
+            for(const col of this.props.controlcolumns){
                 this.shimmerColumns.unshift({
-                    key: 'edit',
+                    key: col.key,
                     name: '',
                     minWidth: 0,
                     maxWidth: 1
@@ -82,8 +93,8 @@ private mounted: boolean = false;
         // remove internal id field
         let index: number = 0;
         let found: boolean = false;
-        for(; index < this.shimmerColumns.length; index++){
-            if(this.shimmerColumns[index].key == "id"){
+        for (; index < this.shimmerColumns.length; index++) {
+            if (this.shimmerColumns[index].key == "id") {
                 found = true;
                 break;
             }

@@ -164,6 +164,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
   render() {
+    const inst: VideohubView = this;
     return (
       <div style={{ marginTop: '1vh' }}>
         <Stack horizontal styles={stackStyles}>
@@ -178,17 +179,22 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
           />
         </Stack>
         <DataTable
-          editText='Schedule'
-          onClickEdit={(_e: any, item: any) => {
-            if (this.state.currentVideohub == undefined) {
-              throw Error("Videohub is undefined");
-            }
+          controlcolumns={[
+            {
+              key: "edit",
+              onClick(event, item) {
+                if (inst.state.currentVideohub == undefined) {
+                  throw Error("Videohub is undefined");
+                }
 
-            Router.push({
-              pathname: './output',
-              query: { videohub: this.state.currentVideohub.id, output: item.id },
-            });
-          }}
+                Router.push({
+                  pathname: './output',
+                  query: { videohub: inst.state.currentVideohub.id, output: item.id },
+                });
+              },
+              text: "Edit"
+            }
+          ]}
           getData={() => {
             if (this.state.currentVideohub === undefined) {
               return undefined;

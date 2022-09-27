@@ -1,3 +1,4 @@
+import { ColumnActionsMode } from '@fluentui/react';
 import { PrismaPromise } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
@@ -41,8 +42,7 @@ export default async function handler(
 
         case "update": {
             let pushButton: PushButton = body;
-            console.log(pushButton)
-            if (pushButton.id == -1) {
+            if (pushButton.id == -1) { // creare
                 await prisma.client.pushButton.create({
                     data: {
                         videohub_id: videohub_id,
@@ -51,20 +51,18 @@ export default async function handler(
                 }).then(async r => {
                     const result: PushButton = r as PushButton;
 
-                    // set ids
-                    const arr: PushbuttonAction[] =[];
+                    // adjust ids
+                    const arr: PushbuttonAction[] = [];
                     for (const action of pushButton.actions) {
-            
-                        const d = {
-                            input_id: action.input_id,
-                            output_id: action.output_id,
+                        const create = {
                             pushbutton_id: result.id,
                             videohub_id: videohub_id,
-                        };
+                            input_id: action.input_id,
+                            output_id: action.output_id,
+                        }
 
-                        console.log(d)
                         await prisma.client.pushButtonAction.create({
-                            data: d
+                            data: create
                         }).then(res => {
                             arr.push(res as PushbuttonAction);
                         });
@@ -74,23 +72,67 @@ export default async function handler(
                     res.status(200).json(result);
                 });
 
-                return;
-
             } else {
-                e = prisma.client.pushButton.update({
+                await prisma.client.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
                     data: {
                         label: pushButton.label,
-                    },
-                    include: {
-                        actions: true,
                     }
+                }).then(async r => {
+                    const result: PushButton = r as PushButton;
+                    result.actions = [];
+
+                    for (const action of pushButton.actions) {
+                        await prisma.client.pushButtonAction.upsert({
+                            where: {
+                                id: action.id,
+                            },
+                            update: {
+                                input_id: action.input_id,
+                                output_id: action.output_id,
+                            },
+                            create: {
+                                pushbutton_id: pushButton.id,
+                                videohub_id: videohub_id,
+                                input_id: action.input_id,
+                                output_id: action.output_id,
+                            }
+                        }).then(res => {
+                            result.actions.push(res as PushbuttonAction);
+                        })
+                    }
+
+                    res.status(200).json(result);
                 });
             }
 
-            break;
+            return;
+        }
+
+        case "delete": {
+            const id: number | undefined = body.id;
+            if (id == undefined) {
+                res.status(405).json({ message: 'Button id required.' });
+                return;
+            }
+
+            await prisma.client.pushButtonAction.deleteMany({
+                where: {
+                    pushbutton_id: id,
+                    videohub_id: videohub_id,
+                }
+            }).then(async res => {
+                await prisma.client.pushButton.delete({
+                    where: {
+                        id: id,
+                    }
+                });
+            });
+
+            res.status(200).json({ result: true });
+            return;
         }
 
         default: {
