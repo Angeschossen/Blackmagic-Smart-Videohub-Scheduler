@@ -7,22 +7,22 @@ import { retrieveVideohubServerSide, retrieveVideohubsServerSide } from "../api/
 import { getPostHeader } from "./main";
 import { Videohub } from "../../components/Videohub";
 
-const HOUR_SART= 0, HOUR_END = 23, DAY_STEP_MINUTES = 60;
+const HOUR_SART = 0, HOUR_END = 23, DAY_STEP_MINUTES = 60;
 
 const RESOURCES = [
     {
-      admin_id: 1,
-      title: "John",
-      mobile: "555666777",
-      avatar: "https://picsum.photos/200/300",
-      color: "#ab2d2d"
+        admin_id: 1,
+        title: "John",
+        mobile: "555666777",
+        avatar: "https://picsum.photos/200/300",
+        color: "#ab2d2d"
     },
     {
-      admin_id: 2,
-      title: "Sarah",
-      mobile: "545678354",
-      avatar: "https://picsum.photos/200/300",
-      color: "#58ab2d"
+        admin_id: 2,
+        title: "Sarah",
+        mobile: "545678354",
+        avatar: "https://picsum.photos/200/300",
+        color: "#58ab2d"
     }
 ];
 
@@ -59,7 +59,7 @@ const fetchRemote = async (query: string, videohub: Videohub, output: number): P
 
 export interface OutputEvent {
     id: number,
-    event_id: string|number,
+    event_id: string | number,
     videohub_id: number,
     output_id: number,
     input_id: number,
@@ -196,7 +196,7 @@ class OutputView extends React.Component<OutputProps, {}> {
                             value: true,
                         }
                     ],
-                    config:{
+                    config: {
                         label: "Repeat every Week", required: false
                     }
                 }
