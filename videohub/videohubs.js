@@ -2,7 +2,7 @@ const { CollectionsOutlined } = require('@mui/icons-material');
 const net = require('net');
 const { start } = require('repl');
 const prisma = require('../database/prisma');
-const dateutils = require('../utils/dateutils');
+const dateutils = require('../components/utils/dateutils');
 
 const VIDEOHUB_PORT = 9990;
 

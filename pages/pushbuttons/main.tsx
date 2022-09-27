@@ -6,8 +6,8 @@ import { EditPushButtonModal } from "../../components/modals/EditPushButtonModal
 import { Videohub } from "../../components/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { VideohubFooter } from "../../components/VideohubFooter";
-import { getRandomKey } from "../../utils/commonutils";
-import { getPostHeader } from "../../utils/fetchutils";
+import { getRandomKey } from "../../components/utils/commonutils";
+import { getPostHeader } from "../../components/utils/fetchutils";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };

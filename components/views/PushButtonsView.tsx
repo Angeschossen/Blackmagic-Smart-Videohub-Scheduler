@@ -2,11 +2,11 @@ import { CommandBarButton, CompoundButton, IIconProps, mergeStyles, MessageBarTy
 import React from "react";
 import { PushButton } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../Videohub";
-import { getPostHeader } from "../../utils/fetchutils";
-import { commandBarItemStyles, stackStyles, stackTokens } from "../../utils/styles";
+import { getPostHeader } from "../utils/fetchutils";
+import { commandBarItemStyles, stackStyles, stackTokens } from "../utils/styles";
 import { BarMessage } from "../common/Messages";
 import Router from "next/router";
-import { getRandomKey } from "../../utils/commonutils";
+import { getRandomKey } from "../utils/commonutils";
 import { threadId } from "worker_threads";
 
 const addIcon: IIconProps = { iconName: 'Add' };

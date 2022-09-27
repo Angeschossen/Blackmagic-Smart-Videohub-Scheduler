@@ -8,7 +8,7 @@ import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
 import { SelectVideohub } from '../../components/buttons/SelectVideohub';
 import { isAfter } from 'date-fns';
-import { getRandomKey } from '../../utils/commonutils';
+import { getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
 import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import useId from '@mui/utils/useId';
