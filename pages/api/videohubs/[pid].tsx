@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { RoutingRequest, Videohub } from '../../../components/Videohub';
-import * as videohubs from '../../../videohub/videohubs'
-import { sendRoutingUpdate } from '../../../videohub/videohubs';
+import * as videohubs from '../../../components/interfaces/videohub/videohubs'
+import { sendRoutingUpdate } from '../../../components/interfaces/videohub/videohubs';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];

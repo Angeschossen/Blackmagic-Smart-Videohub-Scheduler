@@ -1,6 +1,6 @@
 const next = require('next')
 const express = require('express')
-const videohubs = require('./videohub/videohubs');
+const videohubs = require('./components/interfaces/videohub/videohubs');
 
 const app = next({ dev: true })
 const handler = app.getRequestHandler()
