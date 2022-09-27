@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { Videohub } from '../../../components/Videohub';
+import { RoutingRequest, Videohub } from '../../../components/Videohub';
 import * as videohubs from '../../../videohub/videohubs'
+import { REQUEST_TIMEOUT, sendRoutingUpdate } from '../../../videohub/videohubs';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
@@ -25,9 +26,27 @@ export default async function handler(
     res: NextApiResponse
 ) {
     const { pid } = req.query;
+    console.log(pid)
     switch (pid) {
         case "get": {
             res.status(200).json(retrieveVideohubsServerSide());
+            return;
+        }
+
+        case "routing": {
+            if (req.method !== 'POST') {
+                res.status(405).json({ message: 'POST required' });
+                return;
+            }
+
+            const request = req.body as RoutingRequest;
+            const sent = sendRoutingUpdate(request, ()=>{}, ()=>{});
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    res.status(200).json({ result: sent.result });
+                }, REQUEST_TIMEOUT);
+            });
+
             return;
         }
 
