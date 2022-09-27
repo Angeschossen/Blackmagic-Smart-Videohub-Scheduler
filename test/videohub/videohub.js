@@ -8,7 +8,6 @@ const server = net.createServer(function (socket) {
 	socket.write(file.toString() + '\r\n');
 
 	if (mode != "initial") {
-		console.log("Is not")
 		setInterval(() => {
 			file = fs.readFileSync(`./${mode}.txt`, 'utf-8');
 			//socket.write(file.toString() + '\r\n');
@@ -17,8 +16,6 @@ const server = net.createServer(function (socket) {
 
 	/*
 	socket.on('data', function(data) {
-		console.log("Data IN:")
-        console.log(data.toString());
     });*/
 
 	socket.on('error', function(error){
