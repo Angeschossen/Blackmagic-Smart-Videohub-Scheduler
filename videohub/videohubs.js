@@ -190,10 +190,12 @@ class Input {
 }
 
 class InputChangeRequest {
-    constructor(output_id, input_id, callback) {
+    constructor(output_id, input_id, onSuccess, onFailure) {
         this.output_id = output_id;
         this.input_id = input_id;
-        this.callback = callback;
+        this.onSuccess = onSuccess;
+        this.onFailure = onFailure;
+        this.result = false;
     }
 
     send(videohub) {
@@ -217,14 +219,27 @@ class Output {
         this.request = undefined;
     }
 
-    sendRoutingUpdateRequest(videohub, input_id) {
+    sendRoutingUpdateRequest(videohub, input_id, onSuccess, onFailure) {
         this.request = new InputChangeRequest(this.id, input_id, () => {
             this.updateRouting(videohub, input_id);
             this.save(videohub);
-        });
+            this.request.result = true;
+            onSuccess();
+            videohub.removeRequest(this.request);
+            this.request = undefined;
+        }, onFailure);
 
-        videohub.lastRequest = this.request;
+        videohub.requestQueque.push(this.request);
         this.request.send(videohub);
+
+        setTimeout(() => {
+            if (this.request != undefined && !this.request.result) {
+                this.request.onFailure.call();
+                videohub.removeRequest(this.request);
+                this.request = undefined;
+            }
+        }, module.exports.REQUEST_TIMEOUT);
+        return this.request;
     }
 
     async save(videohub) {
@@ -255,10 +270,23 @@ class Videohub {
         this.client = undefined;
         this.connecting = false;
         this.data = data;
-        this.lastRequest = undefined;
+        this.requestQueque = [];
         this.data.connected = false;
     }
 
+    removeRequest(request) {
+        let index;
+        for (let i = 0; i < this.requestQueque.length; i++) {
+            if (this.requestQueque === request) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != undefined) {
+            this.requestQueque.splice(index, 1);
+        }
+    }
     connect(count) {
         this.info(`Attempting connection to videohub (#${count}).`);
 
@@ -328,7 +356,7 @@ class Videohub {
         this.connecting = this.connect(count++);
         this.connecting = setInterval(() => {
             this.connect(count++);
-        }, 5000);
+        }, 30000);
     }
 
     info(msg) {
@@ -376,7 +404,7 @@ class Videohub {
                 continue; // already up to date
             }
 
-            output.sendRoutingUpdateRequest(this, shortest_id);
+            output.sendRoutingUpdateRequest(this, shortest_id, () => { }, () => { });
         }
 
         this.checkEventsId = setTimeout(async () => {
@@ -423,11 +451,12 @@ class Videohub {
                 await this.updateRouting(Number(data[0]), Number(data[1]));
             }
         } else if (text.startsWith(PROTOCOL_ACKNOWLEDGED)) {
-            if (this.lastRequest == undefined) {
+            if (this.requestQueque.length == 0) {
                 throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
             }
 
-            this.lastRequest.callback.call();
+            const request = this.requestQueque.shift();
+            request.onSuccess.call();
 
         } else {
             this.warn("Unknown message.");
@@ -508,9 +537,17 @@ class Videohub {
 }
 
 module.exports = {
+    REQUEST_TIMEOUT: 5000,
     hubs: [],
     getClients: function () {
         return hubs;
+    },
+    getClient: function (id) {
+        for (const client of hubs) {
+            if (client.data.id === id) {
+                return client;
+            }
+        }
     },
     getVideohubs: function () {
         const arr = [];
@@ -540,6 +577,15 @@ module.exports = {
         });
 
         arr.forEach((e) => {
+            // turn into objects
+            for (let i = 0; i < e.outputs.length; i++) {
+                const output = e.outputs[i]
+                e.outputs[i] = new Output(output.id, output.label);
+
+                const input = e.inputs[i];
+                e.inputs[i] = new Input(input.id, input.label);
+            }
+
             hubs.push(new Videohub(e));
         });
     },
@@ -552,6 +598,22 @@ module.exports = {
             hub.reconnect();
         }
     },
-    retrieveEvents: retrieveEvents
+    retrieveEvents: retrieveEvents,
+    sendRoutingUpdate: function (request, onSuccess, onFailure) {
+        const videohubClient = module.exports.getClient(request.videohub_id);
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + request.videohub_id);
+        }
+
+        if (!videohubClient.data.connected) {
+            return false;
+        }
+
+        console.log(videohubClient)
+        const output = videohubClient.getOutput(request.output_id);
+        console.log((typeof output))
+
+        return output.sendRoutingUpdateRequest(videohubClient, request.input_id, onSuccess, onFailure);
+    }
 }
 

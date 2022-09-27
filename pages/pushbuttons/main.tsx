@@ -1,10 +1,11 @@
 import { CommandBarButton, IDropdownOption, IIconProps, IsFocusVisibleClassName, IStackStyles, Stack } from "@fluentui/react";
-import React from "react";
+import React, { Key } from "react";
 import DataTable from "../../components/DataTable";
 import { PushButton, PushbuttonAction } from "../../components/interfaces/PushButton";
 import { EditPushButtonModal } from "../../components/modals/EditPushButtonModal";
 import { Videohub } from "../../components/Videohub";
 import { VideohubFooter } from "../../components/VideohubFooter";
+import { getRandomKey } from "../../utils/commonutils";
 import { getPostHeader } from "../../utils/fetchutils";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
@@ -46,7 +47,7 @@ function getItems(pushButtons: PushButton[]): any[] {
     return cloned;
 }
 
-class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: boolean, currentEdit?: PushButton, pushButtons: PushButton[] }>{
+class PushButtonsList extends React.Component<InputProps, { key: number, isAddModalOpen: boolean, currentEdit?: PushButton, pushButtons: PushButton[] }>{
     private optionsOutput: IDropdownOption[];
     private optionsInput: IDropdownOption[];
     private mounted: boolean = false;
@@ -55,6 +56,7 @@ class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: bool
         super(props);
 
         this.state = {
+            key: getRandomKey(),
             isAddModalOpen: false,
             pushButtons: props.pushbuttons,
         }
@@ -104,7 +106,7 @@ class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: bool
     }
 
     render() {
-        const inst: PushButtonsView = this;
+        const inst: PushButtonsList = this;
         return (
             <div style={{ marginTop: '1vh' }}>
                 <Stack horizontal styles={stackStyles}>
@@ -116,11 +118,12 @@ class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: bool
 
                 </Stack>
                 <DataTable
+                    key={this.state.key}
                     controlcolumns={
                         [
                             {
                                 key: 'edit',
-                                onClick(event, item) {
+                                onClick(_event, item) {
                                     for (const button of inst.state.pushButtons) {
                                         if (button.id === item.id) {
                                             inst.setState({ isAddModalOpen: true, currentEdit: button });
@@ -168,18 +171,15 @@ class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: bool
                                 }
                             }
 
-                            this.setState({ pushButtons: arr });
+                            this.setState({ pushButtons: arr, key: this.state.key + 1, });
                         });
-                    }} 
-                    onDelete={(id: number)=>{
+                    }}
+                    onDelete={(id: number) => {
                         let arr: PushButton[] = this.state.pushButtons.slice();
                         arr = arr.filter(e => e.id != id);
-                        
+
                         console.log(arr);
-                        this.setState({pushButtons: arr}, ()=>{
-                            this.forceUpdate();
-                        });
-                        
+                        this.setState({ pushButtons: arr, key: getRandomKey() });
                     }} />}
                 <VideohubFooter videohub={this.props.videohub} />
             </div>
@@ -187,4 +187,4 @@ class PushButtonsView extends React.Component<InputProps, { isAddModalOpen: bool
     }
 }
 
-export default PushButtonsView;
+export default PushButtonsList;

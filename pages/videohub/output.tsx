@@ -79,7 +79,7 @@ const handleConfirm = async (event: ProcessedEvent, _action: EventActions, video
         start: event.start,
         end: event.end,
         day_of_week: event.start.getDay(),
-        repeat_every_week: event.repeat,
+        repeat_every_week: event.repeat.length > 0,
     };
 
     return fetch('/api/events/update', getPostHeader(e)).then(async res => {

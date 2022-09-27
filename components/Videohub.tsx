@@ -10,6 +10,12 @@ export interface Videohub extends TableItem {
     connected: boolean,
 }
 
+export interface RoutingRequest {
+    videohub_id:number,
+    output_id:number, 
+    input_id:number,
+}
+
 export interface Input extends TableItem {
     id: number,
     label: string,

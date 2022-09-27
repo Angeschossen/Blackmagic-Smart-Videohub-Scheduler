@@ -1,17 +1,42 @@
-import { Stack, CommandBarButton, IIconProps, IStackStyles, IContextualMenuItem, ICommandBarItemProps, CommandBar, Button, IContextualMenuProps, MessageBar, MessageBarType } from '@fluentui/react';
+import { Stack, CommandBarButton, IIconProps, IStackStyles, IContextualMenuItem, ICommandBarItemProps, CommandBar, Button, IContextualMenuProps, MessageBar, MessageBarType, CompoundButton, TeachingBubble, DirectionalHint, Callout, mergeStyleSets, FontWeights, ProgressIndicator } from '@fluentui/react';
 import React from 'react';
 import DayTable from '../../components/DayTable';
 import Router from 'next/router'
 import { retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Output, Videohub } from '../../components/Videohub';
+import { Output, RoutingRequest, Videohub } from '../../components/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
 import { SelectVideohub } from '../../components/buttons/SelectVideohub';
 import { isAfter } from 'date-fns';
+import { getRandomKey } from '../../utils/commonutils';
+import { PushButton } from '../../components/interfaces/PushButton';
+import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
+import useId from '@mui/utils/useId';
+import PushButtonsList from '../pushbuttons/main';
+import PushButtonsView from '../../components/views/PushButtonsView';
 
 const addIcon: IIconProps = { iconName: 'Add' };
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
+const styles = mergeStyleSets({
+  button: {
+    width: 130,
+  },
+  callout: {
+    width: 320,
+    maxWidth: '90%',
+    padding: '20px 24px',
+  },
+  title: {
+    marginBottom: 12,
+    fontWeight: FontWeights.semilight,
+  },
+  link: {
+    display: 'block',
+    marginTop: 20,
+  },
+});
+
 
 export function getPostHeader(e: any): RequestInit {
   return {
@@ -39,7 +64,7 @@ export async function getServerSideProps(context: any) {
   const hubs: Videohub[] = retrieveVideohubsServerSide();
   return {
     props: {
-      videohubs: JSON.parse(JSON.stringify(hubs))
+      videohubs: JSON.parse(JSON.stringify(hubs)),
     },
   }
 }
@@ -59,10 +84,10 @@ function getItems(videohub: Videohub): any[] {
 
 
 interface VideohubViewProps {
-  videohubs: Videohub[]
+  videohubs: Videohub[],
 }
 
-class VideohubView extends React.Component<VideohubViewProps, { videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
+class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
   private menuProps: IContextualMenuProps;
   private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
@@ -70,6 +95,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
     this.generateMenuItems = this.generateMenuItems.bind(this);
     this.state = {
+      tableKey: getRandomKey(),
       currentVideohub: props.videohubs.length > 0 ? props.videohubs[0] : undefined,
       videohubs: props.videohubs,
       menuItems: this.generateMenuItems(props.videohubs),
@@ -134,8 +160,8 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
 
       const menuItems: IContextualMenuItem[] = this.generateMenuItems(res);
 
-      this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res }, () => {
-        console.log("Loaded videohubs");
+      this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res, tableKey: getRandomKey() }, () => {
+        console.log("Loaded data.");
         setTimeout(this.retrieveData, 5000);
       });
     });
@@ -158,7 +184,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   }
 
   onSelectVideohub(hub: Videohub) {
-    this.setState({ currentVideohub: hub });
+    this.setState({ currentVideohub: hub, tableKey: getRandomKey() });
   }
 
   // Here we use a Stack to simulate a command bar.
@@ -166,7 +192,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   render() {
     const inst: VideohubView = this;
     return (
-      <div style={{ marginTop: '1vh' }}>
+      <Stack style={{ margin: '1vh' }}>
         <Stack horizontal styles={stackStyles}>
           <SelectVideohub
             videohubs={this.state.videohubs}
@@ -182,7 +208,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
           controlcolumns={[
             {
               key: "edit",
-              onClick(event, item) {
+              onClick(_event, item) {
                 if (inst.state.currentVideohub == undefined) {
                   throw Error("Videohub is undefined");
                 }
@@ -204,7 +230,10 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
           }}
         />
         <VideohubFooter videohub={this.state.currentVideohub} />
-      </div>
+        <PushButtonsView
+          videohub={this.state.currentVideohub}
+        />
+      </Stack>
     );
   }
 }

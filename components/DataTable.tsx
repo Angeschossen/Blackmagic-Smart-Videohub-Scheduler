@@ -109,7 +109,6 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
             items: items
         }, () => {
             console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
-            setTimeout(this.loadData, 5000);
         });
     }
 
