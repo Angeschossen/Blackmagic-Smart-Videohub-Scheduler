@@ -115,7 +115,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
 
   scheduleRetrieveData() {
     this.retrieveData(() => {
-      setTimeout(this.scheduleRetrieveData, 5000);
+      setTimeout(this.scheduleRetrieveData, 15000);
     });
   }
 
