@@ -1,4 +1,4 @@
-import { MessageBar, MessageBarType } from "@fluentui/react";
+import { IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
 import { render } from "react-dom"
 import { Videohub } from "./Videohub"
 
@@ -27,6 +27,8 @@ const VideohubOnline = () => (
         The videohub is reachable and can be controlled.
     </MessageBar>
 );
+
+const stackStyle: Partial<IStackStyles> = { root: { top: 0, right: 0, left: 0 } };
 
 function getStatusComponent(videohub?: Videohub) {
     if (videohub == undefined) {

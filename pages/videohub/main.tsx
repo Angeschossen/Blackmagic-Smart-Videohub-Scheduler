@@ -14,29 +14,9 @@ import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import useId from '@mui/utils/useId';
 import PushButtonsList from '../pushbuttons/main';
 import PushButtonsView from '../../components/views/PushButtonsView';
+import { VideohubPage } from '../../components/videohub/VideohubPage';
 
-const addIcon: IIconProps = { iconName: 'Add' };
-const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
-const styles = mergeStyleSets({
-  button: {
-    width: 130,
-  },
-  callout: {
-    width: 320,
-    maxWidth: '90%',
-    padding: '20px 24px',
-  },
-  title: {
-    marginBottom: 12,
-    fontWeight: FontWeights.semilight,
-  },
-  link: {
-    display: 'block',
-    marginTop: 20,
-  },
-});
-
 
 export function getPostHeader(e: any): RequestInit {
   return {
@@ -88,7 +68,6 @@ interface VideohubViewProps {
 }
 
 class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
-  private menuProps: IContextualMenuProps;
   private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
     super(props);
@@ -105,17 +84,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     this.retrieveData = this.retrieveData.bind(this);
     this.onSelectVideohub = this.onSelectVideohub.bind(this);
     this.onClickAddPushButton = this.onClickAddPushButton.bind(this);
-
-    this.menuProps = {
-      items: [
-        {
-          key: 'push',
-          text: 'Pushbutton',
-          iconProps: { iconName: 'Add' },
-          onClick: (e, item) => { this.onClickAddPushButton() }
-        }
-      ]
-    };
+    this.scheduleRetrieveData = this.scheduleRetrieveData.bind(this);
   }
 
   componentDidMount() {
@@ -124,7 +93,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     }
 
     this.mounted = true;
-    this.retrieveData();
+    this.scheduleRetrieveData();
   }
 
   generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
@@ -143,7 +112,14 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     return menuItems;
   }
 
-  retrieveData() {
+
+  scheduleRetrieveData() {
+    this.retrieveData(() => {
+      setTimeout(this.scheduleRetrieveData, 5000);
+    });
+  }
+
+  retrieveData(onSet?: () => void) {
     console.log("Retrieving videohubs.");
     retrieveVideohubs().then(res => {
       let videohub: Videohub | undefined;
@@ -159,10 +135,12 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
       }
 
       const menuItems: IContextualMenuItem[] = this.generateMenuItems(res);
-
       this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res, tableKey: getRandomKey() }, () => {
         console.log("Loaded data.");
-        setTimeout(this.retrieveData, 5000);
+
+        if (onSet != undefined) {
+          onSet();
+        }
       });
     });
   }
@@ -192,19 +170,14 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
   render() {
     const inst: VideohubView = this;
     return (
-      <Stack style={{ margin: '1vh' }}>
+      <VideohubPage videohub={this.state.currentVideohub}>
         <Stack horizontal styles={stackStyles}>
           <SelectVideohub
             videohubs={this.state.videohubs}
-            onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)}
-          />
-          <CommandBarButton
-            iconProps={addIcon}
-            text="Edit"
-            menuProps={this.menuProps}
-          />
+            onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)} />
         </Stack>
         <DataTable
+          key={this.state.tableKey}
           controlcolumns={[
             {
               key: "edit",
@@ -222,18 +195,20 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             }
           ]}
           getData={() => {
+            console.log("Get data");
             if (this.state.currentVideohub === undefined) {
               return undefined;
             }
 
             return getItems(this.state.currentVideohub as Videohub);
-          }}
-        />
-        <VideohubFooter videohub={this.state.currentVideohub} />
+          }} />
         <PushButtonsView
           videohub={this.state.currentVideohub}
-        />
-      </Stack>
+          onRoutingUpdated={() => {
+            this.retrieveData(undefined);
+          }} />
+      </VideohubPage>
+
     );
   }
 }

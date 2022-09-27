@@ -6,6 +6,7 @@ import prisma from "../../database/prisma";
 import { getVideohubFromQuery, retrieveVideohubServerSide, retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
 import { getPostHeader } from "./main";
 import { Videohub } from "../../components/Videohub";
+import { VideohubPage } from "../../components/videohub/VideohubPage";
 
 const HOUR_SART = 0, HOUR_END = 23, DAY_STEP_MINUTES = 60;
 
@@ -144,64 +145,66 @@ class OutputView extends React.Component<OutputProps, {}> {
     }
 
     render() {
-        return <div><div style={{ margin: 20, maxWidth: '100%' }}><Scheduler
-            remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
-            onConfirm={(e, a) => {
-                return handleConfirm(e, a, this.props.videohub, this.props.output);
-            }}
-            onDelete={(id) => handleDelete(id, this.props.videohub.id)}
-            view={"week"}
-            week={
-                {
-                    weekDays: [0, 1, 2, 3, 4, 5, 6],
-                    weekStartOn: 0,
-                    startHour: HOUR_SART,
-                    endHour: HOUR_END,
-                    step: DAY_STEP_MINUTES,
-                }
-            }
-            day={
-                {
-                    startHour: HOUR_SART,
-                    endHour: HOUR_END,
-                    step: DAY_STEP_MINUTES,
-                }
-            }
-            fields={[
-                {
-                    name: "title",
-                    type: "select",
-                    options: this.getInputChoices(),
-                    config: {
-                        label: "Input", required: true, errMsg: "Please select an input."
+        return <VideohubPage videohub={this.props.videohub}>
+            <Scheduler
+                remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
+                onConfirm={(e, a) => {
+                    return handleConfirm(e, a, this.props.videohub, this.props.output);
+                }}
+                onDelete={(id) => handleDelete(id, this.props.videohub.id)}
+                view={"week"}
+                week={
+                    {
+                        weekDays: [0, 1, 2, 3, 4, 5, 6],
+                        weekStartOn: 0,
+                        startHour: HOUR_SART,
+                        endHour: HOUR_END,
+                        step: DAY_STEP_MINUTES,
                     }
-                },
-                {
-                    name: "repeat",
-                    type: "select",
-                    options: [
-                        {
-                            id: 0,
-                            text: "No",
-                            value: false
-                        },
-                        {
-                            id: 1,
-                            text: "Yes",
-                            value: true,
+                }
+                day={
+                    {
+                        startHour: HOUR_SART,
+                        endHour: HOUR_END,
+                        step: DAY_STEP_MINUTES,
+                    }
+                }
+                fields={[
+                    {
+                        name: "title",
+                        type: "select",
+                        options: this.getInputChoices(),
+                        config: {
+                            label: "Input", required: true, errMsg: "Please select an input."
                         }
-                    ],
-                    config: {
-                        label: "Repeat every Week", required: false
+                    },
+                    {
+                        name: "repeat",
+                        type: "select",
+                        options: [
+                            {
+                                id: 0,
+                                text: "No",
+                                value: false
+                            },
+                            {
+                                id: 1,
+                                text: "Yes",
+                                value: true,
+                            }
+                        ],
+                        config: {
+                            label: "Repeat every Week", required: false
+                        }
                     }
-                }
-            ]}
-            selectedDate={new Date()}
-            onEventDrop={(_date, updated, old) => {
-                updated.event_id = old.event_id;
-                return handleConfirm(updated, "edit", this.props.videohub, this.props.output);
-            }}
-        /></div></div>;
+                ]}
+                selectedDate={new Date()}
+                onEventDrop={(_date, updated, old) => {
+                    updated.event_id = old.event_id;
+                    return handleConfirm(updated, "edit", this.props.videohub, this.props.output);
+                }}
+            />
+        </VideohubPage>;
     }
 }
 

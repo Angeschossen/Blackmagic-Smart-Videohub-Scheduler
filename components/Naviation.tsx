@@ -40,8 +40,7 @@ const links: INavLinkGroup[] = [
 const navigationsStyles: Partial<INavStyles> = {
     root: {
         height: '100%',
-        maxWidth: '15vh',
-        minWidth: '12vh',
+        width: '13vh',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
@@ -49,7 +48,7 @@ const navigationsStyles: Partial<INavStyles> = {
         boxSizing: 'border-box',
         border: '1px solid #eee',
         overflowY: 'auto',
-        paddingTop: '2vh',
+        paddingTop: '3vh',
     }
 }
 

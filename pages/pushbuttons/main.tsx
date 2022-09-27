@@ -4,6 +4,7 @@ import DataTable from "../../components/DataTable";
 import { PushButton, PushbuttonAction } from "../../components/interfaces/PushButton";
 import { EditPushButtonModal } from "../../components/modals/EditPushButtonModal";
 import { Videohub } from "../../components/Videohub";
+import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { VideohubFooter } from "../../components/VideohubFooter";
 import { getRandomKey } from "../../utils/commonutils";
 import { getPostHeader } from "../../utils/fetchutils";
@@ -108,7 +109,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
     render() {
         const inst: PushButtonsList = this;
         return (
-            <div style={{ marginTop: '1vh' }}>
+            <VideohubPage videohub={this.props.videohub}>
                 <Stack horizontal styles={stackStyles}>
                     <CommandBarButton
                         iconProps={addIcon}
@@ -178,11 +179,9 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
                         let arr: PushButton[] = this.state.pushButtons.slice();
                         arr = arr.filter(e => e.id != id);
 
-                        console.log(arr);
                         this.setState({ pushButtons: arr, key: getRandomKey() });
                     }} />}
-                <VideohubFooter videohub={this.props.videohub} />
-            </div>
+            </VideohubPage>
         )
     }
 }

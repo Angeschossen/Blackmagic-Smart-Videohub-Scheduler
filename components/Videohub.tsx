@@ -11,9 +11,11 @@ export interface Videohub extends TableItem {
 }
 
 export interface RoutingRequest {
-    videohub_id:number,
-    output_id:number, 
-    input_id:number,
+    videohub_id: number,
+    output_id: number,
+    input_id: number,
+    error: string|null|undefined,
+    success: boolean,
 }
 
 export interface Input extends TableItem {

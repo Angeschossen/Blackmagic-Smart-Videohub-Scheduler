@@ -5,7 +5,7 @@ import Navigation from "./Naviation";
 const StackStyles: Partial<IStackStyles> = {
   root: {
     position: 'absolute',
-    left: '220px',
+    left: '13vh',
     bottom: 0,
     right: 0,
     height: '100%',

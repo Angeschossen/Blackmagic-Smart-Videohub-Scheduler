@@ -44,16 +44,6 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     render(): React.ReactNode {
         return <Stack horizontal tokens={stackTokens}>
             <Dropdown
-                placeholder="Select an output"
-                label="Output"
-                defaultSelectedKey={this.props.routing == undefined ? undefined : this.props.routing.output_id}
-                options={this.props.optionsOutput}
-                styles={dropdownStyles}
-                onChange={(_event, _option, index) => {
-                    this.props.onSelectOutput(index);
-                }}
-            />
-            <Dropdown
                 placeholder="Select an input"
                 label="Input"
                 defaultSelectedKey={this.props.routing == undefined ? undefined : this.props.routing.input_id}
@@ -61,6 +51,16 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
                 styles={dropdownStyles}
                 onChange={(_event, _option, index) => {
                     this.props.onSelectInput(index);
+                }}
+            />
+            <Dropdown
+                placeholder="Select an output"
+                label="Output"
+                defaultSelectedKey={this.props.routing == undefined ? undefined : this.props.routing.output_id}
+                options={this.props.optionsOutput}
+                styles={dropdownStyles}
+                onChange={(_event, _option, index) => {
+                    this.props.onSelectOutput(index);
                 }}
             />
         </Stack >;
@@ -140,7 +140,6 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
     }
 
     setRouting(index?: number, output?: number, input?: number): number {
-        console.log(index);
         if (index == undefined) {
             index = this.button.actions.length;
             this.button.actions.push({
@@ -230,11 +229,9 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
                                 actions.push(action);
                             }
 
-                            console.log(actions)
                             if (actions.length != 0) {
                                 this.button.label = this.label;
                                 this.button.actions = actions;
-                                console.log(this.button);
                                 this.props.onConfirm(this.button);
                             } else {
                                 return;
