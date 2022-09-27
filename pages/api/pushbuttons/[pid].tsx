@@ -1,6 +1,6 @@
 import { PrismaPromise } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PushButton } from '../../../components/PushButton';
+import { PushButton } from '../../../components/interfaces/PushButton';
 import prisma from '../../../database/prisma';
 
 export function retrievePushButtonsServerSide(videohubId: number) {

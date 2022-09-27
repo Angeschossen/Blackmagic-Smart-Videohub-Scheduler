@@ -6,6 +6,7 @@ import { retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 import { Output, Videohub } from '../../components/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
+import { SelectVideohub } from '../../components/buttons/SelectVideohub';
 
 const addIcon: IIconProps = { iconName: 'Add' };
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
@@ -158,14 +159,11 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
   // The real CommandBar control also uses CommandBarButtons internally.
   render() {
     return (
-      <div style={{ margin: '1vh' }}>
+      <div style={{ marginTop: '1vh' }}>
         <Stack horizontal styles={stackStyles}>
-          <CommandBarButton
-            iconProps={videohubIcon}
-            text={"Select Videohub"}
-            menuProps={{
-              items: this.state.menuItems
-            }}
+          <SelectVideohub
+            videohubs={this.state.videohubs}
+            onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)}
           />
           <CommandBarButton
             iconProps={addIcon}
@@ -193,7 +191,7 @@ class VideohubView extends React.Component<VideohubViewProps, { videohubs: Video
             return getItems(this.state.currentVideohub as Videohub);
           }}
         />
-        <VideohubFooter videohub={this.state.currentVideohub}/>
+        <VideohubFooter videohub={this.state.currentVideohub} />
       </div>
     );
   }
