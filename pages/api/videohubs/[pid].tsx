@@ -81,7 +81,7 @@ export default async function handler(
         }
     }
 
-    await e.then(result => {
-        res.status(405).json(result);
+    await e.then((r: any) => {
+        res.status(200).json(r);
     });
 }

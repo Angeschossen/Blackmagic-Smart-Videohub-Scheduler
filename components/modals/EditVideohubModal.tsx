@@ -58,8 +58,8 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
                             videohub = {
                                 id: -1,
                                 ip: inst.ip,
-                                name: "Videohub",
-                                version: "1.0",
+                                name: inst.ip,
+                                version: "unkown",
                                 inputs: [],
                                 outputs: [],
                                 connected: false

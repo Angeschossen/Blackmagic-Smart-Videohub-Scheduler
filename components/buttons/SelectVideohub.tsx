@@ -53,8 +53,6 @@ export default class SelectVideohub extends React.Component<InputProps, { open?:
                         isOpen={true}
                         videohubs={this.props.videohubs}
                         onConfirm={function (videohub: Videohub): void {
-                            console.log("===================")
-                            console.log(videohub)
                             inst.props.videohubs.push(videohub);
                             inst.setState({ open: false });
                         }} />
