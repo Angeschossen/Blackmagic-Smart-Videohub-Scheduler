@@ -1,7 +1,5 @@
-import { CommandBarButton, DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
-import { PropaneSharp } from "@mui/icons-material";
+import { DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
-import { buttonProperties } from "office-ui-fabric-react";
 import React from "react";
 import { deepCopy } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
@@ -13,7 +11,6 @@ const stackTokens: IStackTokens = { childrenGap: 20 };
 const dropdownStyles: Partial<IDropdownStyles> = {
     dropdown: { width: 300 },
 };
-const addIcon: IIconProps = { iconName: 'Add' };
 
 
 interface InputProps extends IModalProps {
