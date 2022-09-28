@@ -6,7 +6,6 @@ import { retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 import { Output, RoutingRequest, Videohub } from '../../components/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
-import { SelectVideohub } from '../../components/buttons/SelectVideohub';
 import { isAfter } from 'date-fns';
 import { getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
@@ -15,6 +14,7 @@ import useId from '@mui/utils/useId';
 import PushButtonsList from '../pushbuttons/main';
 import PushButtonsView from '../../components/views/PushButtonsView';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
+import SelectVideohub from '../../components/buttons/SelectVideohub';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -67,7 +67,7 @@ interface VideohubViewProps {
   videohubs: Videohub[],
 }
 
-class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[] }> {
+class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, }> {
   private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
     super(props);
@@ -111,7 +111,6 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
 
     return menuItems;
   }
-
 
   scheduleRetrieveData() {
     this.retrieveData(() => {
@@ -208,7 +207,6 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             this.retrieveData(undefined);
           }} />
       </VideohubPage>
-
     );
   }
 }

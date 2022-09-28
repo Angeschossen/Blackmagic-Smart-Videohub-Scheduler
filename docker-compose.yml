@@ -3,7 +3,7 @@ services:
   mysql:
     container_name: mysql
     ports:
-      - '3306:3306'
+      - '3406:3306'
     image: mysql:latest
     restart: always
     environment:

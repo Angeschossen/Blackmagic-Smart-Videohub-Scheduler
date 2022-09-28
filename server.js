@@ -1,8 +1,10 @@
 const next = require('next')
 const express = require('express')
 const videohubs = require('./components/interfaces/videohub/videohubs');
+const dotenv = require('dotenv');
 
-const app = next({ dev: false })
+const config = dotenv.config();
+const app = next({ dev: config.parsed.NODE_ENV === "development" })
 const handler = app.getRequestHandler()
 
 app.prepare().then(async _res => {

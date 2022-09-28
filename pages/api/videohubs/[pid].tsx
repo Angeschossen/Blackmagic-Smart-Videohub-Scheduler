@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { RoutingRequest, Videohub } from '../../../components/Videohub';
 import * as videohubs from '../../../components/interfaces/videohub/videohubs'
 import { sendRoutingUpdate } from '../../../components/interfaces/videohub/videohubs';
+import prisma from '../../../database/prisma';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
@@ -26,6 +27,7 @@ export default async function handler(
     res: NextApiResponse
 ) {
     const { pid } = req.query;
+    let e;
     switch (pid) {
         case "get": {
             res.status(200).json(retrieveVideohubsServerSide());
@@ -42,8 +44,35 @@ export default async function handler(
             await sendRoutingUpdate(request).then((result: string | undefined) => {
                 res.status(200).json({ result: result });
             });
-        
+
             return;
+        }
+
+        case "update": {
+            if (req.method !== 'POST') {
+                res.status(405).json({ message: 'POST required' });
+                return;
+            }
+
+            const videohub: Videohub = req.body as Videohub;
+            if (videohub.id == -1) {
+                e = prisma.client.videohub.create({
+                    data: {
+                        name: videohub.name,
+                        ip: videohub.ip,
+                        version: videohub.version,
+                    }
+                });
+            } else {
+                e = prisma.client.videohub.update({
+                    where: {
+                        id: videohub.id,
+                    },
+                    data: videohub,
+                });
+            }
+
+            break;
         }
 
         default: {
@@ -51,4 +80,8 @@ export default async function handler(
             return;
         }
     }
+
+    await e.then(result => {
+        res.status(405).json(result);
+    });
 }
