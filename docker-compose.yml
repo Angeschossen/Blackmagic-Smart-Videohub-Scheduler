@@ -1,42 +1,47 @@
-version: '3'
+version: '3.7'
 services:
-  app:
-    image: nextjs-docker
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - database
+  mysql:
+    container_name: mysql
     ports:
-      - 3000:3000
-    volumes:
-      - ./:/usr/src/app
-      - /usr/src/app/node_modules
-      - /usr/src/app/.next
-  database:
+      - '3306:3306'
     image: mysql:latest
     restart: always
     environment:
       MYSQL_DATABASE: 'videohub'
-      # So you don't have to use root, but you can if you like
-      MYSQL_USER: 'video'
       # You can use whatever password you like
-      MYSQL_PASSWORD: 'password'
-      # Password for root access
-      MYSQL_RANDOM_ROOT_PASSWORD: 1
-    ports:
-      # <Port exposed> : < MySQL Port running inside container>
-      - '3406:3306'
-    expose:
-      # Opens port 3306 on the container
-      - '3306'
-      # Where our data will be persisted
+      MYSQL_ROOT_PASSWORD: prisma
     volumes:
-      - my-db:/var/lib/mysql
+      - mysql:/var/lib/mysql
+  prisma:
+    links:
+      - mysql
+    depends_on:
+      - mysql
+    container_name: prisma
+    ports:
+      - '5555:5555'
+    build:
+      context: ./prisma
+      dockerfile: Dockerfile
+    volumes:
+      - /app/prisma
+  backend:
+    links:
+      - mysql
+    depends_on:
+      - mysql
+      - prisma
+    container_name: backend
+    ports:
+      - '3000:3000'
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/prisma
+      - /app/.next
 
-# Name our volume
-volumes:
-  my-db:
-  
-volumes: # add persistent data even if container is removed.
-  my-db:
+volumes: #define our mysql volume used above
+  mysql:
