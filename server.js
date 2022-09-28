@@ -2,7 +2,7 @@ const next = require('next')
 const express = require('express')
 const videohubs = require('./components/interfaces/videohub/videohubs');
 
-const app = next({ dev: true })
+const app = next({ dev: false })
 const handler = app.getRequestHandler()
 
 app.prepare().then(async _res => {
