@@ -6,4 +6,4 @@ WORKDIR /app
 
 COPY ./ ./prisma/
 
-CMD [ "prisma", "dev"]
+CMD [ "prisma", "migrate", "dev", "--name", "init"]
