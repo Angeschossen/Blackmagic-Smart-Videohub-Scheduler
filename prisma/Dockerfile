@@ -5,6 +5,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY ./ ./prisma/
-COPY ../.env ./prisma/
+# COPY ../.env ./prisma/
 
 CMD [ "prisma", "generate"]
+CMD [ "prisma", "migrate", "dev", "--name", "init"]
