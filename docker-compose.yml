@@ -1,16 +1,42 @@
 version: '3'
 services:
   app:
-    image: docker-nextjs
+    image: nextjs-docker
     build:
+      context: .
       dockerfile: Dockerfile
+    depends_on:
+      - database
     ports:
-       - 3000:3000
-  mysql:
-    image: mysql
+      - 3000:3000
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/.next
+  database:
+    image: mysql:latest
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: videohub
+      MYSQL_DATABASE: 'videohub'
+      # So you don't have to use root, but you can if you like
+      MYSQL_USER: 'video'
+      # You can use whatever password you like
+      MYSQL_PASSWORD: 'password'
+      # Password for root access
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
     ports:
-      - "3306:3306"
+      # <Port exposed> : < MySQL Port running inside container>
+      - '3406:3306'
+    expose:
+      # Opens port 3306 on the container
+      - '3306'
+      # Where our data will be persisted
+    volumes:
+      - my-db:/var/lib/mysql
+
+# Name our volume
+volumes:
+  my-db:
   
+volumes: # add persistent data even if container is removed.
+  my-db:

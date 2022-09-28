@@ -586,6 +586,7 @@ module.exports = {
         return undefined;
     },
     loadData: async function () {
+        console.log("Loading data...");
         hubs = [];
 
         const arr = await prisma.client.videohub.findMany({
@@ -607,6 +608,8 @@ module.exports = {
 
             hubs.push(new Videohub(e));
         });
+
+        console.log("Initial data loaded.");
     },
     connect: async function () {
         for (const hub of hubs) {

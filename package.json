@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "node start",
+    "lint": "next lint",
+    "start_prod": "node server.js -p $PORT"
   },
   "dependencies": {
     "@aldabil/react-scheduler": "^2.3.1",
