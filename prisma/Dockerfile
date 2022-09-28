@@ -8,4 +8,4 @@ COPY ./ ./prisma/
 # COPY ../.env ./prisma/
 
 CMD [ "prisma", "generate"]
-CMD [ "prisma", "migrate", "dev", "--name", "init"]
+CMD [ "prisma", "migrate", "deploy"]
