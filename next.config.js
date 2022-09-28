@@ -2,9 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    outputStandalone: true,
-  }
+  output: 'standalone',
 }
 
 /*
@@ -15,7 +13,11 @@ cron.schedule('* * * * *', function () {
 });*/
 
 
-module.exports = (phase) => {
+module.exports = async (phase) => {
   console.log("Starting at phase:", phase);
+  const videohubs = require('./components/interfaces/videohub/videohubs');
+  await videohubs.loadData()
+  videohubs.connect();
+  console.log("Init done.");
   return nextConfig;
 };
