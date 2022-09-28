@@ -22,7 +22,7 @@ services:
     ports:
       - '5555:5555'
     environment:
-      DATABASE_URL: mysql://root:prisma@mysql:3306/videohub
+      DATABASE_URL: mysql://root:prisma@mysql:3304/videohub
     build:
       context: ./prisma
       dockerfile: Dockerfile
