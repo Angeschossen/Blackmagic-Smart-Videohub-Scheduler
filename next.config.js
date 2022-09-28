@@ -14,5 +14,6 @@ cron.schedule('* * * * *', function () {
 
 module.exports = (phase) => {
   console.log("Starting at phase:", phase);
+  output: 'standalone'
   return nextConfig;
 };
