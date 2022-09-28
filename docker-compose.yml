@@ -10,6 +10,7 @@ services:
       MYSQL_DATABASE: 'videohub'
       # You can use whatever password you like
       MYSQL_ROOT_PASSWORD: prisma
+      MYSQL_DATABASE: videohub
     volumes:
       - mysql:/var/lib/mysql
   prisma:
