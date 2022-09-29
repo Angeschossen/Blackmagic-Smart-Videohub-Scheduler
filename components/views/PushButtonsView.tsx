@@ -77,7 +77,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
                         />
                     </Stack>
                 </Stack>
-                <Stack style={{ minHeight: 65 }}>
+                <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
                     {this.getRequestStatus()}
                 </Stack>
                 <Stack horizontal tokens={stackTokens}>

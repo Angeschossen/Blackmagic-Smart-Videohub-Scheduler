@@ -6,6 +6,7 @@ import React from 'react';
 const navigationsStyles: Partial<INavStyles> = {
     root: {
         height: '100%',
+        maxHeight: '100vh',
         width: '13vh',
         top: 0,
         bottom: 0,

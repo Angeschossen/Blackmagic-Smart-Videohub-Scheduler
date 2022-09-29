@@ -185,7 +185,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
                 }
 
                 Router.push({
-                  pathname: './output',
+                  pathname: './events',
                   query: { videohub: inst.state.currentVideohub.id, output: item.id },
                 });
               },
