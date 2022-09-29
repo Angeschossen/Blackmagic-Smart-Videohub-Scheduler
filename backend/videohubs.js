@@ -466,7 +466,9 @@ class Videohub {
 
     async proccesLine(lines, index) {
         const text = lines[index];
-        console.log(`Looking for: ${text} ${PROTOCOL_PREAMPLE}`);
+        if(text.length == 0){
+            return 0;
+        }
 
         switch (text) {
             case PROTOCOL_PREAMPLE: {

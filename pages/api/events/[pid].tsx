@@ -30,8 +30,8 @@ export default async function handler(
             const date_check_start = new Date(date_start.getTime() + 1);
             const date_check_end = new Date(date_end.getTime() - 1);
 
-            console.log("Checking: Start: " + date_check_start)
-            console.log("Checking: End: " + date_check_end)
+            //console.log("Checking: Start: " + date_check_start)
+            //console.log("Checking: End: " + date_check_end)
 
             const event: OutputEvent = body;
             if (!await prisma.client.event.findMany({
@@ -132,8 +132,8 @@ export default async function handler(
             const date_end = new Date(body.end as string);
             const output: number = Number(body.output);
 
-            console.log("Start: " + date_start);
-            console.log("End: " + date_end);
+            //console.log("Start: " + date_start);
+            //console.log("End: " + date_end);
 
             e = await retrieveEvents(videohub_id, output, date_start, date_end, false);
             res.status(200).json(e); // since it returns and array
