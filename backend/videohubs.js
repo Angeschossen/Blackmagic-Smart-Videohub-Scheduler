@@ -4,7 +4,7 @@ const { start } = require('repl');
 const prisma = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 
-const VIDEOHUB_PORT = 9999;
+const VIDEOHUB_PORT = 9990;
 
 const REQUEST_TIMEOUT = 5000;
 const REQUEST_RECONNECT_GRACE_TIME = 2000;
