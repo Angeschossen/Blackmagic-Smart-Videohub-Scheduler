@@ -10,7 +10,7 @@ interface InputProps {
     onSelectVideohub: (videohub: Videohub) => void,
 }
 
-export default class SelectVideohub extends React.Component<InputProps, { open?: boolean, modal?:number }> {
+export default class SelectVideohub extends React.Component<InputProps, { open?: boolean, modal?: number }> {
 
     constructor(props: InputProps) {
         super(props);
@@ -54,7 +54,6 @@ export default class SelectVideohub extends React.Component<InputProps, { open?:
                         videohubs={this.props.videohubs}
                         onConfirm={function (videohub: Videohub): void {
                             inst.props.videohubs.push(videohub);
-                            inst.setState({ open: false });
                         }} />
                 }
                 <CommandBarButton

@@ -1,6 +1,7 @@
-import { IModalProps, IStackTokens, Modal, Stack } from "@fluentui/react";
+import { IModalProps, IStackTokens, MessageBarType, Modal, Stack } from "@fluentui/react";
 import React from "react";
 import { Confirmation } from "../buttons/Confirmation";
+import { BarMessage } from "../common/Messages";
 
 const stackTokens: IStackTokens = { childrenGap: 20 };
 interface InputProps extends IModalProps {
@@ -9,7 +10,7 @@ interface InputProps extends IModalProps {
     onConfirm: () => string | undefined,
 }
 
-export default class EditPushButtonModal extends React.Component<InputProps, { open?: boolean }> {
+export default class InputModal extends React.Component<InputProps, { open?: boolean, error?: string }> {
 
     private mounted: boolean = false;
 
@@ -28,27 +29,35 @@ export default class EditPushButtonModal extends React.Component<InputProps, { o
         return true;
     }
 
+    close() {
+        this.setState({ open: false, error: undefined });
+    }
+
     render(): React.ReactNode {
         return (
-            <>
-                {this.state.open &&
-                    <Modal isOpen={true}>
-                        <Stack tokens={stackTokens} styles={{ root: { margin: '1vh' } }}>
-                            {this.props.children}
-                            <Confirmation
-                                onCancel={() => {
-                                    this.setState({ open: false });
-                                    this.props.onCancel();
-                                }}
-                                onConfirm={() => {
-                                    if (this.props.onConfirm() == undefined) {
-                                        this.setState({ open: false });
-                                    }
-                                }} />
-                        </Stack>
-                    </Modal>
-                }
-            </>
+            <Modal
+                isOpen={this.state.open}
+                key={this.props.key}>
+                <Stack tokens={stackTokens} styles={{ root: { margin: '1vh' } }}>
+                    {this.props.children}
+                    {this.state.error != undefined &&
+                        <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
+                    }
+                    <Confirmation
+                        onCancel={() => {
+                            this.close();
+                            this.props.onCancel();
+                        }}
+                        onConfirm={() => {
+                            const err: string | undefined = this.props.onConfirm();
+                            if (err == undefined) {
+                                this.close();
+                            } else {
+                                this.setState({ error: err });
+                            }
+                        }} />
+                </Stack>
+            </Modal>
         );
     }
 }

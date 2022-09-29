@@ -48,7 +48,7 @@ function getItems(pushButtons: PushButton[]): any[] {
     return cloned;
 }
 
-class PushButtonsList extends React.Component<InputProps, { key: number, isAddModalOpen: boolean, currentEdit?: PushButton, pushButtons: PushButton[] }>{
+class PushButtonsList extends React.Component<InputProps, { key: number, currentEdit?: PushButton, pushButtons: PushButton[], modal?: number, isOpen?: boolean }>{
     private optionsOutput: IDropdownOption[];
     private optionsInput: IDropdownOption[];
     private mounted: boolean = false;
@@ -58,7 +58,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
 
         this.state = {
             key: getRandomKey(),
-            isAddModalOpen: false,
+            isOpen: false,
             pushButtons: props.pushbuttons,
         }
 
@@ -77,8 +77,6 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
                 text: input.label,
             });
         }
-
-        this.onClickAdd = this.onClickAdd.bind(this);
     }
 
 
@@ -89,10 +87,6 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
 
         this.mounted = true;
         //this.retrieveData();
-    }
-
-    onClickAdd() {
-        this.setState({ isAddModalOpen: true })
     }
 
     retrieveData() {
@@ -114,7 +108,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
                     <CommandBarButton
                         iconProps={addIcon}
                         text={"Add"}
-                        onClick={() => this.onClickAdd()}
+                        onClick={() => this.setState({ isOpen: true, modal: getRandomKey() })}
                     />
 
                 </Stack>
@@ -127,7 +121,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
                                 onClick(_event, item) {
                                     for (const button of inst.state.pushButtons) {
                                         if (button.id === item.id) {
-                                            inst.setState({ isAddModalOpen: true, currentEdit: button });
+                                            inst.setState({ isOpen: true, modal: getRandomKey(), currentEdit: button });
                                             break;
                                         }
                                     }
@@ -142,45 +136,47 @@ class PushButtonsList extends React.Component<InputProps, { key: number, isAddMo
                     }
                 />
 
-                {this.state.isAddModalOpen && <EditPushButtonModal
-                    isOpen={this.state.isAddModalOpen}
-                    optionsInput={this.optionsInput}
-                    optionsOutput={this.optionsOutput}
-                    videohub={this.props.videohub}
-                    buttons={this.state.pushButtons}
-                    button={this.state.currentEdit}
-                    close={() => { this.setState({ isAddModalOpen: false, currentEdit: undefined }); }}
-                    onConfirm={async (button: PushButton) => {
-                        fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
-                            const json = await res.json();
-                            const arr: PushButton[] = this.state.pushButtons.slice();
+                {this.state.isOpen &&
+                    <EditPushButtonModal
+                        key={this.state.modal}
+                        isOpen={this.state.isOpen}
+                        optionsInput={this.optionsInput}
+                        optionsOutput={this.optionsOutput}
+                        videohub={this.props.videohub}
+                        buttons={this.state.pushButtons}
+                        button={this.state.currentEdit}
+                        onConfirm={async (button: PushButton) => {
+                            fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
+                                const json = await res.json();
+                                const arr: PushButton[] = this.state.pushButtons.slice();
 
-                            if (button.id == -1) {
-                                arr.push(json);
-                            } else {
-                                let found: boolean = false;
-                                for (let i = 0; i < arr.length; i++) {
-                                    if (arr[i].id === button.id) {
-                                        arr[i] = button; // update
-                                        found = true;
-                                        break;
+                                if (button.id == -1) {
+                                    arr.push(json);
+                                } else {
+                                    let found: boolean = false;
+                                    for (let i = 0; i < arr.length; i++) {
+                                        if (arr[i].id === button.id) {
+                                            arr[i] = button; // update
+                                            found = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (!found) {
+                                        throw Error("Couldn't find matching button.");
                                     }
                                 }
 
-                                if (!found) {
-                                    throw Error("Couldn't find matching button.");
-                                }
-                            }
+                                this.setState({ pushButtons: arr, key: this.state.key + 1, });
+                            });
+                        }}
+                        onDelete={(id: number) => {
+                            let arr: PushButton[] = this.state.pushButtons.slice();
+                            arr = arr.filter(e => e.id != id);
 
-                            this.setState({ pushButtons: arr, key: this.state.key + 1, });
-                        });
-                    }}
-                    onDelete={(id: number) => {
-                        let arr: PushButton[] = this.state.pushButtons.slice();
-                        arr = arr.filter(e => e.id != id);
-
-                        this.setState({ pushButtons: arr, key: getRandomKey() });
-                    }} />}
+                            this.setState({ pushButtons: arr, key: getRandomKey() });
+                        }} />
+                }
             </VideohubPage>
         )
     }

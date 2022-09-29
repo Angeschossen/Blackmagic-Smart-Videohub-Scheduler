@@ -1,10 +1,9 @@
-import { CommandBarButton, IContextualMenuItem, IIconProps, IModalProps, Modal, TextField } from "@fluentui/react";
+import { IModalProps, TextField } from "@fluentui/react";
 import React from "react";
 import InputModal from "../modals/InputModal";
 import { deepCopy } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Videohub } from "../Videohub";
-const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
 interface InputProps extends IModalProps {
     videohubs: Videohub[],

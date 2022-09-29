@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKey, Selection, Link } from '@fluentui/react';
+import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKey, Selection, Link, Stack } from '@fluentui/react';
 import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 
 export interface TableInput {
@@ -77,7 +77,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         if (items != undefined) {
             this.shimmerColumns = buildColumns(items);
 
-            for(const col of this.props.controlcolumns){
+            for (const col of this.props.controlcolumns) {
                 this.shimmerColumns.unshift({
                     key: col.key,
                     name: '',
@@ -114,8 +114,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
 
     render() {
         return (
-            <>
-                <div>
+                <Stack>
                     <ShimmeredDetailsList
                         setKey="items"
                         items={this.state.items || []}
@@ -127,8 +126,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
                         ariaLabelForGrid="Item details"
                         listProps={shimmeredDetailsListProps}
                     />
-                </div>
-            </>
+                </Stack>
         );
     }
 };
