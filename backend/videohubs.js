@@ -4,13 +4,17 @@ const { start } = require('repl');
 const prisma = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 
-const VIDEOHUB_PORT = 9990;
+const VIDEOHUB_PORT = 9999;
 
-const REQUEST_TIMEOUT= 5000;
-const REQUEST_RECONNECT_GRACE_TIME= 2000;
+const REQUEST_TIMEOUT = 5000;
+const REQUEST_RECONNECT_GRACE_TIME = 2000;
+
+const PROTOCOL_CONFIGURATION = "CONFIGURATION:"
+const PROTOCOL_END_PRELUDE = "END PRELUDE:"
+const PROTOCOL_VIDEO_OUTPUT_LOCKS = "VIDEO OUTPUT LOCKS:"
 
 const PROTOCOL_INPUT_LABELS = "INPUT LABELS:"
-const PROTOCOL_PREAMPLE = "PROTOCOL PREAMBLE:"
+const PROTOCOL_PREAMPLE = "PROTOCOL PREAMPLE:"
 const PROTOCOL_ACKNOWLEDGED = "ACK";
 const PROTOCOL_VIDEOHUB_DEVICE = "VIDEOHUB DEVICE:"
 const PROTOCOL_OUTPUT_LABELS = "OUTPUT LABELS:"
@@ -34,19 +38,7 @@ function getConfigEntry(lines, index) {
     return line.substring(line.indexOf(":") + 1).trim();
 }
 
-function getCorrespondingLines(lines, look) {
-    let index = -1;
-    for (let i = 0; i < lines.length; i++) {
-        if (lines[i] === look) {
-            index = i;
-            break;
-        }
-    }
-
-    if (index == -1) {
-        throw SyntaxError("Entry not found in videohub response: " + look);
-    }
-
+function getCorrespondingLines(lines, index) {
     const arr = [];
     for (let i = index + 1; i < lines.length; i++) {
         const line = lines[i];
@@ -238,7 +230,7 @@ class Output {
             setTimeout(() => {
                 if (videohub.data.connected) {
                     request.send(videohub);
-                }else{
+                } else {
                     _resolve("Videohub not reachable.");
                 }
             }, REQUEST_RECONNECT_GRACE_TIME);
@@ -288,12 +280,14 @@ class Videohub {
         this.data = data;
         this.requestQueque = [];
         this.data.connected = false;
+
+        this.updateRouting = this.updateRouting.bind(this);
     }
 
     addRequest(request) {
         this.requestQueque.push(request);
     }
-    
+
     removeRequest(request) {
         let index;
         for (let i = 0; i < this.requestQueque.length; i++) {
@@ -457,29 +451,108 @@ class Videohub {
     }
 
     async handle_received(text) {
-        if (text.startsWith(PROTOCOL_PREAMPLE)) {
-            lines = getCorrespondingLines(getLines(text), PROTOCOL_PREAMPLE);
-            this.data.version = getConfigEntry(lines, 0);
-        } else if (text.startsWith(PROTOCOL_VIDEOHUB_DEVICE)) {
-            this.loadInitial(text);
-            await this.save();
-        } else if (text.startsWith(PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
-            const lines = getCorrespondingLines(getLines(text), PROTOCOL_VIDEO_OUTPUT_ROUTING);
+        const lines = getLines(text);
 
-            for (const line of lines) {
-                const data = line.split(" ");
-                await this.updateRouting(Number(data[0]), Number(data[1]));
+        let found = false;
+        try {
+            for (let i = 0; i < lines.length; i++) {
+                if (!found) {
+                    const res = await this.proccesLine(lines, i);
+                    console.log(res);
+                    if (res != 0) {
+                        i += res;
+                        found = true;
+                    }
+                } else {
+                    if (lines[i].length != 0) {
+                        continue;
+                    }
+
+                    found = false;
+                }
             }
-        } else if (text.startsWith(PROTOCOL_ACKNOWLEDGED)) {
-            if (this.requestQueque.length == 0) {
-                throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
+        } catch (ex) {
+            console.log(ex);
+        }
+    }
+
+    async proccesLine(lines, index) {
+        const text = lines[index];
+        console.log(`Looking for: ${text} ${PROTOCOL_PREAMPLE}`);
+
+        switch (text) {
+            case PROTOCOL_PREAMPLE: {
+                lines = getCorrespondingLines(lines, index);
+                console.log(lines);
+                this.data.version = getConfigEntry(lines, 0);
+                return 1;
             }
 
-            const request = this.requestQueque.shift();
-            request.onSuccess.call();
+            case PROTOCOL_INPUT_LABELS: {
+                // inputs and outputs
+                this.data.inputs = [];
+                getCorrespondingLines(lines, index).forEach(line => {
+                    const index = line.indexOf(" ");
+                    this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
+                });
 
-        } else {
-            this.warn("Unknown message.");
+                return this.data.inputs.length;
+            }
+
+            case PROTOCOL_OUTPUT_LABELS: {
+                // inputs and outputs
+                this.data.inputs = [];
+                getCorrespondingLines(lines, index).forEach(line => {
+                    const index = line.indexOf(" ");
+                    this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
+                });
+
+                return this.data.inputs.length;
+            }
+
+            case PROTOCOL_VIDEOHUB_DEVICE: {
+                //this.data.name = getConfigEntry(lines, 3);
+                await this.save();
+                return 1;
+            }
+
+            case PROTOCOL_VIDEO_OUTPUT_ROUTING: {
+                let i = 0;
+                for (const line of getCorrespondingLines(lines, index)) {
+                    const data = line.split(" ");
+                    await this.updateRouting(Number(data[0]), Number(data[1]));
+                    i++;
+                }
+
+                return i;
+            }
+
+            case PROTOCOL_ACKNOWLEDGED: {
+                if (this.requestQueque.length == 0) {
+                    throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
+                }
+
+                const request = this.requestQueque.shift();
+                request.onSuccess.call();
+                return 1;
+            }
+
+            case PROTOCOL_CONFIGURATION: {
+                return 1;
+            }
+
+            case PROTOCOL_END_PRELUDE: {
+                return 1;
+            }
+
+            case PROTOCOL_VIDEO_OUTPUT_LOCKS: {
+                return 1;
+            }
+
+            default: {
+                this.warn("Unknown message.");
+                return 0;
+            }
         }
     }
 
@@ -491,19 +564,8 @@ class Videohub {
         // name
         this.data.name = getConfigEntry(lines, 3);
 
-        // inputs and outputs
-        this.data.inputs = [];
-        getCorrespondingLines(lines, PROTOCOL_INPUT_LABELS).forEach(line => {
-            const index = line.indexOf(" ");
 
-            this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
-        });
 
-        this.data.outputs = [];
-        for (const line of getCorrespondingLines(lines, PROTOCOL_OUTPUT_LABELS)) {
-            const index = line.indexOf(" ");
-            this.data.outputs.push(new Output(Number(line.substring(0, index)), line.substring(index + 1)));
-        }
 
         // mapping
         for (const line of getCorrespondingLines(lines, PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
