@@ -3,7 +3,7 @@ import { PushButtonAction } from "@prisma/client";
 import React from "react";
 import { deepCopy } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
-import { Confirmation, ConfirmationProps } from "../buttons/Confirmation";
+import { Confirmation } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../Videohub";
 
