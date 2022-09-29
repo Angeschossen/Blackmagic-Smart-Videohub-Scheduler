@@ -46,7 +46,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
         }
 
         if (this.state.currentRequest.success) {
-            return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."}/>;
+            return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
         } else {
             if (this.state.currentRequest.error == undefined) {
                 return <ProgressIndicator key={this.state.statusKey} label="Waiting for Response" description="Please wait until the videohub acknowledged the change." />;
@@ -85,7 +85,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
                         return (
                             <CompoundButton primary key={key} secondaryText="Click to execute."
                                 onClick={async () => {
-                                    if (this.props.videohub == undefined || this.state.currentRequest != undefined) {
+                                    if (this.props.videohub == undefined || (this.state.currentRequest != undefined && !this.state.currentRequest.success)) {
                                         return;
                                     }
 
