@@ -1,4 +1,4 @@
-import { CommandBarButton, CompoundButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
+import { CommandBarButton, CompoundButton, DefaultButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
 import React from "react";
 import { PushButton } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../Videohub";
@@ -46,7 +46,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
         }
 
         if (this.state.currentRequest.success) {
-            return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
+            return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."}/>;
         } else {
             if (this.state.currentRequest.error == undefined) {
                 return <ProgressIndicator key={this.state.statusKey} label="Waiting for Response" description="Please wait until the videohub acknowledged the change." />;
@@ -59,26 +59,28 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
     render() {
         return (
             <Stack>
-                <Stack tokens={{ childrenGap: 0 }}>
+                <Stack >
                     <h1>Push Buttons</h1>
-                    <CommandBarButton
-                        styles={commandBarItemStyles}
-                        iconProps={addIcon}
-                        text="Edit"
-                        onClick={() => {
-                            if (this.props.videohub == undefined) {
-                                return;
-                            }
+                    <Stack horizontal>
+                        <DefaultButton
+                            text="Edit"
+                            onClick={() => {
+                                if (this.props.videohub == undefined) {
+                                    return;
+                                }
 
-                            Router.push({
-                                pathname: '../pushbuttons/main',
-                                query: { videohub: this.props.videohub.id },
-                            });
-                        }} />
+                                Router.push({
+                                    pathname: '../pushbuttons/main',
+                                    query: { videohub: this.props.videohub.id },
+                                });
+                            }}
+                        />
+                    </Stack>
                 </Stack>
                 <Stack style={{ minHeight: 65 }}>
                     {this.getRequestStatus()}
-                </Stack><Stack horizontal tokens={stackTokens}>
+                </Stack>
+                <Stack horizontal tokens={stackTokens}>
                     {this.state.pushbuttons.map((button, key) => {
                         return (
                             <CompoundButton primary key={key} secondaryText="Click to execute."

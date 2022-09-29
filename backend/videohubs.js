@@ -369,7 +369,11 @@ class Videohub {
         this.connecting = this.connect(count++);
         this.connecting = setInterval(() => {
             this.connect(count++);
-        }, 30000);
+        }, 300000); // try connection every 5 minutes
+    }
+
+    reconnectProccess(){
+
     }
 
     info(msg) {
