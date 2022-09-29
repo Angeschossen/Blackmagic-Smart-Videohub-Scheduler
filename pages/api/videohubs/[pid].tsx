@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { RoutingRequest, Videohub } from '../../../components/Videohub';
-import * as videohubs from '../../../components/interfaces/videohub/videohubs'
-import { sendRoutingUpdate } from '../../../components/interfaces/videohub/videohubs';
+import * as videohubs from '../../../backend/videohubs'
+import { sendRoutingUpdate } from '../../../backend/videohubs';
 import prisma from '../../../database/prisma';
 
 export function retrieveVideohubsServerSide() {

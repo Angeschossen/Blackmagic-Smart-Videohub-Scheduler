@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
 import { OutputEvent } from '../../videohub/output';
-import { retrieveEvents } from '../../../components/interfaces/videohub/videohubs'
+import { retrieveEvents } from '../../../backend/videohubs'
 
 export default async function handler(
     req: NextApiRequest,
