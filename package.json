@@ -2,6 +2,7 @@
   "name": "videohub",
   "version": "0.1.0",
   "private": true,
+  "main": "server_custom.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
