@@ -545,7 +545,7 @@ class Videohub {
             }
 
             default: {
-                this.warn("Unknown message.");
+                this.warn(`Unknown message. Start: ${text}`);
                 return 0;
             }
         }
