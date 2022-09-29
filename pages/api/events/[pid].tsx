@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prisma';
-import { OutputEvent } from '../../videohub/output';
+import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
 
 export default async function handler(
@@ -85,6 +85,7 @@ export default async function handler(
             }
 
             const id: number = body.id;
+            console.log(body);
             if (id === -1) {
                 e = prisma.client.event.create({
                     data: {
