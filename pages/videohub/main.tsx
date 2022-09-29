@@ -153,7 +153,6 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
       return;
     }
 
-    console.log("Push")
     Router.push({
       pathname: '../pushbuttons/main',
       query: { videohub: this.state.currentVideohub.id },

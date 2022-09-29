@@ -45,7 +45,6 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
             return <></>
         }
 
-        console.log(this.state.currentRequest.error)
         if (this.state.currentRequest.success) {
             return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
         } else {

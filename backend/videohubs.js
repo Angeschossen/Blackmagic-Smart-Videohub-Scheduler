@@ -170,7 +170,7 @@ class Input {
             where: {
                 videohubInput: {
                     videohub_id: videohub.data.id,
-                    id: this.id,
+                    id: this.id, // prisma requires id to start at 1
                 }
             },
             create: {
@@ -251,12 +251,13 @@ class Output {
     }
 
     async save(videohub) {
+        const vid = Number(videohub.data.id);
         const input_id = this.input_id == undefined ? null : this.input_id;
         await prisma.client.output.upsert({
             where: {
                 videohubOutput: {
-                    videohub_id: videohub.data.id,
-                    id: this.id,
+                    videohub_id: vid,
+                    id: this.id, // prisma requires id to start at 1
                 }
             },
             update: {
@@ -265,7 +266,7 @@ class Output {
             },
             create: {
                 id: this.id,
-                videohub_id: videohub.data.id,
+                videohub_id: vid,
                 input_id: input_id,
                 label: this.label,
             }
@@ -280,8 +281,6 @@ class Videohub {
         this.data = data;
         this.requestQueque = [];
         this.data.connected = false;
-
-        this.updateRouting = this.updateRouting.bind(this);
     }
 
     addRequest(request) {
@@ -444,35 +443,24 @@ class Videohub {
         return this.data.inputs[id];
     }
 
-    async updateRouting(output_id, input_id) {
-        const output = this.getOutput(output_id);
-        output.updateRouting(this, input_id);
-        await output.save(this);
-    }
-
     async handle_received(text) {
         const lines = getLines(text);
 
         let found = false;
-        try {
-            for (let i = 0; i < lines.length; i++) {
-                if (!found) {
-                    const res = await this.proccesLine(lines, i);
-                    console.log(res);
-                    if (res != 0) {
-                        i += res;
-                        found = true;
-                    }
-                } else {
-                    if (lines[i].length != 0) {
-                        continue;
-                    }
-
-                    found = false;
+        for (let i = 0; i < lines.length; i++) {
+            if (!found) {
+                const res = await this.proccesLine(lines, i);
+                if (res != 0) {
+                    i += res;
+                    found = true;
                 }
+            } else {
+                if (lines[i].length != 0) {
+                    continue;
+                }
+
+                found = false;
             }
-        } catch (ex) {
-            console.log(ex);
         }
     }
 
@@ -483,17 +471,19 @@ class Videohub {
         switch (text) {
             case PROTOCOL_PREAMPLE: {
                 lines = getCorrespondingLines(lines, index);
-                console.log(lines);
                 this.data.version = getConfigEntry(lines, 0);
+                await this.save();
                 return 1;
             }
 
             case PROTOCOL_INPUT_LABELS: {
                 // inputs and outputs
                 this.data.inputs = [];
-                getCorrespondingLines(lines, index).forEach(line => {
+                getCorrespondingLines(lines, index).forEach(async line => {
                     const index = line.indexOf(" ");
-                    this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
+                    const input = new Input(Number(line.substring(0, index)), line.substring(index + 1));
+                    this.data.inputs.push(input);
+                    await input.save(this)
                 });
 
                 return this.data.inputs.length;
@@ -501,17 +491,20 @@ class Videohub {
 
             case PROTOCOL_OUTPUT_LABELS: {
                 // inputs and outputs
-                this.data.inputs = [];
-                getCorrespondingLines(lines, index).forEach(line => {
+                this.data.outputs = [];
+                getCorrespondingLines(lines, index).forEach(async line => {
                     const index = line.indexOf(" ");
-                    this.data.inputs.push(new Input(Number(line.substring(0, index)), line.substring(index + 1)));
+                    const output = new Output(Number(line.substring(0, index)), line.substring(index + 1));
+                    this.data.outputs.push(output);
+                    await output.save(this)
                 });
 
-                return this.data.inputs.length;
+                return this.data.outputs.length;
             }
 
             case PROTOCOL_VIDEOHUB_DEVICE: {
-                //this.data.name = getConfigEntry(lines, 3);
+                const entries = getCorrespondingLines(lines, index);
+                this.data.name = getConfigEntry(entries, 2);
                 await this.save();
                 return 1;
             }
@@ -554,6 +547,12 @@ class Videohub {
                 return 0;
             }
         }
+    }
+
+    async updateRouting(output_id, input_id) {
+        const output = this.getOutput(output_id);
+        output.updateRouting(this, input_id);
+        await output.save(this);
     }
 
     loadInitial(text) {
@@ -662,7 +661,7 @@ module.exports = {
             // turn into objects
             for (let i = 0; i < e.outputs.length; i++) {
                 const output = e.outputs[i]
-                e.outputs[i] = new Output(output.id, output.label);
+                e.outputs[i] = new Output(output.id, output.label); // prisma requires id start at 1 so its off by one
 
                 const input = e.inputs[i];
                 e.inputs[i] = new Input(input.id, input.label);
