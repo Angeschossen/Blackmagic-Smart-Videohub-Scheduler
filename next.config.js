@@ -5,13 +5,6 @@ const nextConfig = {
   output: 'standalone',
 }
 
-/*
-const cron = require('node-cron');
-
-cron.schedule('* * * * *', function () {
-  console.log('Say scheduled hello')
-});*/
-
 module.exports = async (phase) => {
   console.log("Starting at phase:", phase);
   return nextConfig;
