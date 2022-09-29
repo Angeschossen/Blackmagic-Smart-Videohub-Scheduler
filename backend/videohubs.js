@@ -7,6 +7,12 @@ const dateutils = require('../components/utils/dateutils');
 const VIDEOHUB_PORT = 9990;
 
 const REQUEST_TIMEOUT = 5000;
+const CLIENT_RECONNECT_INTERVAL_LOWEST = 5000;
+const CLIENT_RECONNECT_ATTEMPTS_LOWEST = 6; // 30 seconds
+const CLIENT_RECONNECT_INTERVAL_LOW = 120000;
+const CLIENT_RECONNECT_ATTEMPTS_LOW = 11; // 10 minutes
+const CLIENT_RECONNECT_INTERVAL_NORMAL = 300000;
+
 const REQUEST_RECONNECT_GRACE_TIME = 2000;
 
 const PROTOCOL_CONFIGURATION = "CONFIGURATION:"
@@ -281,6 +287,7 @@ class Videohub {
         this.data = data;
         this.requestQueque = [];
         this.data.connected = false;
+        this.connectionAttempt = 0;
     }
 
     addRequest(request) {
@@ -300,8 +307,8 @@ class Videohub {
             this.requestQueque.splice(index, 1);
         }
     }
-    connect(count) {
-        this.info(`Attempting connection to videohub (#${count}).`);
+    connect() {
+        this.info(`Attempting connection to videohub (#${this.connectionAttempt}).`);
 
         if (this.socket != undefined) {
             throw new Error("Already connected")
@@ -315,6 +322,7 @@ class Videohub {
             this.info("Successfully connected.");
             this.client = client;
             this.data.connected = true;
+            this.connectionAttempt = 0;
             this.clearReconnect()
             //this.client.write("Hello!");
         });
@@ -326,13 +334,15 @@ class Videohub {
         })
 
         client.on("close", () => {
-            this.info("Connection closed")
-            this.reconnect()
+            this.info(`Connection closed (#${this.connectionAttempt})`);
+            this.clearReconnect();
+            this.reconnect();
         })
 
         client.on("end", () => {
-            this.info("Connection ended")
-            this.reconnect()
+            this.info(`Connection ended (#${this.connectionAttempt})`);
+            this.clearReconnect();
+            this.reconnect();
         })
 
         client.on("error", console.error)
@@ -365,15 +375,28 @@ class Videohub {
         this.data.connected = false;
         this.stopEventsCheck();
 
-        let count = 1;
-        this.connecting = this.connect(count++);
-        this.connecting = setInterval(() => {
-            this.connect(count++);
-        }, 300000); // try connection every 5 minutes
+        this.connectionAttempt++;
+        const delay = this.calculateReconnectTimeout();
+        this.info(`Attempting reconnect (#${this.connectionAttempt}) in ${delay} ms.`);
+        this.reconnectProccess(delay);
     }
 
-    reconnectProccess(){
+    calculateReconnectTimeout() {
+        if (this.connectionAttempt == 1) { // first
+            return 0;
+        } else if (this.connectionAttempt <= CLIENT_RECONNECT_ATTEMPTS_LOWEST) {
+            return CLIENT_RECONNECT_INTERVAL_LOWEST;
+        } else if (this.connectionAttempt <= CLIENT_RECONNECT_ATTEMPTS_LOW) {
+            return CLIENT_RECONNECT_INTERVAL_LOW;
+        } else {
+            return CLIENT_RECONNECT_INTERVAL_NORMAL;
+        }
+    }
 
+    reconnectProccess(timeout) {
+        this.connecting = setTimeout(() => {
+            this.connect();
+        }, timeout);
     }
 
     info(msg) {
@@ -470,7 +493,7 @@ class Videohub {
 
     async proccesLine(lines, index) {
         const text = lines[index];
-        if(text.length == 0){
+        if (text.length == 0) {
             return 0;
         }
 
