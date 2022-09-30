@@ -1,7 +1,7 @@
 import { DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
 import React from "react";
-import { deepCopy } from "../utils/commonutils";
+import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Confirmation } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
@@ -67,7 +67,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 }
 
-export class EditPushButtonModal extends React.Component<InputProps, {}> {
+export class EditPushButtonModal extends React.Component<InputProps, { label?: string, modalKey?: number, isOpen?: boolean }> {
 
     private routingComponents: RoutingComponent[] = [];
     private mounted: boolean = false;
@@ -84,6 +84,7 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
             actions: []
         } : deepCopy(props.button);
 
+        this.state = { modalKey: getRandomKey(), isOpen: this.props.isOpen };
         this.label = this.button.label;
         this.addActionComponent = this.addActionComponent.bind(this);
         this.validateButtonLabel = this.validateButtonLabel.bind(this);
@@ -102,7 +103,7 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
                 this.addActionComponent(false, action);
             }
         } else {
-            this.addActionComponent(true,undefined);
+            this.addActionComponent(true, undefined);
         }
 
         this.setState({ label: this.button.label });
@@ -179,7 +180,8 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
         const inst: EditPushButtonModal = this;
         return (
             <InputModal
-                isOpen={this.props.isOpen}
+                key={this.state.modalKey}
+                isOpen={this.state.isOpen}
                 onCancel={function (): void {
                     // just let it close
                 }} onConfirm={function (): string | undefined {
@@ -232,15 +234,16 @@ export class EditPushButtonModal extends React.Component<InputProps, {}> {
                         this.addActionComponent(false, undefined);
                         this.forceUpdate();
                     }} allowDisabledFocus />
-                    {this.button.id != -1 && <DefaultButton text="Delete" style={{ backgroundColor: '#e8453a' }} onClick={() => {
-                        fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
-                            const json = await res.json();
-                            if (json.result) {
-                                this.props.onDelete(this.button.id);
-                                this.setState({ open: false });
-                            }
-                        });
-                    }} allowDisabledFocus />}
+                    {this.button.id != -1 &&
+                        <DefaultButton text="Delete" style={{ backgroundColor: '#e8453a' }} onClick={() => {
+                            fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
+                                const json = await res.json();
+                                if (json.result) {
+                                    this.props.onDelete(this.button.id);
+                                    this.setState({ modalKey: getRandomKey(), isOpen: false });
+                                }
+                            });
+                        }} allowDisabledFocus />}
                 </Stack>
             </InputModal>
         );

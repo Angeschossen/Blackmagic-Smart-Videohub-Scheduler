@@ -59,23 +59,21 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
     render() {
         return (
             <Stack>
-                <Stack >
+                <Stack horizontalAlign="start">
                     <h1>Push Buttons</h1>
-                    <Stack horizontal>
-                        <DefaultButton
-                            text="Edit"
-                            onClick={() => {
-                                if (this.props.videohub == undefined) {
-                                    return;
-                                }
+                    <DefaultButton
+                        text="Edit"
+                        onClick={() => {
+                            if (this.props.videohub == undefined) {
+                                return;
+                            }
 
-                                Router.push({
-                                    pathname: '../pushbuttons/main',
-                                    query: { videohub: this.props.videohub.id },
-                                });
-                            }}
-                        />
-                    </Stack>
+                            Router.push({
+                                pathname: '../pushbuttons/main',
+                                query: { videohub: this.props.videohub.id },
+                            });
+                        }}
+                    />
                 </Stack>
                 <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
                     {this.getRequestStatus()}

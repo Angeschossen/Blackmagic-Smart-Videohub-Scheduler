@@ -10,6 +10,7 @@ import { getRandomKey } from "../../components/utils/commonutils";
 import { getPostHeader } from "../../components/utils/fetchutils";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
+
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 const addIcon: IIconProps = { iconName: 'Add' };
 
@@ -108,33 +109,28 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                     <CommandBarButton
                         iconProps={addIcon}
                         text={"Add"}
-                        onClick={() => this.setState({ isOpen: true, modal: getRandomKey() })}
-                    />
+                        onClick={() => this.setState({ isOpen: true, modal: getRandomKey() })} />
 
                 </Stack>
                 <DataTable
                     key={this.state.key}
-                    controlcolumns={
-                        [
-                            {
-                                key: 'edit',
-                                onClick(_event, item) {
-                                    for (const button of inst.state.pushButtons) {
-                                        if (button.id === item.id) {
-                                            inst.setState({ isOpen: true, modal: getRandomKey(), currentEdit: button });
-                                            break;
-                                        }
+                    controlcolumns={[
+                        {
+                            key: 'edit',
+                            onClick(_event, item) {
+                                for (const button of inst.state.pushButtons) {
+                                    if (button.id === item.id) {
+                                        inst.setState({ isOpen: true, modal: getRandomKey(), currentEdit: button });
+                                        break;
                                     }
-                                },
-                                text: "Edit",
+                                }
                             },
-                        ]
-                    }
+                            text: "Edit",
+                        },
+                    ]}
                     getData={() => {
                         return getItems(this.state.pushButtons);
-                    }
-                    }
-                />
+                    }} />
 
                 {this.state.isOpen &&
                     <EditPushButtonModal
@@ -175,8 +171,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                             arr = arr.filter(e => e.id != id);
 
                             this.setState({ pushButtons: arr, key: getRandomKey() });
-                        }} />
-                }
+                        }} />}
             </VideohubPage>
         )
     }
