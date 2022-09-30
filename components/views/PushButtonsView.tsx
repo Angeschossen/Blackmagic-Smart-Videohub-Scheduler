@@ -50,7 +50,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
         } else {
             if (this.state.currentRequest.error == undefined) {
                 const request: RoutingRequest = this.state.currentRequest;
-                return <ProgressIndicator key={this.state.statusKey} label={`${this.props.videohub.inputs[this.state.currentRequest.input_id]} to ${this.props.videohub.outputs[request.output_id]}`} description="Please wait until the videohub acknowledged the change." />;
+                return <ProgressIndicator key={this.state.statusKey} label={`${this.props.videohub.inputs[this.state.currentRequest.input_id].label} to ${this.props.videohub.outputs[request.output_id].label}`} description="Please wait until the videohub acknowledged the change." />;
             } else {
                 return <BarMessage key={this.state.statusKey} type={MessageBarType.error} text={this.state.currentRequest.error} />;
             }

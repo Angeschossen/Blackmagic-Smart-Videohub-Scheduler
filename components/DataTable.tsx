@@ -82,7 +82,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
                     key: col.key,
                     name: '',
                     minWidth: 0,
-                    maxWidth: 1
+                    maxWidth: 1,
                 });
             }
 
@@ -92,7 +92,6 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         let found: boolean = false;
         for (; index < this.shimmerColumns.length; index++) {
             const col: IColumn = this.shimmerColumns[index];
-            console.log(col.key)
             if (col.key === "id") {
                 found = true;
                 index = index;
@@ -107,8 +106,6 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         } else {
             this.shimmerColumns = buildColumns([{ Loading: '' }]);
         }
-
-        console.log(this.shimmerColumns)
 
         // refreshes view
         this.setState({

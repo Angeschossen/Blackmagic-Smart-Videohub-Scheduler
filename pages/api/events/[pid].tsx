@@ -85,7 +85,6 @@ export default async function handler(
             }
 
             const id: number = body.id;
-            console.log(body);
             if (id === -1) {
                 e = prisma.client.event.create({
                     data: {
