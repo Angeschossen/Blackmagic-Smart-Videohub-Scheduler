@@ -582,9 +582,12 @@ class Videohub {
             }
 
             case PROTOCOL_VIDEOHUB_DEVICE: {
-                const entries = getCorrespondingLines(lines, index);
-                this.data.name = getConfigEntry(entries, 2);
-                await this.save();
+                if (this.data.name === this.data.ip) {
+                    const entries = getCorrespondingLines(lines, index);
+                    this.data.name = getConfigEntry(entries, 2);
+                    await this.save();
+                }
+                
                 return 1;
             }
 

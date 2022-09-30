@@ -41,7 +41,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
     }
 
     getRequestStatus() {
-        if (this.state.currentRequest == undefined) {
+        if (this.state.currentRequest == undefined || this.props.videohub == undefined) {
             return <></>
         }
 
@@ -49,7 +49,8 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
             return <BarMessage key={this.state.statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
         } else {
             if (this.state.currentRequest.error == undefined) {
-                return <ProgressIndicator key={this.state.statusKey} label="Waiting for Response" description="Please wait until the videohub acknowledged the change." />;
+                const request: RoutingRequest = this.state.currentRequest;
+                return <ProgressIndicator key={this.state.statusKey} label={`${this.props.videohub.inputs[this.state.currentRequest.input_id]} to ${this.props.videohub.outputs[request.output_id]}`} description="Please wait until the videohub acknowledged the change." />;
             } else {
                 return <BarMessage key={this.state.statusKey} type={MessageBarType.error} text={this.state.currentRequest.error} />;
             }

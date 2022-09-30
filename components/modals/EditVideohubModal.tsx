@@ -1,9 +1,11 @@
-import { IModalProps, TextField } from "@fluentui/react";
+import { IModalProps, IStackTokens, Stack, TextField } from "@fluentui/react";
 import React from "react";
 import InputModal from "../modals/InputModal";
 import { deepCopy } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Videohub } from "../Videohub";
+
+const stackTokens: IStackTokens = { childrenGap: 20 };
 
 interface InputProps extends IModalProps {
     videohubs: Videohub[],
@@ -13,6 +15,7 @@ interface InputProps extends IModalProps {
 
 export default class EditVideohubModal extends React.Component<InputProps, { edit?: Videohub, modalId?: number }> {
     private ip?: string;
+    private name?: string;
 
     constructor(props: InputProps) {
         super(props);
@@ -20,7 +23,7 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
         this.state = { edit: props.edit != undefined ? deepCopy(props.edit) as Videohub : undefined }
     }
 
-    validateButtonLabel(input?: string): string | undefined {
+    validateIPAddress(input?: string): string | undefined {
         if (input == undefined) {
             return "You must provide an ip address.";
         }
@@ -29,6 +32,20 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
         for (const b of this.props.videohubs) {
             if (b.ip.toLowerCase() === input && b != this.state.edit) {
                 return "A videohub with this ip address already exists.";
+            }
+        }
+
+        return undefined;
+    }
+
+
+    validateName(input?: string): string | undefined {
+        if (input != undefined) {
+            input = input.toLowerCase();
+            for (const b of this.props.videohubs) {
+                if (b.name.toLowerCase() === input && b != this.state.edit) {
+                    return "A videohub with this name already exists.";
+                }
             }
         }
 
@@ -44,7 +61,12 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
                     // nothing, just cancel
                 }}
                 onConfirm={function (): string | undefined {
-                    const err = inst.validateButtonLabel(inst.ip);
+                    let err = inst.validateIPAddress(inst.ip);
+                    if (err != undefined) {
+                        return err;
+                    }
+
+                    err = inst.validateName(inst.name);
                     if (err != undefined) {
                         return err;
                     }
@@ -57,7 +79,7 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
                             videohub = {
                                 id: -1,
                                 ip: inst.ip,
-                                name: inst.ip,
+                                name: inst.name == undefined ? inst.ip : inst.name,
                                 version: "unkown",
                                 inputs: [],
                                 outputs: [],
@@ -81,7 +103,19 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
                     validateOnLoad={false}
                     validateOnFocusOut={true}
                     onGetErrorMessage={(value: string) => {
-                        return this.validateButtonLabel(value);
+                        return this.validateIPAddress(value);
+                    }}
+                />
+                <TextField label="Name"
+                    placeholder="Get from device"
+                    onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
+                        this.ip = val;
+                    }}
+                    defaultValue={this.state.edit == undefined ? undefined : this.state.edit.name}
+                    validateOnLoad={false}
+                    validateOnFocusOut={true}
+                    onGetErrorMessage={(value: string) => {
+                        return this.validateName(value);
                     }}
                 />
             </InputModal>

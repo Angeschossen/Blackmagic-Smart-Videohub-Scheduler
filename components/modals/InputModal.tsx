@@ -1,4 +1,5 @@
 import { IModalProps, IStackTokens, MessageBarType, Modal, Stack } from "@fluentui/react";
+import { minHeight } from "@mui/system";
 import React from "react";
 import { Confirmation } from "../buttons/Confirmation";
 import { BarMessage } from "../common/Messages";
@@ -39,8 +40,10 @@ export default class InputModal extends React.Component<InputProps, { open?: boo
                 <Modal
                     isOpen={this.state.open}
                     key={this.props.key}>
-                    <Stack tokens={stackTokens} styles={{ root: { padding: '1vh' } }}>
-                        {this.props.children}
+                    <Stack>
+                        <Stack tokens={stackTokens} styles={{ root: { padding: '2vh' } }}>
+                            {this.props.children}
+                        </Stack>
                         {this.state.error != undefined &&
                             <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
                         }

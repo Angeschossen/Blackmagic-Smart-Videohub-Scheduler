@@ -67,7 +67,7 @@ interface VideohubViewProps {
   videohubs: Videohub[],
 }
 
-class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, }> {
+class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, pushbuttonViewKey?: number }> {
   private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
     super(props);
@@ -75,6 +75,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     this.generateMenuItems = this.generateMenuItems.bind(this);
     this.state = {
       tableKey: getRandomKey(),
+      pushbuttonViewKey: getRandomKey(),
       currentVideohub: props.videohubs.length > 0 ? props.videohubs[0] : undefined,
       videohubs: props.videohubs,
       menuItems: this.generateMenuItems(props.videohubs),
@@ -160,7 +161,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
   }
 
   onSelectVideohub(hub: Videohub) {
-    this.setState({ currentVideohub: hub, tableKey: getRandomKey() });
+    this.setState({ currentVideohub: hub, tableKey: getRandomKey(), pushbuttonViewKey: getRandomKey() });
   }
 
   // Here we use a Stack to simulate a command bar.
@@ -174,34 +175,35 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             videohubs={this.state.videohubs}
             onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)} />
         </Stack>
-          <DataTable
-            key={this.state.tableKey}
-            controlcolumns={[
-              {
-                key: "edit",
-                onClick(_event, item) {
-                  if (inst.state.currentVideohub == undefined) {
-                    throw Error("Videohub is undefined");
-                  }
+        <DataTable
+          key={this.state.tableKey}
+          controlcolumns={[
+            {
+              key: "edit",
+              onClick(_event, item) {
+                if (inst.state.currentVideohub == undefined) {
+                  throw Error("Videohub is undefined");
+                }
 
-                  Router.push({
-                    pathname: './events',
-                    query: { videohub: inst.state.currentVideohub.id, output: item.id },
-                  });
-                },
-                text: "Edit"
-              }
-            ]}
-            getData={() => {
-              console.log("Get data");
-              if (this.state.currentVideohub === undefined) {
-                return undefined;
-              }
+                Router.push({
+                  pathname: './events',
+                  query: { videohub: inst.state.currentVideohub.id, output: item.id },
+                });
+              },
+              text: "Schedule"
+            }
+          ]}
+          getData={() => {
+            console.log("Get data");
+            if (this.state.currentVideohub === undefined) {
+              return undefined;
+            }
 
-              return getItems(this.state.currentVideohub as Videohub);
-            }} />
-        <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh', paddingRight: '2vh' }}>
+            return getItems(this.state.currentVideohub as Videohub);
+          }} />
+        <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh' }}>
           <PushButtonsView
+            key={this.state.pushbuttonViewKey}
             videohub={this.state.currentVideohub}
             onRoutingUpdated={() => {
               this.retrieveData(undefined);

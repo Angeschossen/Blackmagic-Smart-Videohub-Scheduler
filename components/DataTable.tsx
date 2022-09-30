@@ -85,17 +85,17 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
                     maxWidth: 1
                 });
             }
-        } else {
-            this.shimmerColumns = buildColumns([{ Loading: '' }]);
-        }
 
-
+            
         // remove internal id field
         let index: number = 0;
         let found: boolean = false;
         for (; index < this.shimmerColumns.length; index++) {
-            if (this.shimmerColumns[index].key == "id") {
+            const col: IColumn = this.shimmerColumns[index];
+            console.log(col.key)
+            if (col.key === "id") {
                 found = true;
+                index = index;
                 break;
             }
         }
@@ -103,6 +103,12 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         if (found) {
             this.shimmerColumns.splice(index, 1);
         }
+
+        } else {
+            this.shimmerColumns = buildColumns([{ Loading: '' }]);
+        }
+
+        console.log(this.shimmerColumns)
 
         // refreshes view
         this.setState({
@@ -114,7 +120,7 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
 
     render() {
         return (
-            <Stack style={{ paddingRight: '2vh' }}>
+            <Stack>
                 <ShimmeredDetailsList
                     setKey="items"
                     items={this.state.items || []}

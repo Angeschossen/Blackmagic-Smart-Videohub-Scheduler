@@ -40,7 +40,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 
     render(): React.ReactNode {
-        return <Stack horizontal tokens={stackTokens}>
+        return <Stack horizontal wrap tokens={stackTokens}>
             <Dropdown
                 required={this.props.required}
                 placeholder="Select an input"
@@ -211,7 +211,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
 
                     return "Please specify at leat one complete routing with an input and output.";
                 }}>
-                <Stack tokens={stackTokens} styles={{ root: { margin: '1vh' } }}>
+                <Stack tokens={stackTokens}>
                     <TextField label="Name" required
                         onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
                             this.label = val;

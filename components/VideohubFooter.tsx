@@ -21,6 +21,7 @@ const VideohubOffline = (p: MessageBarProps) => (
 
 const VideohubOnline = () => (
     <MessageBar
+
         messageBarType={MessageBarType.success}
         isMultiline={false}
     >
@@ -28,7 +29,6 @@ const VideohubOnline = () => (
     </MessageBar>
 );
 
-const stackStyle: Partial<IStackStyles> = { root: { top: 0, right: 0, left: 0 } };
 
 function getStatusComponent(videohub?: Videohub) {
     if (videohub == undefined) {
@@ -43,5 +43,9 @@ function getStatusComponent(videohub?: Videohub) {
 }
 
 export const VideohubFooter = (p: InputProps) => {
-    return getStatusComponent(p.videohub);
+    return (
+        <Stack>
+            {getStatusComponent(p.videohub)}
+        </Stack>
+    )
 }

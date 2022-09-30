@@ -126,6 +126,7 @@ class OutputView extends React.Component<OutputProps, {}> {
     render() {
         return <VideohubPage videohub={this.props.videohub}>
             <Stack>
+                <h1>{this.props.videohub.outputs[this.props.output].label}</h1>
                 <Scheduler
                     remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
                     onConfirm={(e, a) => {
