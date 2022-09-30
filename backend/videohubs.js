@@ -5,6 +5,7 @@ const prisma = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 
 const VIDEOHUB_PORT = 9990;
+const CONNECTION_HEALT_CHECK_INTERVAL = 60000;
 
 const REQUEST_TIMEOUT = 5000;
 const CLIENT_RECONNECT_INTERVAL_LOWEST = 5000;
@@ -57,6 +58,28 @@ function getCorrespondingLines(lines, index) {
 
     return arr;
 }
+
+function checkConnection(host, port, timeout) {
+    return new Promise(function (resolve, reject) {
+        timeout = timeout || 10000;     // default of 10 seconds
+        var timer = setTimeout(function () {
+            reject("timeout");
+            socket.end();
+        }, timeout);
+
+        const socket = net.createConnection(port, host, function () {
+            clearTimeout(timer);
+            resolve();
+            socket.end();
+        });
+
+        socket.on('error', function (err) {
+            clearTimeout(timer);
+            reject(err);
+        });
+    });
+}
+
 
 async function retrieveEvents(videohub_id, output_id, date_start, date_end, inclusive) {
     const filter_base = output_id == undefined ?
@@ -288,10 +311,31 @@ class Videohub {
         this.requestQueque = [];
         this.data.connected = false;
         this.connectionAttempt = 0;
+        this.checkConnectionHealthId = undefined;
     }
 
     addRequest(request) {
         this.requestQueque.push(request);
+    }
+
+    checkConnectionHealth() {
+        this.info("Checking connection health.")
+        checkConnection(this.data.ip, VIDEOHUB_PORT, 5000).then(function () {
+            this.checkConnectionHealthId = setTimeout(() => {
+                this.checkConnectionHealth();
+            }, CONNECTION_HEALT_CHECK_INTERVAL);
+        }, function (err) {
+            this.info("Videohub detected as not reachable.");
+            console.error(err);
+
+            clearTimeout(this.checkConnectionHealthId); // stop, since disconnected anyway
+            this.onClose();
+        });
+    }
+
+    scheduleCheckConnectionHealth() {
+        clearTimeout(this.checkConnectionHealthId);
+        this.checkConnectionHealth();
     }
 
     removeRequest(request) {
@@ -307,6 +351,12 @@ class Videohub {
             this.requestQueque.splice(index, 1);
         }
     }
+
+    onClose() {
+        this.clearReconnect();
+        this.reconnect();
+    }
+
     connect() {
         this.info(`Attempting connection to videohub (#${this.connectionAttempt}).`);
 
@@ -323,8 +373,8 @@ class Videohub {
             this.client = client;
             this.data.connected = true;
             this.connectionAttempt = 0;
-            this.clearReconnect()
-            //this.client.write("Hello!");
+            this.clearReconnect();
+            this.scheduleCheckConnectionHealth();
         });
 
         client.on("data", async data => {
@@ -335,14 +385,12 @@ class Videohub {
 
         client.on("close", () => {
             this.info(`Connection closed (#${this.connectionAttempt})`);
-            this.clearReconnect();
-            this.reconnect();
+            this.onClose()
         })
 
         client.on("end", () => {
             this.info(`Connection ended (#${this.connectionAttempt})`);
-            this.clearReconnect();
-            this.reconnect();
+            this.onClose()
         })
 
         client.on("error", console.error)
