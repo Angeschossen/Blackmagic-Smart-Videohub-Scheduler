@@ -382,7 +382,7 @@ class Videohub {
         client.on("data", async data => {
             data = data.toString();
             this.info("Received:\n" + data)
-            this.handle_received(data);
+            await this.handle_received(data);
         })
 
         client.on("close", () => {
