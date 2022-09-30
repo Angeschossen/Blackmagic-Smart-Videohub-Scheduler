@@ -114,19 +114,19 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
 
     render() {
         return (
-                <Stack>
-                    <ShimmeredDetailsList
-                        setKey="items"
-                        items={this.state.items || []}
-                        columns={this.shimmerColumns}
-                        selectionMode={SelectionMode.none}
-                        onRenderItemColumn={this.onRenderItemColumn}
-                        enableShimmer={!this.state.items}
-                        ariaLabelForShimmer="Content is being fetched"
-                        ariaLabelForGrid="Item details"
-                        listProps={shimmeredDetailsListProps}
-                    />
-                </Stack>
+            <Stack style={{ paddingRight: '2vh' }}>
+                <ShimmeredDetailsList
+                    setKey="items"
+                    items={this.state.items || []}
+                    columns={this.shimmerColumns}
+                    selectionMode={SelectionMode.none}
+                    onRenderItemColumn={this.onRenderItemColumn}
+                    enableShimmer={!this.state.items}
+                    ariaLabelForShimmer="Content is being fetched"
+                    ariaLabelForGrid="Item details"
+                    listProps={shimmeredDetailsListProps}
+                />
+            </Stack>
         );
     }
 };
