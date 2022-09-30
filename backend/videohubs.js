@@ -62,7 +62,7 @@ function getCorrespondingLines(lines, index) {
 function checkConnection(host, port, timeout) {
     return new Promise(function (resolve, reject) {
         timeout = timeout || 10000;     // default of 10 seconds
-        var timer = setTimeout(function () {
+        const timer = setTimeout(function () {
             reject("timeout");
             socket.end();
         }, timeout);
@@ -319,17 +319,18 @@ class Videohub {
     }
 
     checkConnectionHealth() {
-        this.info("Checking connection health.")
+        this.info("Checking connection health.");
+        
+        const hub = this;
         checkConnection(this.data.ip, VIDEOHUB_PORT, 5000).then(function () {
-            this.checkConnectionHealthId = setTimeout(() => {
-                this.checkConnectionHealth();
+            hub.info("Connection is healthy.");
+            hub.checkConnectionHealthId = setTimeout(() => {
+                hub.checkConnectionHealth();
             }, CONNECTION_HEALT_CHECK_INTERVAL);
         }, function (err) {
-            this.info("Videohub detected as not reachable.");
+            hub.info("Videohub detected as not reachable.");
             console.error(err);
-
-            clearTimeout(this.checkConnectionHealthId); // stop, since disconnected anyway
-            this.onClose();
+            hub.onClose();
         });
     }
 
@@ -353,6 +354,7 @@ class Videohub {
     }
 
     onClose() {
+        this.clearTimeout(this.checkConnectionHealthId);
         this.clearReconnect();
         this.reconnect();
     }
