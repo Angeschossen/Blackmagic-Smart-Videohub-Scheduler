@@ -5,16 +5,16 @@ import React from 'react';
 // icons: https://www.flicon.io/
 const navigationsStyles: Partial<INavStyles> = {
     root: {
-        height: '100%',
-        maxHeight: '100vh',
+        //height: '100%',
+        //maxHeight: '100vh',
         width: '13vh',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
-        position: 'absolute',
+        position: 'fixed',
         boxSizing: 'border-box',
         border: '1px solid #eee',
-        overflowY: 'auto',
+        //overflowY: 'auto',
         //paddingTop: '3vh',
     }
 }

@@ -174,37 +174,39 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             videohubs={this.state.videohubs}
             onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)} />
         </Stack>
-        <DataTable
-          key={this.state.tableKey}
-          controlcolumns={[
-            {
-              key: "edit",
-              onClick(_event, item) {
-                if (inst.state.currentVideohub == undefined) {
-                  throw Error("Videohub is undefined");
-                }
+          <DataTable
+            key={this.state.tableKey}
+            controlcolumns={[
+              {
+                key: "edit",
+                onClick(_event, item) {
+                  if (inst.state.currentVideohub == undefined) {
+                    throw Error("Videohub is undefined");
+                  }
 
-                Router.push({
-                  pathname: './events',
-                  query: { videohub: inst.state.currentVideohub.id, output: item.id },
-                });
-              },
-              text: "Edit"
-            }
-          ]}
-          getData={() => {
-            console.log("Get data");
-            if (this.state.currentVideohub === undefined) {
-              return undefined;
-            }
+                  Router.push({
+                    pathname: './events',
+                    query: { videohub: inst.state.currentVideohub.id, output: item.id },
+                  });
+                },
+                text: "Edit"
+              }
+            ]}
+            getData={() => {
+              console.log("Get data");
+              if (this.state.currentVideohub === undefined) {
+                return undefined;
+              }
 
-            return getItems(this.state.currentVideohub as Videohub);
-          }} />
-        <PushButtonsView
-          videohub={this.state.currentVideohub}
-          onRoutingUpdated={() => {
-            this.retrieveData(undefined);
-          }} />
+              return getItems(this.state.currentVideohub as Videohub);
+            }} />
+        <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh', paddingRight: '2vh' }}>
+          <PushButtonsView
+            videohub={this.state.currentVideohub}
+            onRoutingUpdated={() => {
+              this.retrieveData(undefined);
+            }} />
+        </Stack>
       </VideohubPage>
     );
   }

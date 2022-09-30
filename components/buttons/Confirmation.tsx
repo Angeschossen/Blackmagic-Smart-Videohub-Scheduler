@@ -8,7 +8,7 @@ export interface ConfirmationProps {
 
 export const Confirmation = (p: ConfirmationProps) => {
     return (
-        <Stack horizontal styles={{ root: { flexWrap: 'wrap', justifyContent: 'space-between' } }}>
+        <Stack verticalAlign='end' horizontal styles={{ root: { justifyContent: 'space-between' } }}>
             <IconButton
                 key='cancel'
                 iconProps={{ iconName: 'Cancel' }}

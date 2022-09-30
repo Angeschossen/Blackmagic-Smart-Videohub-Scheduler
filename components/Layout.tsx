@@ -7,7 +7,7 @@ const StackStyles: Partial<IStackStyles> = {
     position: 'absolute',
     left: '13vh',
     bottom: 0,
-    right: '0',
+    right: 0,
     height: '100%',
     maxHeight: '100%'
   }

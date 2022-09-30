@@ -35,29 +35,31 @@ export default class InputModal extends React.Component<InputProps, { open?: boo
 
     render(): React.ReactNode {
         return (
-            <Modal
-                isOpen={this.state.open}
-                key={this.props.key}>
-                <Stack tokens={stackTokens} styles={{ root: { margin: '1vh' } }}>
-                    {this.props.children}
-                    {this.state.error != undefined &&
-                        <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
-                    }
-                    <Confirmation
-                        onCancel={() => {
-                            this.close();
-                            this.props.onCancel();
-                        }}
-                        onConfirm={() => {
-                            const err: string | undefined = this.props.onConfirm();
-                            if (err == undefined) {
+            <Stack>
+                <Modal
+                    isOpen={this.state.open}
+                    key={this.props.key}>
+                    <Stack tokens={stackTokens} styles={{ root: { padding: '1vh' } }}>
+                        {this.props.children}
+                        {this.state.error != undefined &&
+                            <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
+                        }
+                        <Confirmation
+                            onCancel={() => {
                                 this.close();
-                            } else {
-                                this.setState({ error: err });
-                            }
-                        }} />
-                </Stack>
-            </Modal>
+                                this.props.onCancel();
+                            }}
+                            onConfirm={() => {
+                                const err: string | undefined = this.props.onConfirm();
+                                if (err == undefined) {
+                                    this.close();
+                                } else {
+                                    this.setState({ error: err });
+                                }
+                            }} />
+                    </Stack>
+                </Modal>
+            </Stack>
         );
     }
 }
