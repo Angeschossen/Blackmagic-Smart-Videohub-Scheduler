@@ -47,6 +47,7 @@ export default async function handler(
                     data: {
                         videohub_id: videohub_id,
                         label: pushButton.label,
+                        color: pushButton.color,
                     }
                 }).then(async r => {
                     const result: PushButton = r as PushButton;

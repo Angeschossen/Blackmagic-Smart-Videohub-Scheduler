@@ -171,8 +171,8 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
     }
 
     validateButtonLabel(input: string): string | undefined {
-        if (input.length > 32) {
-            return "Name can't be longer than 32 characters.";
+        if (input.length > 42) {
+            return "Name can't be longer than 42 characters.";
         }
 
         input = input.toLowerCase();
@@ -198,8 +198,9 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                         return "Please insert a name.";
                     }
 
-                    if (inst.validateButtonLabel(inst.label) != undefined) {
-                        return "A button with this name already exists.";
+                    const err = inst.validateButtonLabel(inst.label);
+                    if (err != undefined) {
+                        return err;
                     }
 
                     const actions: PushbuttonAction[] = [];

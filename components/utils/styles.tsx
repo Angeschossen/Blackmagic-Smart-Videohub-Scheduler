@@ -1,6 +1,6 @@
 import { IStackStyles, IStackTokens } from "@fluentui/react";
 
-export const desktopMinWidth = 500;
+export const desktopMinWidth = 700;
 export const stackTokens: IStackTokens = { childrenGap: 20 };
 export const stackStyles: Partial<IStackStyles> = {
     root: {
