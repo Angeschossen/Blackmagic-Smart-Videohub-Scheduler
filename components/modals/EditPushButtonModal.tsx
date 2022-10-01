@@ -170,6 +170,10 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
     }
 
     validateButtonLabel(input: string): string | undefined {
+        if (input.length > 32) {
+            return "Name can't be longer than 32 characters.";
+        }
+
         input = input.toLowerCase();
         for (const b of this.props.buttons) {
             if (b.label.toLowerCase() === input && b.id != this.button.id) {
