@@ -3,7 +3,7 @@ import React from "react";
 import InputModal from "../modals/InputModal";
 import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
-import { Videohub } from "../Videohub";
+import { Videohub } from "../interfaces/Videohub";
 
 const stackTokens: IStackTokens = { childrenGap: 20 };
 

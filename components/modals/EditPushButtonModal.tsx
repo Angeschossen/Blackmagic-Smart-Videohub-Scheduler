@@ -5,7 +5,7 @@ import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Confirmation } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
-import { Videohub } from "../Videohub";
+import { Videohub } from "../interfaces/Videohub";
 import InputModal from "./InputModal";
 import { PickColor } from "../input/ColorPicker";
 import { threadId } from "worker_threads";
@@ -235,12 +235,14 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                         }}
                     />
                     <Label>Color</Label>
+                    <Stack horizontalAlign="center">
                     <PickColor
                         color={this.color}
                         onChange={(color) => {
                             this.color = color;
                         }}
                     />
+                    </Stack>
                     <Stack>
                         {this.routingComponents.map((component, index) => {
                             return <React.Fragment key={index}>

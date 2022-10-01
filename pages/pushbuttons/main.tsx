@@ -3,13 +3,14 @@ import React, { Key } from "react";
 import DataTable from "../../components/DataTable";
 import { PushButton, PushbuttonAction } from "../../components/interfaces/PushButton";
 import { EditPushButtonModal } from "../../components/modals/EditPushButtonModal";
-import { Videohub } from "../../components/Videohub";
+import { Videohub } from "../../components/interfaces/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { VideohubFooter } from "../../components/VideohubFooter";
 import { getRandomKey } from "../../components/utils/commonutils";
 import { getPostHeader } from "../../components/utils/fetchutils";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
+import { vi } from "date-fns/locale";
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 const addIcon: IIconProps = { iconName: 'Add' };
@@ -27,12 +28,18 @@ export async function getServerSideProps(context: any) {
     )*/
 
     const videohub: Videohub = getVideohubFromQuery(context.query);
-    const buttons: PushButton[] = await retrievePushButtonsServerSide(videohub.id);
-    return {
-        props: {
-            videohub: JSON.parse(JSON.stringify(videohub)),
-            pushbuttons: JSON.parse(JSON.stringify(buttons))
-        },
+    if (videohub == undefined) {
+        return {
+            notFound: true,
+        }
+    } else {
+        const buttons: PushButton[] = await retrievePushButtonsServerSide(videohub.id);
+        return {
+            props: {
+                videohub: JSON.parse(JSON.stringify(videohub)),
+                pushbuttons: JSON.parse(JSON.stringify(buttons))
+            },
+        }
     }
 }
 

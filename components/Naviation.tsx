@@ -48,7 +48,7 @@ const links: INavLinkGroup[] = [
                 }
             },
             {
-                name: 'Videohub',
+                name: 'Videohubs',
                 url: '/videohub/main',
                 key: 'videohub',
                 iconProps: {

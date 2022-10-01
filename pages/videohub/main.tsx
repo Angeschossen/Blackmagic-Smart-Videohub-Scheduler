@@ -2,8 +2,8 @@ import { Stack, CommandBarButton, IIconProps, IStackStyles, IContextualMenuItem,
 import React from 'react';
 import DayTable from '../../components/DayTable';
 import Router from 'next/router'
-import { retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Output, RoutingRequest, Videohub } from '../../components/Videohub';
+import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
+import { Output, RoutingRequest, Videohub } from '../../components/interfaces/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
 import { isAfter } from 'date-fns';
@@ -38,16 +38,28 @@ async function retrieveVideohubs(): Promise<Videohub[]> {
 }
 
 export async function getServerSideProps(context: any) {
-  /*
   context.res.setHeader(
     'Cache-Control',
     'public, s-maxage=60, stale-while-revalidate=120'
-  )*/
+  )
 
+  const selected: Videohub | undefined = getVideohubFromQuery(context.query);
   const hubs: Videohub[] = retrieveVideohubsServerSide();
+
+  let index = -1;
+  if (selected != undefined) {
+    for (let i = 0; i < hubs.length; i++) {
+      if (hubs[i].id === selected.id) {
+        index = i;
+        break;
+      }
+    }
+  }
+
   return {
     props: {
       videohubs: JSON.parse(JSON.stringify(hubs)),
+      videohub: index,
     },
   }
 }
@@ -68,6 +80,7 @@ function getItems(videohub: Videohub): any[] {
 
 interface VideohubViewProps {
   videohubs: Videohub[],
+  videohub: number,
 }
 
 class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, pushbuttonViewKey?: number }> {
@@ -79,7 +92,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     this.state = {
       tableKey: getRandomKey(),
       pushbuttonViewKey: getRandomKey(),
-      currentVideohub: props.videohubs.length > 0 ? props.videohubs[0] : undefined,
+      currentVideohub: props.videohub == -1 ? props.videohubs.length > 0 ? props.videohubs[0] : undefined : props.videohubs[props.videohub],
       videohubs: props.videohubs,
       menuItems: this.generateMenuItems(props.videohubs),
     };
@@ -139,12 +152,16 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
 
       let change: boolean;
       if (this.state.currentVideohub != undefined) {
-        change = false;
-        for (let i = 0; i < videohub.outputs.length; i++) {
-          if (this.state.currentVideohub.outputs[i].input_id != videohub.outputs[i].input_id) {
-            change = true;
-            break;
+        if (this.state.currentVideohub.connected == videohub.connected) {
+          change = false;
+          for (let i = 0; i < videohub.outputs.length; i++) {
+            if (this.state.currentVideohub.outputs[i].input_id != videohub.outputs[i].input_id) {
+              change = true;
+              break;
+            }
           }
+        } else {
+          change = true;
         }
       } else {
         change = true;

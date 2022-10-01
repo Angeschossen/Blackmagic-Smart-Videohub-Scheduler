@@ -1,7 +1,7 @@
 import { CommandBarButton, CompoundButton, DefaultButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
 import React from "react";
 import { PushButton } from "../interfaces/PushButton";
-import { RoutingRequest, Videohub } from "../Videohub";
+import { RoutingRequest, Videohub } from "../interfaces/Videohub";
 import { getPostHeader } from "../utils/fetchutils";
 import { commandBarItemStyles, desktopMinWidth, stackStyles, stackTokens } from "../utils/styles";
 import { BarMessage } from "../common/Messages";

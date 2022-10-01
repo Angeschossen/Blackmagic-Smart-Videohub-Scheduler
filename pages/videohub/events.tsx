@@ -4,7 +4,7 @@ import { EventActions, ProcessedEvent } from "@aldabil/react-scheduler/dist/type
 import React from "react";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
 import { getPostHeader } from "./main";
-import { Videohub } from "../../components/Videohub";
+import { Videohub } from "../../components/interfaces/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { Stack } from "@fluentui/react";
 
@@ -64,7 +64,7 @@ const handleConfirm = async (event: ProcessedEvent, _action: EventActions, video
         start: event.start,
         end: event.end,
         day_of_week: event.start.getDay(),
-        repeat_every_week: event.repeat,
+        repeat_every_week: event.repeat != undefined && event.repeat,
     };
 
     return fetch('/api/events/update', getPostHeader(e)).then(async res => {
@@ -86,18 +86,23 @@ interface OutputProps {
 }
 
 export async function getServerSideProps(context: any) {
-    /*
     context.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=60, stale-while-revalidate=120'
-    )*/
+        'Cache-Control',
+        'public, s-maxage=60, stale-while-revalidate=120'
+    )
 
     const hub: Videohub = getVideohubFromQuery(context.query);
-    return {
-        props: {
-            videohub: JSON.parse(JSON.stringify(hub)),
-            output: Number(context.query.output),
-        },
+    if (hub == undefined) {
+        return {
+            notFound: true,
+        }
+    } else {
+        return {
+            props: {
+                videohub: JSON.parse(JSON.stringify(hub)),
+                output: Number(context.query.output),
+            },
+        }
     }
 }
 
@@ -126,7 +131,10 @@ class OutputView extends React.Component<OutputProps, {}> {
     render() {
         return <VideohubPage videohub={this.props.videohub}>
             <Stack>
-                <h1>{this.props.videohub.outputs[this.props.output].label}</h1>
+                <Stack>
+                    <h1>{this.props.videohub.outputs[this.props.output].label}</h1>
+                    <p>Current input: {this.props.videohub.inputs[this.props.output].label}</p>
+                </Stack>
                 <Scheduler
                     remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}
                     onConfirm={(e, a) => {

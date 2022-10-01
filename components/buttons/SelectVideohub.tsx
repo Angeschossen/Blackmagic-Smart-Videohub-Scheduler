@@ -2,7 +2,7 @@ import { CommandBarButton, IContextualMenuItem, IIconProps } from "@fluentui/rea
 import React from "react";
 import EditVideohubModal from "../modals/EditVideohubModal";
 import { getRandomKey } from "../utils/commonutils";
-import { Videohub } from "../Videohub";
+import { Videohub } from "../interfaces/Videohub";
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
 interface InputProps {

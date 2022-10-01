@@ -1,10 +1,12 @@
-const { CollectionsOutlined } = require('@mui/icons-material');
 const net = require('net');
-const { start } = require('repl');
 const prisma = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 
-const VIDEOHUB_PORT = 9990;
+const ICON_ERROR = "Error";
+const ICON_CONNECTION_SUCCESS = "NetworkTower";
+const ICON_SUCCESS = "Accept";
+
+const VIDEOHUB_PORT = 9999;
 const CONNECTION_HEALT_CHECK_INTERVAL = 60000;
 
 const REQUEST_TIMEOUT = 5000;
@@ -28,6 +30,7 @@ const PROTOCOL_OUTPUT_LABELS = "OUTPUT LABELS:"
 const PROTOCOL_VIDEO_OUTPUT_ROUTING = "VIDEO OUTPUT ROUTING:"
 const PROTOCOL_FRIENDLY_NAME = "Friendly name:"
 const PROTOCOL_LATEST_VERSION = "2.8"
+
 
 function getLines(input) {
     lines = input.split("\n");
@@ -107,36 +110,37 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
         }
     };
 
-    const e = await prisma.client.event.findMany({
-        where: {
-            AND: [
-                filter_base,
-                {
-                    OR: [
-                        filter_repeat,
-                        {
-                            start: {
-                                lte: date_start,
-                            },
-                            end: {
-                                gte: date_end,
-                            }
+    const condition = {
+        AND: [
+            filter_base,
+            {
+                OR: [
+                    filter_repeat,
+                    {
+                        start: {
+                            lte: date_start,
                         },
-                        {
-                            start: {
-                                gte: date_start,
-                                lte: date_end,
-                            },
-                            end: {
-                                lte: date_end,
-                                gte: date_start,
-                            }
+                        end: {
+                            gte: date_end,
+                        }
+                    },
+                    {
+                        start: {
+                            gte: date_start,
+                            lte: date_end,
+                        },
+                        end: {
+                            lte: date_end,
+                            gte: date_start,
+                        }
+                    },
+                ]
+            }
+        ]
+    };
 
-                        },
-                    ]
-                }
-            ]
-        }
+    const e = await prisma.client.event.findMany({
+        where: condition,
     });
 
     const arr = [];
@@ -144,7 +148,7 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
     for (const event of e) {
         event.event_id = event.id;
 
-        if (event.repeat_every_week != undefined) { // is repeat
+        if (event.repeat_every_week) { // is repeat
             let event_start = new Date(event.start);
             let event_end = new Date(event.end);
 
@@ -170,9 +174,15 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
                 event_start.setDate(event_start.getDate() + 7);
                 event_end.setDate(event_end.getDate() + 7);
 
-                if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
+                // re check time span
+                if (event_start <= date_start && event_end >= date_end || ((event_start >= date_start && event_start <= date_end) && (event_end <= date_end && event_end >= date_start))) {
                     arr.push(eventFinal);
                 }
+
+                /*
+                if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
+                    arr.push(eventFinal);
+                } */
             }
         } else {
             arr.push(event); // always add
@@ -314,6 +324,18 @@ class Videohub {
         this.checkConnectionHealthId = undefined;
     }
 
+    async logActivity(description, icon) {
+        await prisma.client.videohubActivity.create({
+            data: {
+                title: this.data.name,
+                description: description,
+                icon: icon,
+                time: new Date(),
+                videohub_id: this.data.id,
+            }
+        });
+    }
+
     addRequest(request) {
         this.requestQueque.push(request);
     }
@@ -327,10 +349,10 @@ class Videohub {
             hub.checkConnectionHealthId = setTimeout(() => {
                 hub.checkConnectionHealth();
             }, CONNECTION_HEALT_CHECK_INTERVAL);
-        }, function (err) {
+        }, async function (err) {
             hub.info("Videohub detected as not reachable.");
             console.error(err);
-            hub.onClose();
+            await hub.onClose();
         });
     }
 
@@ -353,13 +375,13 @@ class Videohub {
         }
     }
 
-    onClose() {
+    async onClose() {
         clearTimeout(this.checkConnectionHealthId);
         this.clearReconnect();
-        this.reconnect();
+        await this.reconnect();
     }
 
-    connect() {
+    connect(isInitial) {
         this.info(`Attempting connection to videohub (#${this.connectionAttempt}).`);
 
         if (this.socket != undefined) {
@@ -377,6 +399,11 @@ class Videohub {
             this.connectionAttempt = 0;
             this.clearReconnect();
             this.scheduleCheckConnectionHealth();
+            this.startEventsCheck();
+
+            if (!isInitial) {
+                await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS);
+            }
         });
 
         client.on("data", async data => {
@@ -385,14 +412,14 @@ class Videohub {
             await this.handle_received(data);
         })
 
-        client.on("close", () => {
+        client.on("close", async () => {
             this.info(`Connection closed (#${this.connectionAttempt})`);
-            this.onClose()
+            await this.onClose()
         })
 
-        client.on("end", () => {
+        client.on("end", async () => {
             this.info(`Connection ended (#${this.connectionAttempt})`);
-            this.onClose()
+            await this.onClose()
         })
 
         client.on("error", console.error)
@@ -411,7 +438,7 @@ class Videohub {
         }
     }
 
-    reconnect() {
+    async reconnect() {
         if (false != this.connecting) {
             return;
         }
@@ -420,6 +447,10 @@ class Videohub {
             this.client.removeAllListeners();
             this.client.destroy();
             this.client = undefined;
+        }
+
+        if (this.data.connected) {
+            await this.logActivity("Connection lost.", ICON_ERROR)
         }
 
         this.data.connected = false;
@@ -445,7 +476,7 @@ class Videohub {
 
     reconnectProccess(timeout) {
         this.connecting = setTimeout(() => {
-            this.connect();
+            this.connect(false);
         }, timeout);
     }
 
@@ -494,7 +525,17 @@ class Videohub {
                 continue; // already up to date
             }
 
-            output.sendRoutingUpdateRequest(this, shortest_id);
+            const input = this.data.inputs[shortest_id];
+            output.sendRoutingUpdateRequest(this, shortest_id).then(async result => {
+                const routing = `input ${input.label} to output ${output.label}.`;
+
+                if (result != undefined) {
+                    this.info(`Scheduled routing update failed. Input ${input.id} to output ${output.id}`);
+                    await this.logActivity(`Scheduled routing update failed: ${routing}`, ICON_ERROR);
+                } else {
+                    await this.logActivity(`Scheduled routing update was successful: ${routing}`, ICON_SUCCESS);
+                }
+            });
         }
 
         this.checkEventsId = setTimeout(async () => {
@@ -587,7 +628,7 @@ class Videohub {
                     this.data.name = getConfigEntry(entries, 2);
                     await this.save();
                 }
-                
+
                 return 1;
             }
 
@@ -635,31 +676,6 @@ class Videohub {
         const output = this.getOutput(output_id);
         output.updateRouting(this, input_id);
         await output.save(this);
-    }
-
-    loadInitial(text) {
-        this.info("Loading initial data.");
-
-        const lines = getLines(text);
-
-        // name
-        this.data.name = getConfigEntry(lines, 3);
-
-
-
-
-        // mapping
-        for (const line of getCorrespondingLines(lines, PROTOCOL_VIDEO_OUTPUT_ROUTING)) {
-            const data = line.split(" ");
-            const output_id = Number(data[0]);
-            const input_id = Number(data[1]);
-
-            const output = this.getOutput(output_id);
-            output.updateRouting(this, input_id);
-        }
-
-        this.info("Loaded initial data.");
-        this.startEventsCheck();
     }
 
     async startEventsCheck() {
@@ -760,7 +776,7 @@ module.exports = {
                 throw Error("Already connected");
             }
 
-            hub.reconnect();
+            hub.reconnect(true);
         }
     },
     retrieveEvents: retrieveEvents,
