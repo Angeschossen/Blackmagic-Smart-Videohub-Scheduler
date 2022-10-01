@@ -83,7 +83,7 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
                 <Stack wrap horizontal tokens={stackTokens}>
                     {this.state.pushbuttons.map((button, key) => {
                         return (
-                            <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`}
+                            <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{root:{backgroundColor: button.color, borderColor: button.color}}}
                                 onClick={async () => {
                                     if (this.props.videohub == undefined || (this.state.currentRequest != undefined && !this.state.currentRequest.success)) {
                                         return;
