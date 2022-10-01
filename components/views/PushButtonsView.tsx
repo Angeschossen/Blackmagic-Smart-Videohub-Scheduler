@@ -3,11 +3,12 @@ import React from "react";
 import { PushButton } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../Videohub";
 import { getPostHeader } from "../utils/fetchutils";
-import { commandBarItemStyles, stackStyles, stackTokens } from "../utils/styles";
+import { commandBarItemStyles, desktopMinWidth, stackStyles, stackTokens } from "../utils/styles";
 import { BarMessage } from "../common/Messages";
 import Router from "next/router";
 import { getRandomKey } from "../utils/commonutils";
 import { threadId } from "worker_threads";
+import { useMediaQuery } from "react-responsive";
 
 const addIcon: IIconProps = { iconName: 'Add' };
 
@@ -79,10 +80,10 @@ export default class PushButtons extends React.Component<InputProps, { pushbutto
                 <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
                     {this.getRequestStatus()}
                 </Stack>
-                <Stack horizontal tokens={stackTokens}>
+                <Stack wrap horizontal tokens={stackTokens}>
                     {this.state.pushbuttons.map((button, key) => {
                         return (
-                            <CompoundButton primary key={key} secondaryText="Click to execute."
+                            <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`}
                                 onClick={async () => {
                                     if (this.props.videohub == undefined || (this.state.currentRequest != undefined && !this.state.currentRequest.success)) {
                                         return;

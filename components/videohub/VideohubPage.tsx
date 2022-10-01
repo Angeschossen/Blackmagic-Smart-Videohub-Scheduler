@@ -8,11 +8,13 @@ interface InputProps {
 }
 export const VideohubPage = (p: InputProps) => {
     return (
-        <>
-            <VideohubFooter videohub={p.videohub} />
-            <Stack style={{ paddingTop: '1vh', paddingLeft: '2vh', paddingRight: '2vh'}}>
+        <Stack>
+            <Stack.Item style={{justifyContent: 'flex-end',right: 0}}>
+                <VideohubFooter videohub={p.videohub} />
+            </Stack.Item>
+            <Stack style={{ paddingTop: '1vh', paddingLeft: '2vh', paddingRight: '2vh' }}>
                 {p.children}
             </Stack>
-        </>
+        </Stack>
     )
 }

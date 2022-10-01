@@ -1,15 +1,27 @@
 import { IStackStyles, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
-import Navigation from "./Naviation";
+import { Navigation } from "./Naviation";
+import { evaluateViewType } from "./views/DesktopView";
 
-const StackStyles: Partial<IStackStyles> = {
+const StackStylesDesktop: Partial<IStackStyles> = {
   root: {
     position: 'absolute',
-    left: '13vh',
+    left: '140px',
     bottom: 0,
     right: 0,
     height: '100%',
-    maxHeight: '100%'
+    maxHeight: '100%',
+  }
+}
+
+const StackStylesMobile: Partial<IStackStyles> = {
+  root: {
+    position: 'absolute',
+    left: '40px',
+    bottom: 0,
+    right: 0,
+    height: '100%',
+    maxHeight: '100%',
   }
 }
 
@@ -18,7 +30,8 @@ type LayoutProps = {
 }
 
 const Layout = (a: LayoutProps) => {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(false);
+  const isDekstop = evaluateViewType();
   useEffect(() => {
     setReady(true);
   }, [])
@@ -28,7 +41,7 @@ const Layout = (a: LayoutProps) => {
       {ready ?
         <Stack>
           <Navigation />
-          <Stack styles={StackStyles}>
+          <Stack styles={isDekstop ? StackStylesDesktop:StackStylesMobile}>
             {a.children}
           </Stack>
         </Stack>

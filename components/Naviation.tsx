@@ -1,21 +1,32 @@
 import { INavLink, INavLinkGroup, INavStyles, Nav } from "@fluentui/react";
-import React from 'react';
+import React, { useState } from 'react';
+import MediaQuery, { useMediaQuery } from "react-responsive";
+import { desktopMinWidth } from "./utils/styles";
+import { evaluateViewType } from "./views/DesktopView";
 
 
 // icons: https://www.flicon.io/
-const navigationsStyles: Partial<INavStyles> = {
+const styleMobile: Partial<INavStyles> = {
     root: {
-        //height: '100%',
-        //maxHeight: '100vh',
-        width: '13vh',
+        width: '40px',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
         position: 'fixed',
         boxSizing: 'border-box',
         border: '1px solid #eee',
-        //overflowY: 'auto',
-        //paddingTop: '3vh',
+    }
+}
+
+const style: Partial<INavStyles> = {
+    root: {
+        width: '140px',
+        top: 0,
+        bottom: 0,
+        horizontal: 'strech',
+        position: 'fixed',
+        boxSizing: 'border-box',
+        border: '1px solid #eee',
     }
 }
 
@@ -54,32 +65,21 @@ const links: INavLinkGroup[] = [
     }
 ];
 
-class Navigation extends React.Component<{}, { selectedKey?: string }>  {
 
-    constructor(props: any) {
-        super(props);
+export const Navigation = () => {
+    const isDekstop = evaluateViewType();
+    const [selectedKey, setSelectedKey] = useState<string|undefined>();
 
-        this.state = { selectedKey: undefined };
-    }
-
-    onLinkClick(item?: INavLink) {
-        this.setState({ selectedKey: item?.key });
-    }
-
-    render(): React.ReactNode {
-        return (
-            <div className="ms-Grid-col ms-sm6 ms-md4 ms-lg2">
-                < Nav
-                    onLinkClick={(_e: any, item?: INavLink) => {
-                        this.onLinkClick(item);
-                    }}
-                    groups={links}
-                    selectedKey={this.state.selectedKey}
-                    styles={navigationsStyles}
-                /></div>
-        )
-    }
+    return (
+        < Nav
+            onLinkClick={(_e: any, item?: INavLink) => {
+                if (item?.key != undefined) {
+                    setSelectedKey(item.key);
+                }
+            }}
+            groups={links}
+            selectedKey={selectedKey}
+            styles={isDekstop ? style : styleMobile}
+        />
+    )
 }
-
-
-export default Navigation;
