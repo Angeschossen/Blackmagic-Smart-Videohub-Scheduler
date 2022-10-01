@@ -1,7 +1,7 @@
 import { IStackStyles, Stack } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
 import { Navigation } from "./Naviation";
-import { evaluateViewType } from "./views/DesktopView";
+import { useViewType } from "./views/DesktopView";
 
 const StackStylesDesktop: Partial<IStackStyles> = {
   root: {
@@ -31,7 +31,7 @@ type LayoutProps = {
 
 const Layout = (a: LayoutProps) => {
   const [ready, setReady] = useState(false);
-  const isDekstop = evaluateViewType();
+  const isDekstop = useViewType();
   useEffect(() => {
     setReady(true);
   }, [])

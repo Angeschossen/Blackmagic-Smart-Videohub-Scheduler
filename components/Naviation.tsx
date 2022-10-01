@@ -2,7 +2,7 @@ import { INavLink, INavLinkGroup, INavStyles, Nav } from "@fluentui/react";
 import React, { useState } from 'react';
 import MediaQuery, { useMediaQuery } from "react-responsive";
 import { desktopMinWidth } from "./utils/styles";
-import { evaluateViewType } from "./views/DesktopView";
+import { useViewType } from "./views/DesktopView";
 
 
 // icons: https://www.flicon.io/
@@ -67,7 +67,7 @@ const links: INavLinkGroup[] = [
 
 
 export const Navigation = () => {
-    const isDekstop = evaluateViewType();
+    const isDekstop = useViewType();
     const [selectedKey, setSelectedKey] = useState<string|undefined>();
 
     return (
