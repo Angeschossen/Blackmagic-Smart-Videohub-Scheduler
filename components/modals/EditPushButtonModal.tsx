@@ -1,12 +1,14 @@
-import { DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
-import React from "react";
+import React, { RefObject } from "react";
 import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Confirmation } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../Videohub";
 import InputModal from "./InputModal";
+import { PickColor } from "../input/ColorPicker";
+import { threadId } from "worker_threads";
 
 const stackTokens: IStackTokens = { childrenGap: 20 };
 const dropdownStyles: Partial<IDropdownStyles> = {
@@ -73,6 +75,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
     private mounted: boolean = false;
     private button: PushButton;
     private label?: string;
+    private PickColor: RefObject<typeof PickColor>;
 
     constructor(props: InputProps) {
         super(props);
@@ -84,6 +87,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
             actions: []
         } : deepCopy(props.button);
 
+        this.PickColor = React.createRef();
         this.state = { modalKey: getRandomKey(), isOpen: this.props.isOpen };
         this.label = this.button.label;
         this.addActionComponent = this.addActionComponent.bind(this);
@@ -223,6 +227,8 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                             return this.validateButtonLabel(value);
                         }}
                     />
+                    <Label>Color</Label>
+                    <PickColor></PickColor>
                     <Stack>
                         {this.routingComponents.map((component, index) => {
                             return <React.Fragment key={index}>

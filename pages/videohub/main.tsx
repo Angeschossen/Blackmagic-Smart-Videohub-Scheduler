@@ -7,7 +7,7 @@ import { Output, RoutingRequest, Videohub } from '../../components/Videohub';
 import DataTable from '../../components/DataTable';
 import { VideohubFooter } from '../../components/VideohubFooter';
 import { isAfter } from 'date-fns';
-import { getRandomKey } from '../../components/utils/commonutils';
+import { areArrayIdentical, getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
 import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import useId from '@mui/utils/useId';
@@ -15,6 +15,9 @@ import PushButtonsList from '../pushbuttons/main';
 import PushButtonsView from '../../components/views/PushButtonsView';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
 import SelectVideohub from '../../components/buttons/SelectVideohub';
+import MediaQuery from 'react-responsive';
+import { desktopMinWidth } from '../../components/utils/styles';
+import videohubs from '../../backend/videohubs';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -114,9 +117,9 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
   }
 
   scheduleRetrieveData() {
-    this.retrieveData(() => {
-      setTimeout(this.scheduleRetrieveData, 15000);
-    });
+    setTimeout(() => this.retrieveData(() => {
+      this.scheduleRetrieveData();
+    }), 5000);
   }
 
   retrieveData(onSet?: () => void) {
@@ -134,14 +137,31 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
         return;
       }
 
-      const menuItems: IContextualMenuItem[] = this.generateMenuItems(res);
-      this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res, tableKey: getRandomKey() }, () => {
-        console.log("Loaded data.");
-
-        if (onSet != undefined) {
-          onSet();
+      let change: boolean;
+      if (this.state.currentVideohub != undefined) {
+        change = false;
+        for (let i = 0; i < videohub.outputs.length; i++) {
+          if (this.state.currentVideohub.outputs[i].input_id != videohub.outputs[i].input_id) {
+            change = true;
+            break;
+          }
         }
-      });
+      }else{
+        change = true;
+      }
+
+      if (change) {
+        const menuItems: IContextualMenuItem[] = this.generateMenuItems(res);
+        this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res, tableKey: getRandomKey() }, () => {
+          console.log("Loaded data.");
+
+          if (onSet != undefined) {
+            onSet();
+          }
+        });
+      } else {
+        console.log("No change.");
+      }
     });
   }
 
@@ -175,32 +195,36 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             videohubs={this.state.videohubs}
             onSelectVideohub={(hub: Videohub) => this.onSelectVideohub(hub)} />
         </Stack>
-        <DataTable
-          key={this.state.tableKey}
-          controlcolumns={[
-            {
-              key: "edit",
-              onClick(_event, item) {
-                if (inst.state.currentVideohub == undefined) {
-                  throw Error("Videohub is undefined");
+        <Stack>
+          <MediaQuery minWidth={desktopMinWidth}>
+            <DataTable
+              key={this.state.tableKey}
+              controlcolumns={[
+                {
+                  key: "edit",
+                  onClick(_event, item) {
+                    if (inst.state.currentVideohub == undefined) {
+                      throw Error("Videohub is undefined");
+                    }
+
+                    Router.push({
+                      pathname: './events',
+                      query: { videohub: inst.state.currentVideohub.id, output: item.id },
+                    });
+                  },
+                  text: "Schedule"
+                }
+              ]}
+              getData={() => {
+                console.log("Get data");
+                if (this.state.currentVideohub === undefined) {
+                  return undefined;
                 }
 
-                Router.push({
-                  pathname: './events',
-                  query: { videohub: inst.state.currentVideohub.id, output: item.id },
-                });
-              },
-              text: "Schedule"
-            }
-          ]}
-          getData={() => {
-            console.log("Get data");
-            if (this.state.currentVideohub === undefined) {
-              return undefined;
-            }
-
-            return getItems(this.state.currentVideohub as Videohub);
-          }} />
+                return getItems(this.state.currentVideohub as Videohub);
+              }} />
+          </MediaQuery>
+        </Stack>
         <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh' }}>
           <PushButtonsView
             key={this.state.pushbuttonViewKey}
