@@ -2,7 +2,8 @@ export interface PushButton {
     id: number,
     videohub_id: number,
     label: string,
-    actions: PushbuttonAction[]
+    actions: PushbuttonAction[],
+    color?: string
 }
 
 export interface PushbuttonAction{
