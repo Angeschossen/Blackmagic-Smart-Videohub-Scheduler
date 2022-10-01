@@ -9,6 +9,7 @@ interface InputProps extends IModalProps {
     children?: React.ReactNode,
     onCancel: () => void,
     onConfirm: () => string | undefined,
+    modalKey:number|undefined,
 }
 
 export default class InputModal extends React.Component<InputProps, { open?: boolean, error?: string }> {
@@ -39,7 +40,7 @@ export default class InputModal extends React.Component<InputProps, { open?: boo
             <Stack>
                 <Modal
                     isOpen={this.state.open}
-                    key={this.props.key}>
+                    key={this.props.modalKey}>
                     <Stack>
                         <Stack tokens={stackTokens} styles={{ root: { padding: '2vh' } }}>
                             {this.props.children}

@@ -9,15 +9,22 @@ import {
 
 const white = getColorFromString('#ffffff')!;
 
-export const PickColor: React.FunctionComponent = () => {
-  const [color, setColor] = React.useState(white);
+interface InputProps {
+    onChange: (color: IColor)=>void, 
+    color?: IColor,
+}
+export const PickColor = (p: InputProps) => {
+  const [color, setColor] = React.useState(p.color == undefined ? white: p.color);
   const updateColor = React.useCallback((ev: any, colorObj: IColor) => setColor(colorObj), []);
 
   return (
     <div className={classNames.wrapper}>
       <ColorPicker
         color={color}
-        onChange={updateColor}
+        onChange={(e:any, color: IColor)=>{
+            p.onChange(color);
+            updateColor(e, color);
+        }}
         alphaType={"alpha"}
         showPreview={true}
         styles={colorPickerStyles}

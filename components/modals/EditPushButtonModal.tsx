@@ -1,4 +1,4 @@
-import { DefaultButton, Dropdown, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
+import { DefaultButton, Dropdown, getColorFromString, IColor, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
 import React, { RefObject } from "react";
 import { deepCopy, getRandomKey } from "../utils/commonutils";
@@ -75,7 +75,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
     private mounted: boolean = false;
     private button: PushButton;
     private label?: string;
-    private PickColor: RefObject<typeof PickColor>;
+    private color?: IColor;
 
     constructor(props: InputProps) {
         super(props);
@@ -87,9 +87,10 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
             actions: []
         } : deepCopy(props.button);
 
-        this.PickColor = React.createRef();
         this.state = { modalKey: getRandomKey(), isOpen: this.props.isOpen };
         this.label = this.button.label;
+        this.color = this.button.color==undefined ? undefined : getColorFromString(this.button.color);
+
         this.addActionComponent = this.addActionComponent.bind(this);
         this.validateButtonLabel = this.validateButtonLabel.bind(this);
         this.setRouting = this.setRouting.bind(this);
@@ -188,7 +189,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
         const inst: EditPushButtonModal = this;
         return (
             <InputModal
-                key={this.state.modalKey}
+                modalKey={this.state.modalKey}
                 isOpen={this.state.isOpen}
                 onCancel={function (): void {
                     // just let it close
@@ -213,6 +214,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                     if (actions.length != 0) {
                         inst.button.label = inst.label;
                         inst.button.actions = actions;
+                        inst.button.color = inst.color == undefined ? undefined : inst.color.str;
                         inst.props.onConfirm(inst.button);
                         return undefined;
                     }
@@ -232,7 +234,12 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                         }}
                     />
                     <Label>Color</Label>
-                    <PickColor></PickColor>
+                    <PickColor
+                        color={this.color}
+                        onChange={(color) => {
+                            this.color = color;
+                        }}
+                    />
                     <Stack>
                         {this.routingComponents.map((component, index) => {
                             return <React.Fragment key={index}>
@@ -245,7 +252,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
                         this.forceUpdate();
                     }} allowDisabledFocus />
                     {this.button.id != -1 &&
-                        <DefaultButton text="Delete" style={{ backgroundColor: '#e8453a' }} onClick={() => {
+                        <DefaultButton text="Delete" style={{ backgroundColor: '#e61c1c' }} onClick={() => {
                             fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
                                 const json = await res.json();
                                 if (json.result) {

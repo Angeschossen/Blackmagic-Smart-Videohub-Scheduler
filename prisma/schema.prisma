@@ -81,4 +81,5 @@ model PushButton {
   videohub_id Int
   label       String             @unique
   actions     PushButtonAction[]
+  color       String?
 }

@@ -1,5 +1,5 @@
 import { ColumnActionsMode } from '@fluentui/react';
-import { PrismaPromise } from '@prisma/client';
+import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prisma from '../../../database/prisma';
@@ -59,7 +59,7 @@ export default async function handler(
                             videohub_id: videohub_id,
                             input_id: action.input_id,
                             output_id: action.output_id,
-                        }
+                        } as PushButtonAction
 
                         await prisma.client.pushButtonAction.create({
                             data: create
@@ -79,6 +79,7 @@ export default async function handler(
                     },
                     data: {
                         label: pushButton.label,
+                        color: pushButton.color,
                     }
                 }).then(async r => {
                     const result: PushButton = r as PushButton;
