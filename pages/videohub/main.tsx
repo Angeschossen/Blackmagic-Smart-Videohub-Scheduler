@@ -122,7 +122,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
     }), 5000);
   }
 
-  retrieveData(onSet?: () => void) {
+  retrieveData(onDone?: () => void) {
     console.log("Retrieving videohubs.");
     retrieveVideohubs().then(res => {
       let videohub: Videohub | undefined;
@@ -146,7 +146,7 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
             break;
           }
         }
-      }else{
+      } else {
         change = true;
       }
 
@@ -155,12 +155,15 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
         this.setState({ menuItems: menuItems, currentVideohub: videohub, videohubs: res, tableKey: getRandomKey() }, () => {
           console.log("Loaded data.");
 
-          if (onSet != undefined) {
-            onSet();
+          if (onDone != undefined) {
+            onDone();
           }
         });
       } else {
         console.log("No change.");
+        if (onDone != undefined) {
+          onDone();
+        }
       }
     });
   }
