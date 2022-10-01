@@ -1,6 +1,6 @@
 import { IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
 import { render } from "react-dom"
-import { Videohub } from "./Videohub"
+import { Videohub } from "./interfaces/Videohub"
 
 interface InputProps {
     videohub?: Videohub

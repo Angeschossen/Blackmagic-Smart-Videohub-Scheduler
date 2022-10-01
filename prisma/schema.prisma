@@ -36,6 +36,7 @@ model Videohub {
   events            Event[]
   pushbuttons       PushButton[]
   pushbuttonactions PushButtonAction[]
+  VideohubActivity  VideohubActivity[]
 }
 
 model Input {
@@ -82,4 +83,14 @@ model PushButton {
   label       String             @unique
   actions     PushButtonAction[]
   color       String?
+}
+
+model VideohubActivity {
+  id          Int      @id @default(autoincrement())
+  videohub    Videohub @relation(fields: [videohub_id], references: [id])
+  videohub_id Int
+  title       String
+  description String?   @db.MediumText
+  icon        String
+  time        DateTime
 }
