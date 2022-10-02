@@ -232,6 +232,10 @@ class InputChangeRequest {
         this.result = false;
     }
 
+    ack(){
+        this.onSuccess();
+    }
+
     send(videohub) {
         const send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}\n${this.output_id} ${this.input_id}\n\n`
         videohub.info(`Sending routing update: ${send}`);
@@ -691,7 +695,7 @@ class Videohub {
             console.log(req.output_id+" "+req.input_id)
             if (req.output_id === output_id && req.input_id === input_id) {
                 console.log("Call onSuccess")
-                request.onSuccess(); // remove request and call success
+                request.ack(); // remove request and call success
                 return false;
             }
 
