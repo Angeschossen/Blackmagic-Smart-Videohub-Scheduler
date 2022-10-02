@@ -689,7 +689,8 @@ class Videohub {
 
         this.requestQueque = this.requestQueque.filter(req => {
             console.log(req.output_id+" "+req.input_id)
-            if (req.output_id == output_id && req.input_id == input_id) {
+            if (req.output_id === output_id && req.input_id === input_id) {
+                console.log("Call onSuccess")
                 request.onSuccess(); // remove request and call success
                 return false;
             }
