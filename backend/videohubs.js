@@ -233,8 +233,6 @@ class InputChangeRequest {
     }
 
     ack(){
-        console.log("ACK CAlled");
-        console.log(this.onSuccess)
         this.onSuccess();
     }
 
@@ -694,15 +692,8 @@ class Videohub {
         output.updateRouting(this, input_id);
 
         this.requestQueque = this.requestQueque.filter(req => {
-            console.log(req.output_id+" "+req.input_id)
             if (req.output_id === output_id && req.input_id === input_id) {
-                console.log("Call onSuccess");
-
-                try{
-                req.ack(); // remove request and call success
-                }catch(ex){
-                    console.log(ex);
-                }
+                req.ack(); // remove request and call success 
                 return false;
             }
 
@@ -815,13 +806,11 @@ module.exports = {
     },
     retrieveEvents: retrieveEvents,
     sendRoutingUpdate: function (request) {
-        console.log("Got request: " + request.output_id + " " + request.input_id);
         const videohubClient = module.exports.getClient(request.videohub_id);
         if (videohubClient == undefined) {
             throw Error("Client not found: " + request.videohub_id);
         }
 
-        videohubClient.info("Request: " + request.output_id + " " + request.input_id)
         const output = videohubClient.getOutput(request.output_id);
         return output.sendRoutingUpdateRequest(videohubClient, request.input_id);
     }
