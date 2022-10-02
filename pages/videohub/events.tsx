@@ -129,11 +129,13 @@ class OutputView extends React.Component<OutputProps, {}> {
     }
 
     render() {
+        const output = this.props.videohub.outputs[this.props.output];
+        const input_id: number | null = output.input_id;
         return <VideohubPage videohub={this.props.videohub}>
             <Stack>
                 <Stack>
-                    <h1>{this.props.videohub.outputs[this.props.output].label}</h1>
-                    <p>Current input: {this.props.videohub.inputs[this.props.output].label}</p>
+                    <h1>{output.label}</h1>
+                    <p>Current input: {input_id == null ? "None" : this.props.videohub.inputs[input_id].label}</p>
                 </Stack>
                 <Scheduler
                     remoteEvents={(q) => fetchRemote(q, this.props.videohub, this.props.output)}

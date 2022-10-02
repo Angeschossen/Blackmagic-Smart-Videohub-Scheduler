@@ -67,10 +67,11 @@ export async function getServerSideProps(context: any) {
 function getItems(videohub: Videohub): any[] {
   const cloned: any[] = [];
   for (const output of videohub.outputs) {
+    console.log(output.input_id)
     cloned.push({
       id: output.id,
       Output: output.label,
-      Input: (output.input_id == null ? "None" : videohub.inputs[output.input_id].label),
+      Input: (output.input_id == undefined ? "None" : videohub.inputs[output.input_id].label),
     });
   }
 
