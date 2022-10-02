@@ -699,7 +699,7 @@ class Videohub {
                 console.log("Call onSuccess");
 
                 try{
-                request.ack(); // remove request and call success
+                req.ack(); // remove request and call success
                 }catch(ex){
                     console.log(ex);
                 }
