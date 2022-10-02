@@ -688,6 +688,7 @@ class Videohub {
         output.updateRouting(this, input_id);
 
         this.requestQueque = this.requestQueque.filter(req => {
+            console.log(req.output_id+" "+req.input_id)
             if (req.output_id == output_id && req.input_id == input_id) {
                 request.onSuccess(); // remove request and call success
                 return false;
