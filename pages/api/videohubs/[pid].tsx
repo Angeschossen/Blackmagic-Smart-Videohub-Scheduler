@@ -26,7 +26,7 @@ export async function getVideohubActivityServerSide() {
                 time: 'desc',
             }
         ],
-        take: 25,
+        take: 15,
     }).then(res => {
         return res as VideohubActivity[];
     });
