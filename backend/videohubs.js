@@ -234,7 +234,7 @@ class InputChangeRequest {
 
     send(videohub) {
         const send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}\n${this.output_id} ${this.input_id}\n\n`
-        videohub.info(`Sending routing update: ${send}`);
+        //videohub.info(`Sending routing update: ${send}`);
         videohub.client.write(send);
         videohub.requestQueque.push(this);
         videohub.info("Routing update sent.");
@@ -253,6 +253,8 @@ class Output {
     }
 
     sendRoutingUpdateRequest(videohub, input_id) {
+        videohub.info(`Sending routing update: ${this.id} ${input_id}`);
+
         // prepare
         let _resolve;
         let request;
@@ -793,6 +795,7 @@ module.exports = {
     },
     retrieveEvents: retrieveEvents,
     sendRoutingUpdate: function (request) {
+        console.log("Got request: " + request.output_id + " " + request.input_id);
         const videohubClient = module.exports.getClient(request.videohub_id);
         if (videohubClient == undefined) {
             throw Error("Client not found: " + request.videohub_id);
