@@ -9,7 +9,7 @@ interface InputProps extends IModalProps {
     children?: React.ReactNode,
     onCancel: () => void,
     onConfirm: () => string | undefined,
-    modalKey:number|undefined,
+    modalKey: number | undefined,
 }
 
 export default class InputModal extends React.Component<InputProps, { open?: boolean, error?: string }> {
@@ -37,33 +37,30 @@ export default class InputModal extends React.Component<InputProps, { open?: boo
 
     render(): React.ReactNode {
         return (
-            <Stack>
-                <Modal
-                    isOpen={this.state.open}
-                    key={this.props.modalKey}>
-                    <Stack>
-                        <Stack tokens={stackTokens} styles={{ root: { padding: '2vh' } }}>
-                            {this.props.children}
-                        </Stack>
-                        {this.state.error != undefined &&
-                            <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
-                        }
-                        <Confirmation
-                            onCancel={() => {
+            <Modal
+                isOpen={this.state.open}
+                key={this.props.modalKey}>
+                <Stack tokens={stackTokens} styles={{ root: { padding: '2vh' } }}>
+                    {this.props.children}
+
+                    {this.state.error != undefined &&
+                        <BarMessage text={this.state.error} type={MessageBarType.error}></BarMessage>
+                    }
+                    <Confirmation
+                        onCancel={() => {
+                            this.close();
+                            this.props.onCancel();
+                        }}
+                        onConfirm={() => {
+                            const err: string | undefined = this.props.onConfirm();
+                            if (err == undefined) {
                                 this.close();
-                                this.props.onCancel();
-                            }}
-                            onConfirm={() => {
-                                const err: string | undefined = this.props.onConfirm();
-                                if (err == undefined) {
-                                    this.close();
-                                } else {
-                                    this.setState({ error: err });
-                                }
-                            }} />
-                    </Stack>
-                </Modal>
-            </Stack>
+                            } else {
+                                this.setState({ error: err });
+                            }
+                        }} />
+                </Stack>
+            </Modal>
         );
     }
 }

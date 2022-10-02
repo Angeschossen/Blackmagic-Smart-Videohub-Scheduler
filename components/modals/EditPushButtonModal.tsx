@@ -42,7 +42,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 
     render(): React.ReactNode {
-        return <Stack horizontal wrap tokens={stackTokens}>
+        return <>
             <Dropdown
                 required={this.props.required}
                 placeholder="Select an input"
@@ -65,7 +65,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
                     this.props.onSelectOutput(index);
                 }}
             />
-        </Stack >;
+        </>;
     }
 }
 
@@ -89,7 +89,7 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
 
         this.state = { modalKey: getRandomKey(), isOpen: this.props.isOpen };
         this.label = this.button.label;
-        this.color = this.button.color==undefined ? undefined : getColorFromString(this.button.color);
+        this.color = this.button.color == undefined ? undefined : getColorFromString(this.button.color);
 
         this.addActionComponent = this.addActionComponent.bind(this);
         this.validateButtonLabel = this.validateButtonLabel.bind(this);
@@ -222,49 +222,43 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
 
                     return "Please specify at leat one complete routing with an input and output.";
                 }}>
-                <Stack tokens={stackTokens}>
-                    <TextField label="Name" required
-                        onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
-                            this.label = val;
-                        }}
-                        defaultValue={this.button == undefined ? undefined : this.button.label}
-                        validateOnLoad={false}
-                        validateOnFocusOut={true}
-                        onGetErrorMessage={(value: string) => {
-                            return this.validateButtonLabel(value);
-                        }}
-                    />
-                    <Label>Color</Label>
-                    <Stack horizontalAlign="center">
-                    <PickColor
-                        color={this.color}
-                        onChange={(color) => {
-                            this.color = color;
-                        }}
-                    />
-                    </Stack>
-                    <Stack>
-                        {this.routingComponents.map((component, index) => {
-                            return <React.Fragment key={index}>
-                                {component.render()}
-                            </React.Fragment>
-                        })}
-                    </Stack>
-                    <DefaultButton text="Add routing" onClick={() => {
-                        this.addActionComponent(false, undefined);
-                        this.forceUpdate();
-                    }} allowDisabledFocus />
-                    {this.button.id != -1 &&
-                        <DefaultButton text="Delete" style={{ backgroundColor: '#e61c1c' }} onClick={() => {
-                            fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
-                                const json = await res.json();
-                                if (json.result) {
-                                    this.props.onDelete(this.button.id);
-                                    this.setState({ modalKey: getRandomKey(), isOpen: false });
-                                }
-                            });
-                        }} allowDisabledFocus />}
-                </Stack>
+                <TextField label="Name" required
+                    onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
+                        this.label = val;
+                    }}
+                    defaultValue={this.button == undefined ? undefined : this.button.label}
+                    validateOnLoad={false}
+                    validateOnFocusOut={true}
+                    onGetErrorMessage={(value: string) => {
+                        return this.validateButtonLabel(value);
+                    }}
+                />
+                <Label>Color</Label>
+                <PickColor
+                    color={this.color}
+                    onChange={(color) => {
+                        this.color = color;
+                    }}
+                />
+                {this.routingComponents.map((component, index) => {
+                    return <React.Fragment key={index}>
+                        {component.render()}
+                    </React.Fragment>
+                })}
+                <DefaultButton text="Add routing" onClick={() => {
+                    this.addActionComponent(false, undefined);
+                    this.forceUpdate();
+                }} allowDisabledFocus />
+                {this.button.id != -1 &&
+                    <DefaultButton text="Delete" style={{ backgroundColor: '#e61c1c' }} onClick={() => {
+                        fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
+                            const json = await res.json();
+                            if (json.result) {
+                                this.props.onDelete(this.button.id);
+                                this.setState({ modalKey: getRandomKey(), isOpen: false });
+                            }
+                        });
+                    }} allowDisabledFocus />}
             </InputModal>
         );
     }

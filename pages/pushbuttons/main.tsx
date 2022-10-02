@@ -71,6 +71,8 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
         }
 
         this.optionsOutput = [];
+        this.optionsInput = [];
+
         for (const input of props.videohub.outputs) {
             this.optionsOutput.push({
                 key: input.id,
@@ -78,7 +80,6 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
             });
         }
 
-        this.optionsInput = [];
         for (const input of props.videohub.inputs) {
             this.optionsInput.push({
                 key: input.id,
@@ -119,7 +120,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                         onClick={() => this.setState({ isOpen: true, modal: getRandomKey() })} />
 
                 </Stack>
-                <Stack>
+                <Stack.Item>
                     <DataTable
                         key={this.state.key}
                         controlcolumns={[
@@ -139,48 +140,47 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                         getData={() => {
                             return getItems(this.state.pushButtons);
                         }} />
+                </Stack.Item>
+                {this.state.isOpen &&
+                    <EditPushButtonModal
+                        key={this.state.modal}
+                        isOpen={this.state.isOpen}
+                        optionsInput={this.optionsInput}
+                        optionsOutput={this.optionsOutput}
+                        videohub={this.props.videohub}
+                        buttons={this.state.pushButtons}
+                        button={this.state.currentEdit}
+                        onConfirm={async (button: PushButton) => {
+                            fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
+                                const json = await res.json();
+                                const arr: PushButton[] = this.state.pushButtons.slice();
 
-                    {this.state.isOpen &&
-                        <EditPushButtonModal
-                            key={this.state.modal}
-                            isOpen={this.state.isOpen}
-                            optionsInput={this.optionsInput}
-                            optionsOutput={this.optionsOutput}
-                            videohub={this.props.videohub}
-                            buttons={this.state.pushButtons}
-                            button={this.state.currentEdit}
-                            onConfirm={async (button: PushButton) => {
-                                fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
-                                    const json = await res.json();
-                                    const arr: PushButton[] = this.state.pushButtons.slice();
-
-                                    if (button.id == -1) {
-                                        arr.push(json);
-                                    } else {
-                                        let found: boolean = false;
-                                        for (let i = 0; i < arr.length; i++) {
-                                            if (arr[i].id === button.id) {
-                                                arr[i] = button; // update
-                                                found = true;
-                                                break;
-                                            }
-                                        }
-
-                                        if (!found) {
-                                            throw Error("Couldn't find matching button.");
+                                if (button.id == -1) {
+                                    arr.push(json);
+                                } else {
+                                    let found: boolean = false;
+                                    for (let i = 0; i < arr.length; i++) {
+                                        if (arr[i].id === button.id) {
+                                            arr[i] = button; // update
+                                            found = true;
+                                            break;
                                         }
                                     }
 
-                                    this.setState({ pushButtons: arr, key: this.state.key + 1, });
-                                });
-                            }}
-                            onDelete={(id: number) => {
-                                let arr: PushButton[] = this.state.pushButtons.slice();
-                                arr = arr.filter(e => e.id != id);
+                                    if (!found) {
+                                        throw Error("Couldn't find matching button.");
+                                    }
+                                }
 
-                                this.setState({ pushButtons: arr, key: getRandomKey() });
-                            }} />}
-                </Stack>
+                                this.setState({ pushButtons: arr, key: this.state.key + 1, });
+                            });
+                        }}
+                        onDelete={(id: number) => {
+                            let arr: PushButton[] = this.state.pushButtons.slice();
+                            arr = arr.filter(e => e.id != id);
+
+                            this.setState({ pushButtons: arr, key: getRandomKey() });
+                        }} />}
             </VideohubPage>
         )
     }

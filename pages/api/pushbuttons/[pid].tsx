@@ -4,15 +4,15 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prisma from '../../../database/prisma';
 
-export function retrievePushButtonsServerSide(videohubId: number) {
-    return prisma.client.pushButton.findMany({
+export async function retrievePushButtonsServerSide(videohubId: number) {
+    return await prisma.client.pushButton.findMany({
         where: {
             videohub_id: videohubId,
         },
         include: {
             actions: true,
         }
-    }) as PrismaPromise<PushButton[]>;
+    }) as PushButton[];
 }
 
 export default async function handler(
@@ -35,9 +35,9 @@ export default async function handler(
     let e;
     switch (pid) {
         case "get": {
-            return await retrievePushButtonsServerSide(videohub_id).then(arr => {
-                res.status(200).json(arr);
-            });
+            const buttons: PushButton[] = await retrievePushButtonsServerSide(videohub_id);
+            res.status(200).json(buttons);
+            return;
         }
 
         case "update": {
