@@ -12,12 +12,12 @@ import { PushButton } from '../../components/interfaces/PushButton';
 import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import useId from '@mui/utils/useId';
 import PushButtonsList from '../pushbuttons/main';
-import PushButtonsView from '../../components/views/PushButtonsView';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
 import SelectVideohub from '../../components/buttons/SelectVideohub';
 import MediaQuery from 'react-responsive';
 import { desktopMinWidth } from '../../components/utils/styles';
 import videohubs from '../../backend/videohubs';
+import { PushButtons } from '../../components/views/PushButtonsView';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -37,16 +37,20 @@ async function retrieveVideohubs(): Promise<Videohub[]> {
   return (await fetch('/api/videohubs/get').then()).json();
 }
 
+async function retrievePushButtons(videohub: number): Promise<PushButton[]> {
+  return (await fetch('/api/pushbuttons/get', getPostHeader({ videohub_id: videohub })).then()).json();
+}
+
 export async function getServerSideProps(context: any) {
   context.res.setHeader(
     'Cache-Control',
     'public, s-maxage=60, stale-while-revalidate=120'
   )
 
-  const selected: Videohub | undefined = getVideohubFromQuery(context.query);
+  let selected: Videohub | undefined = getVideohubFromQuery(context.query);
   const hubs: Videohub[] = retrieveVideohubsServerSide();
+  let index: number = 0;
 
-  let index = -1;
   if (selected != undefined) {
     for (let i = 0; i < hubs.length; i++) {
       if (hubs[i].id === selected.id) {
@@ -54,12 +58,24 @@ export async function getServerSideProps(context: any) {
         break;
       }
     }
+  } else {
+    if (hubs.length != 0) {
+      selected = hubs[0];
+    }
+  }
+
+  let buttons: PushButton[];
+  if (selected != undefined) {
+    buttons = await retrievePushButtonsServerSide(selected.id);
+  } else {
+    buttons = [];
   }
 
   return {
     props: {
       videohubs: JSON.parse(JSON.stringify(hubs)),
       videohub: index,
+      pushbuttons: JSON.parse(JSON.stringify(buttons)),
     },
   }
 }
@@ -67,7 +83,6 @@ export async function getServerSideProps(context: any) {
 function getItems(videohub: Videohub): any[] {
   const cloned: any[] = [];
   for (const output of videohub.outputs) {
-    console.log(output.input_id)
     cloned.push({
       id: output.id,
       Output: output.label,
@@ -82,20 +97,23 @@ function getItems(videohub: Videohub): any[] {
 interface VideohubViewProps {
   videohubs: Videohub[],
   videohub: number,
+  pushbuttons: PushButton[],
 }
 
-class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, pushbuttonViewKey?: number }> {
+class VideohubView extends React.Component<VideohubViewProps, { tableKey: number, videohubs: Videohub[], currentVideohub?: Videohub, pushbuttons: PushButton[], currentEdit?: Output, menuItems: IContextualMenuItem[], addModalKey?: number, pushbuttonViewKey?: number }> {
   private mounted: boolean = false;
   constructor(props: VideohubViewProps) {
     super(props);
 
     this.generateMenuItems = this.generateMenuItems.bind(this);
+    let index: number = Math.min(props.videohub, props.videohubs.length);
     this.state = {
       tableKey: getRandomKey(),
       pushbuttonViewKey: getRandomKey(),
-      currentVideohub: props.videohub == -1 ? props.videohubs.length > 0 ? props.videohubs[0] : undefined : props.videohubs[props.videohub],
+      currentVideohub: index < props.videohubs.length ? props.videohubs[index] : undefined,
       videohubs: props.videohubs,
       menuItems: this.generateMenuItems(props.videohubs),
+      pushbuttons: this.props.pushbuttons,
     };
 
     this.onClickEdit = this.onClickEdit.bind(this);
@@ -202,7 +220,9 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
   }
 
   onSelectVideohub(hub: Videohub) {
-    this.setState({ currentVideohub: hub, tableKey: getRandomKey(), pushbuttonViewKey: getRandomKey() });
+    retrievePushButtons(hub.id).then(pushbuttons => {
+      this.setState({ currentVideohub: hub, tableKey: getRandomKey(), pushbuttonViewKey: getRandomKey(), pushbuttons: pushbuttons });
+    });
   }
 
   // Here we use a Stack to simulate a command bar.
@@ -246,13 +266,14 @@ class VideohubView extends React.Component<VideohubViewProps, { tableKey: number
               }} />
           </MediaQuery>
         </Stack>
+        <PushButtons
+          key={this.state.pushbuttonViewKey}
+          pushbuttons={this.state.pushbuttons}
+          videohub={this.state.currentVideohub}
+          onRoutingUpdated={() => {
+            this.retrieveData(undefined);
+          }} />
         <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh' }}>
-          <PushButtonsView
-            key={this.state.pushbuttonViewKey}
-            videohub={this.state.currentVideohub}
-            onRoutingUpdated={() => {
-              this.retrieveData(undefined);
-            }} />
         </Stack>
       </VideohubPage>
     );
