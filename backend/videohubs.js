@@ -283,9 +283,15 @@ class Output {
         const promise = new Promise((resolve) => {
             _resolve = resolve;
             setTimeout(() => {
+                if (!request.result) {
+                    videohub.info(`Request timed out: ${this.id} ${input_id}`);
+                    resolve(request.result, "Request timed out.");
+                } else {
+                    resolve(undefined);
+                }
+
                 videohub.removeRequest(request);
-                resolve(request.result ? undefined : "Request timed out.");
-                videohub.info(`Request timed out: ${this.id} ${input_id}`);
+
             }, REQUEST_TIMEOUT);
         });
 
@@ -683,7 +689,7 @@ class Videohub {
 
         this.requestQueque = this.requestQueque.filter(req => {
             if (req.output_id == output_id && req.input_id == input_id) {
-                request.onSuccess.call(); // remove request and call success
+                request.onSuccess(); // remove request and call success
                 return false;
             }
 
@@ -802,7 +808,7 @@ module.exports = {
             throw Error("Client not found: " + request.videohub_id);
         }
 
-        videohubClient.info("Request: "+request.output_id+" "+request.input_id)
+        videohubClient.info("Request: " + request.output_id + " " + request.input_id)
         const output = videohubClient.getOutput(request.output_id);
         return output.sendRoutingUpdateRequest(videohubClient, request.input_id);
     }
