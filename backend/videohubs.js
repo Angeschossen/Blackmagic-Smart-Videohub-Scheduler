@@ -248,7 +248,7 @@ class Output {
     }
 
     updateRouting(videohub, input_id) {
-        videohub.info(`Updating routing: ${input_id} -> ${this.id}`);
+        videohub.info(`Updating routing: ${this.id} ${input_id}`);
         this.input_id = input_id;
     }
 
@@ -364,7 +364,7 @@ class Videohub {
     removeRequest(request) {
         let index;
         for (let i = 0; i < this.requestQueque.length; i++) {
-            if (this.requestQueque === request) {
+            if (this.requestQueque[i] === request) {
                 index = i;
                 break;
             }
@@ -372,6 +372,7 @@ class Videohub {
 
         if (index != undefined) {
             this.requestQueque.splice(index, 1);
+            this.info(`Request removed: ${request.output_id} ${request.input_id}`);
         }
     }
 
@@ -644,12 +645,13 @@ class Videohub {
             }
 
             case PROTOCOL_ACKNOWLEDGED: {
+                /*
                 if (this.requestQueque.length == 0) {
                     throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
                 }
 
                 const request = this.requestQueque.shift();
-                request.onSuccess.call();
+                request.onSuccess.call(); */
                 return 1;
             }
 
@@ -675,6 +677,16 @@ class Videohub {
     async updateRouting(output_id, input_id) {
         const output = this.getOutput(output_id);
         output.updateRouting(this, input_id);
+
+        this.requestQueque = this.requestQueque.filter(req => {
+            if (req.output_id == output_id && req.input_id == input_id) {
+                request.onSuccess.call(); // remove request and call success
+                return false;
+            }
+
+            return true;
+        });
+
         await output.save(this);
     }
 
