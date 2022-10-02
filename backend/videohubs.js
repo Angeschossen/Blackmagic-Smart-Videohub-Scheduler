@@ -234,7 +234,7 @@ class InputChangeRequest {
 
     send(videohub) {
         const send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}\n${this.output_id} ${this.input_id}\n\n`
-        //videohub.info(`Sending routing update: ${send}`);
+        videohub.info(`Sending routing update: ${send}`);
         videohub.client.write(send);
         videohub.requestQueque.push(this);
         videohub.info("Routing update sent.");
@@ -253,12 +253,12 @@ class Output {
     }
 
     sendRoutingUpdateRequest(videohub, input_id) {
-        videohub.info(`Sending routing update: ${this.id} ${input_id}`);
-
         // prepare
         let _resolve;
         let request;
         request = new InputChangeRequest(this.id, input_id, () => {
+            videohub.info(`Request was successful: ${this.id} ${input_id}`);
+
             this.updateRouting(videohub, input_id);
             this.save(videohub);
             request.result = true;
@@ -285,6 +285,7 @@ class Output {
             setTimeout(() => {
                 videohub.removeRequest(request);
                 resolve(request.result ? undefined : "Request timed out.");
+                videohub.info(`Request timed out: ${this.id} ${input_id}`);
             }, REQUEST_TIMEOUT);
         });
 
