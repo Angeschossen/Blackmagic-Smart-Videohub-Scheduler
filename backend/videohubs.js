@@ -801,6 +801,7 @@ module.exports = {
             throw Error("Client not found: " + request.videohub_id);
         }
 
+        videohubClient.info("Request: "+request.output_id+" "+request.input_id)
         const output = videohubClient.getOutput(request.output_id);
         return output.sendRoutingUpdateRequest(videohubClient, request.input_id);
     }
