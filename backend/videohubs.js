@@ -233,6 +233,8 @@ class InputChangeRequest {
     }
 
     ack(){
+        console.log("ACK CAlled");
+        console.log(this.onSuccess)
         this.onSuccess();
     }
 
