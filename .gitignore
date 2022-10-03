@@ -31,6 +31,7 @@ package-lock.json
 
 # settings
 .env
+.env.local
 
 # misc
 .DS_Store
