@@ -161,6 +161,7 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
                 event_end = new Date(event_start.getTime() + event_duration);
             } else {
                 startIndex = 0;
+
             }
 
             for (let i = startIndex; i < weeks; i++) {
@@ -169,15 +170,15 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
                 eventFinal.start = event_start;
                 eventFinal.end = event_end;
 
-                event_start = new Date(eventFinal.start);
-                event_end = new Date(eventFinal.end);
-                event_start.setDate(event_start.getDate() + 7);
-                event_end.setDate(event_end.getDate() + 7);
-
                 // re check time span
                 if (event_start <= date_start && event_end >= date_end || ((event_start >= date_start && event_start <= date_end) && (event_end <= date_end && event_end >= date_start))) {
                     arr.push(eventFinal);
                 }
+
+                event_start = new Date(eventFinal.start);
+                event_end = new Date(eventFinal.end);
+                event_start.setDate(event_start.getDate() + 7);
+                event_end.setDate(event_end.getDate() + 7);
 
                 /*
                 if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
@@ -541,13 +542,13 @@ class Videohub {
 
             const input = this.data.inputs[shortest_id];
             output.sendRoutingUpdateRequest(this, shortest_id).then(async result => {
-                const routing = `input ${input.label} to output ${output.label}.`;
+                const routing = `Input ${input.label} to output ${output.label}.`;
 
                 if (result != undefined) {
                     this.info(`Scheduled routing update failed. Input ${input.id} to output ${output.id}`);
-                    await this.logActivity(`Scheduled routing update failed: ${routing}`, ICON_ERROR);
+                    await this.logActivity(`Scheduled routing update failed. ${routing}`, ICON_ERROR);
                 } else {
-                    await this.logActivity(`Scheduled routing update was successful: ${routing}`, ICON_SUCCESS);
+                    await this.logActivity(`Scheduled routing update was successful. ${routing}`, ICON_SUCCESS);
                 }
             });
         }

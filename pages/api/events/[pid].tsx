@@ -85,6 +85,7 @@ export default async function handler(
             }
 
             const id: number = body.id;
+            const repeat:boolean = event.repeat_every_week===true;
             if (id === -1) {
                 e = prisma.client.event.create({
                     data: {
@@ -94,7 +95,7 @@ export default async function handler(
                         end: date_end,
                         videohub_id: videohub_id,
 
-                        repeat_every_week: event.repeat_every_week,
+                        repeat_every_week: repeat,
                         day_of_week: date_start.getDay(),
                     }
                 });
@@ -108,7 +109,7 @@ export default async function handler(
                         input_id: event.input_id,
                         start: date_start,
                         end: date_end,
-                        repeat_every_week: event.repeat_every_week,
+                        repeat_every_week: repeat,
                     }
                 });
             }
