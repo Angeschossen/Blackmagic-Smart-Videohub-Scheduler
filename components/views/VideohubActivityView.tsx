@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ActivityItem, Icon, Label, Link, mergeStyleSets, Stack, Text } from '@fluentui/react';
+import { ActivityItem, Icon, Link, mergeStyleSets, Stack, Text } from '@fluentui/react';
 import { VideohubActivity } from '../interfaces/Videohub';
 import Router from 'next/router';
 import { videohubPageStyle } from '../videohub/VideohubPage';
@@ -14,6 +14,7 @@ const classNames = mergeStyleSets({
 });
 
 export const VideohubActivityView = (p: { activityItems: VideohubActivity[] }) => {
+
   return (
     <Stack style={videohubPageStyle}>
       <h1>Recent Activity of Videohubs</h1>

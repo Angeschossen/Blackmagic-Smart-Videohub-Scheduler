@@ -3,7 +3,7 @@ import { render } from "react-dom"
 import { Videohub } from "./interfaces/Videohub"
 
 interface InputProps {
-    videohub?: Videohub
+    videohub?: Videohub,
 }
 
 interface MessageBarProps {

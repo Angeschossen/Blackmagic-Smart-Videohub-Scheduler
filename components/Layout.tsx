@@ -41,7 +41,7 @@ const Layout = (a: LayoutProps) => {
       {ready ?
         <Stack>
           <Navigation />
-          <Stack styles={isDekstop ? StackStylesDesktop:StackStylesMobile}>
+          <Stack styles={isDekstop ? StackStylesDesktop : StackStylesMobile}>
             {a.children}
           </Stack>
         </Stack>
