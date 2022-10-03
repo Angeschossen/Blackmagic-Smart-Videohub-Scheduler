@@ -59,58 +59,68 @@ export const PushButtons = (props: InputProps) => {
                     }}
                 />
             </Stack>
+            {props.videohub != undefined && 
+            <>
             <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
                 {getRequestStatus()}
             </Stack>
-            <Stack horizontalAlign={isDekstop ? "start":"center"} wrap horizontal tokens={stackTokens}>
-                {props.pushbuttons.map((button, key) => {
-                    return (
-                        <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
-                            onClick={async () => {
-                                if (props.videohub == undefined || (currentRequest != undefined && !currentRequest.success)) {
-                                    return;
-                                }
+            <Stack horizontalAlign={isDekstop ? "start" : "center"} wrap horizontal tokens={stackTokens}>
+                    {props.pushbuttons.map((button, key) => {
+                        return (
+                            <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
+                                onClick={async () => {
+                                    if (props.videohub == undefined || (currentRequest != undefined && !currentRequest.success)) {
+                                        return;
+                                    }
 
-                                let err;
-                                let request: RoutingRequest | undefined;
-                                for (const action of button.actions) {
-                                    request = {
-                                        videohub_id: props.videohub.id,
-                                        output_id: action.output_id,
-                                        input_id: action.input_id,
-                                        error: undefined,
-                                        success: false,
-                                    };
+                                    let err;
+                                    let request: RoutingRequest | undefined;
+                                    for (const action of button.actions) {
+                                        request = {
+                                            videohub_id: props.videohub.id,
+                                            output_id: action.output_id,
+                                            input_id: action.input_id,
+                                            error: undefined,
+                                            success: false,
+                                        };
 
-                                    setCurrentRequest(request);
-                                    const json = await (await fetch('/api/videohubs/routing', getPostHeader(request))).json();
-                                    err = json.result;
-                                    if (err != undefined) {
-                                        request.error = `Error: ${err} Action: Route input: ${request.input_id} to output: ${request.output_id}`;
                                         setCurrentRequest(request);
-                                        break;
-                                    } else {
-                                        request.success = true;
-                                    }
-                                }
+                                        const json = await (await fetch('/api/videohubs/routing', getPostHeader(request))).json();
+                                        err = json.result;
 
-                                if (err == null) {
-                                    setCurrentRequest(request);
-                                    setStatusKey(getRandomKey());
-                                    if (props.onRoutingUpdated != undefined) {
-                                        props.onRoutingUpdated();
-                                    }
-                                }
+                                        let br = false;
+                                        if (err != undefined) {
+                                            request.error = `Error: ${err} Action: Input ${props.videohub.inputs[request.input_id].label} to output ${props.videohub.outputs[request.output_id].label}.`;
+                                            br = true;
+                                        } else {
+                                            request.success = true;
+                                        }
 
-                                setTimeout(() => {
-                                    setCurrentRequest(undefined);
-                                }, 3500);
-                            }}>
-                            {button.label}
-                        </CompoundButton>
-                    );
-                })}
-            </Stack>
+                                        setCurrentRequest(request);
+                                        setStatusKey(getRandomKey());
+
+                                        if (br) {
+                                            break;
+                                        }
+                                    }
+
+                                    if (err == null) {
+                                        setCurrentRequest(request);
+                                        setStatusKey(getRandomKey());
+                                        if (props.onRoutingUpdated != undefined) {
+                                            props.onRoutingUpdated();
+                                        }
+                                    }
+
+                                    setTimeout(() => {
+                                        setCurrentRequest(undefined);
+                                    }, 3500);
+                                }}>
+                                {button.label}
+                            </CompoundButton>
+                        );
+                    })}
+                </Stack></>}
         </Stack>
     );
 

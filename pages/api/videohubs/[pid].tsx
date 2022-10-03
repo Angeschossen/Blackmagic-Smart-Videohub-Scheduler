@@ -57,7 +57,6 @@ export default async function handler(
 
             const request = req.body as RoutingRequest;
             await sendRoutingUpdate(request).then((result: string | undefined) => {
-                console.log("Routing res: " + result);
                 res.status(200).json({ result: result });
             });
 
