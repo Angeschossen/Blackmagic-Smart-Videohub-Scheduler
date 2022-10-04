@@ -35,7 +35,6 @@ export const PushButtons = (props: InputProps) => {
             return <BarMessage key={statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
         } else {
             if (currentRequest.error == undefined) {
-                const request: RoutingRequest = currentRequest;
                 return <ProgressIndicator key={statusKey} label={"Waiting for Response."} description="Please wait until the videohub acknowledged the change." />;
             } else {
                 return <BarMessage key={statusKey} type={MessageBarType.error} text={currentRequest.error} />;
