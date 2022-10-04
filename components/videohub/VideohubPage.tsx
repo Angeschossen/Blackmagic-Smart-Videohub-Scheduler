@@ -1,4 +1,5 @@
 import { Stack } from "@fluentui/react";
+import Login from "../auth/Login";
 import { Videohub } from "../interfaces/Videohub";
 import { VideohubFooter } from "../VideohubFooter"
 
@@ -12,9 +13,12 @@ export const videohubPageStyle = { paddingBottom: '1vh', paddingTop: '1vh', padd
 export const VideohubPage = (p: InputProps) => {
     return (
         <Stack>
-            <Stack.Item style={{justifyContent: 'flex-end',right: 0}}>
+            <Stack.Item style={{ justifyContent: 'flex-end', right: 0 }}>
                 <VideohubFooter videohub={p.videohub} />
             </Stack.Item>
+            <Stack horizontal horizontalAlign="end">
+                <Login></Login>
+            </Stack>
             <Stack style={videohubPageStyle}>
                 {p.children}
             </Stack>

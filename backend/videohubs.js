@@ -1,5 +1,5 @@
 const net = require('net');
-const prisma = require('../database/prismadb');
+const prisma = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 
 const ICON_ERROR = "Error";

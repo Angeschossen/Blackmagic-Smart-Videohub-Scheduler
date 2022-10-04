@@ -60,7 +60,7 @@ export async function getServerSideProps(context: any) {
   return {
     props: {
       videohubs: JSON.parse(JSON.stringify(hubs)),
-      videohub: selected?.id,
+      videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),
     } as VideohubViewProps,
   }
