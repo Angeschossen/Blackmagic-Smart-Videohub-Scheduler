@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../database/prisma';
+import prismadb from '../../../database/prismadb';
 import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
 
@@ -34,7 +34,7 @@ export default async function handler(
             //console.log("Checking: End: " + date_check_end)
 
             const event: OutputEvent = body;
-            if (!await prisma.client.event.findMany({
+            if (!await prismadb.event.findMany({
                 where: {
                     AND: [
                         {
@@ -87,7 +87,7 @@ export default async function handler(
             const id: number = body.id;
             const repeat:boolean = event.repeat_every_week===true;
             if (id === -1) {
-                e = prisma.client.event.create({
+                e = prismadb.event.create({
                     data: {
                         output_id: event.output_id,
                         input_id: event.input_id,
@@ -100,7 +100,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prisma.client.event.update({
+                e = prismadb.event.update({
                     where: {
                         id: id,
                     },
@@ -119,7 +119,7 @@ export default async function handler(
 
         case "delete": {
             const id: number = body.id;
-            e = prisma.client.event.delete({
+            e = prismadb.event.delete({
                 where: {
                     id: id,
                 }

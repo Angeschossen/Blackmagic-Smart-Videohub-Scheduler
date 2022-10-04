@@ -2,10 +2,10 @@ import { ColumnActionsMode } from '@fluentui/react';
 import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
-import prisma from '../../../database/prisma';
+import prismadb from '../../../database/prismadb';
 
 export async function retrievePushButtonsServerSide(videohubId: number) {
-    return await prisma.client.pushButton.findMany({
+    return await prismadb.pushButton.findMany({
         where: {
             videohub_id: videohubId,
         },
@@ -43,7 +43,7 @@ export default async function handler(
         case "update": {
             let pushButton: PushButton = body;
             if (pushButton.id == -1) { // creare
-                await prisma.client.pushButton.create({
+                await prismadb.pushButton.create({
                     data: {
                         videohub_id: videohub_id,
                         label: pushButton.label,
@@ -62,7 +62,7 @@ export default async function handler(
                             output_id: action.output_id,
                         } as PushButtonAction
 
-                        await prisma.client.pushButtonAction.create({
+                        await prismadb.pushButtonAction.create({
                             data: create
                         }).then(res => {
                             arr.push(res as PushbuttonAction);
@@ -74,7 +74,7 @@ export default async function handler(
                 });
 
             } else {
-                await prisma.client.pushButton.update({
+                await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
@@ -87,7 +87,7 @@ export default async function handler(
                     result.actions = [];
 
                     for (const action of pushButton.actions) {
-                        await prisma.client.pushButtonAction.upsert({
+                        await prismadb.pushButtonAction.upsert({
                             where: {
                                 id: action.id,
                             },
@@ -120,13 +120,13 @@ export default async function handler(
                 return;
             }
 
-            await prisma.client.pushButtonAction.deleteMany({
+            await prismadb.pushButtonAction.deleteMany({
                 where: {
                     pushbutton_id: id,
                     videohub_id: videohub_id,
                 }
             }).then(async res => {
-                await prisma.client.pushButton.delete({
+                await prismadb.pushButton.delete({
                     where: {
                         id: id,
                     }

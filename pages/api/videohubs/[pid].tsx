@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
 import * as videohubs from '../../../backend/videohubs'
 import { sendRoutingUpdate } from '../../../backend/videohubs';
-import prisma from '../../../database/prisma';
+import prismadb from '../../../database/prismadb';
 import { time } from 'console';
 
 export function retrieveVideohubsServerSide() {
@@ -20,7 +20,7 @@ export function getVideohubFromQuery(query: any): Videohub {
 }
 
 export async function getVideohubActivityServerSide() {
-    return await prisma.client.videohubActivity.findMany({
+    return await prismadb.videohubActivity.findMany({
         orderBy: [
             {
                 time: 'desc',
@@ -71,7 +71,7 @@ export default async function handler(
 
             const videohub: Videohub = req.body as Videohub;
             if (videohub.id == -1) {
-                e = prisma.client.videohub.create({
+                e = prismadb.videohub.create({
                     data: {
                         name: videohub.name,
                         ip: videohub.ip,
@@ -79,7 +79,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prisma.client.videohub.update({
+                e = prismadb.videohub.update({
                     where: {
                         id: videohub.id,
                     },
