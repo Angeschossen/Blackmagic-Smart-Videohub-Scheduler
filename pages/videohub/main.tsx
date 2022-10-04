@@ -112,7 +112,6 @@ export const VideohubView = (props: VideohubViewProps) => {
   }
 
   const isDekstop = useViewType();
-  const { data: session } = useSession();
   const [videohubData, setVideohubData] = useState(buildVideohubData(props));
   let retrieveTimeout: NodeJS.Timeout | undefined;
 
@@ -213,33 +212,34 @@ export const VideohubView = (props: VideohubViewProps) => {
       {isDekstop &&
         <>
           <h1>Schedule</h1>
-          {session ? <DataTable
-            key={videohubData.tableKey}
-            controlcolumns={[
-              {
-                key: "edit",
-                onClick(_event, item) {
-                  if (videohubData.currentVideohub == undefined) {
-                    throw Error("Videohub is undefined");
-                  }
+          {videohubData?.currentVideohub?.inputs.length != 0 ?
+            <DataTable
+              key={videohubData.tableKey}
+              controlcolumns={[
+                {
+                  key: "edit",
+                  onClick(_event, item) {
+                    if (videohubData.currentVideohub == undefined) {
+                      throw Error("Videohub is undefined");
+                    }
 
-                  Router.push({
-                    pathname: './events',
-                    query: { videohub: videohubData.currentVideohub.id, output: item.id },
-                  });
-                },
-                text: "Schedule"
-              }
-            ]}
-            getData={() => {
-              console.log("Get data");
-              if (videohubData.currentVideohub === undefined) {
-                return undefined;
-              }
+                    Router.push({
+                      pathname: './events',
+                      query: { videohub: videohubData.currentVideohub.id, output: item.id },
+                    });
+                  },
+                  text: "Schedule"
+                }
+              ]}
+              getData={() => {
+                console.log("Get data");
+                if (videohubData.currentVideohub === undefined) {
+                  return undefined;
+                }
 
-              return getItems(videohubData.currentVideohub as Videohub);
-            }} /> :
-            <p>You're not logged in or you're missing permission to schedule outputs.</p>}
+                return getItems(videohubData.currentVideohub as Videohub);
+              }} /> :
+            <p>Videohub must have been online for at least one time.</p>}
         </>}
       <PushButtons
         key={videohubData.pushButtonsKey}
