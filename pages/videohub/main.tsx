@@ -11,7 +11,6 @@ import { VideohubPage } from '../../components/videohub/VideohubPage';
 import SelectVideohub from '../../components/buttons/SelectVideohub';
 import { PushButtons } from '../../components/views/PushButtonsView';
 import { useViewType } from '../../components/views/DesktopView';
-import { useSession } from 'next-auth/react';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -117,7 +116,7 @@ export const VideohubView = (props: VideohubViewProps) => {
 
   useEffect(() => {
     scheduleRetrieveData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
     const menuItems: IContextualMenuItem[] = [];

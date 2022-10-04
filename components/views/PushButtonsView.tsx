@@ -1,16 +1,13 @@
-import { CommandBarButton, CompoundButton, DefaultButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
+import { CompoundButton, DefaultButton, IIconProps, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
 import React, { useState } from "react";
 import { PushButton } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../interfaces/Videohub";
 import { getPostHeader } from "../utils/fetchutils";
-import { commandBarItemStyles, desktopMinWidth, stackStyles, stackTokens } from "../utils/styles";
+import {stackTokens } from "../utils/styles";
 import { BarMessage } from "../common/Messages";
 import Router from "next/router";
 import { getRandomKey } from "../utils/commonutils";
-import { threadId } from "worker_threads";
-import { useMediaQuery } from "react-responsive";
 import { useViewType } from "./DesktopView";
-import { useSession } from "next-auth/react";
 
 const addIcon: IIconProps = { iconName: 'Add' };
 
@@ -24,7 +21,6 @@ export const PushButtons = (props: InputProps) => {
     const isDekstop = useViewType();
     const [statusKey, setStatusKey] = useState<string | number>();
     const [currentRequest, setCurrentRequest] = useState<RoutingRequest>();
-    const { data: session } = useSession();
 
     const getRequestStatus = () => {
         if (currentRequest == undefined || props.videohub == undefined) {
@@ -46,7 +42,7 @@ export const PushButtons = (props: InputProps) => {
         <Stack>
             <Stack horizontalAlign="start">
                 <h1>Push Buttons</h1>
-                {session && <DefaultButton
+                <DefaultButton
                     text="Edit"
                     onClick={() => {
                         if (props.videohub == undefined) {
@@ -58,7 +54,7 @@ export const PushButtons = (props: InputProps) => {
                             query: { videohub: props.videohub.id },
                         });
                     }}
-                />}
+                />
             </Stack>
             {props.videohub != undefined &&
                 <>
