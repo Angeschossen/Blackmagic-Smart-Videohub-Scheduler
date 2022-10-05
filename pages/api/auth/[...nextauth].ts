@@ -18,4 +18,13 @@ export default NextAuth({
       clientSecret: process.env.GOOGLE_SECRET || "",
     }),
   ],
+  callbacks: {
+    async session({ session, token, user }) {
+      if (session?.user != undefined) {
+        const obj: any = session.user;
+        obj.role = user.role; // Add role value to user object so it is passed along with session
+      }
+      return session;
+    }
+  },
 })
