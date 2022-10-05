@@ -13,11 +13,11 @@ datasource db {
 
 model Event {
   id          Int      @id @default(autoincrement())
-  videohub    Videohub @relation(fields: [videohub_id], references: [id])
+  videohub    Videohub @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id Int
-  output      Output   @relation(fields: [videohub_id, output_id], references: [videohub_id, id])
+  output      Output   @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
   output_id   Int
-  input       Input    @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
+  input       Input    @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id    Int
   start       DateTime
   end         DateTime
@@ -45,48 +45,48 @@ model Videohub {
 
 model Input {
   id                Int
-  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub          Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id       Int
   label             String
   outputs           Output[]
   events            Event[]
   pushbuttonactions PushButtonAction[]
 
-  @@id([videohub_id, id], name: "videohubInput")
+  @@id([videohub_id, id], name: "videohub_input")
   @@map("inputs")
 }
 
 model Output {
   id                Int
-  videohub          Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub          Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id       Int
-  input             Input?             @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
+  input             Input?             @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id          Int?
   label             String
   Event             Event[]
   pushbuttonactions PushButtonAction[]
 
-  @@id([videohub_id, id], name: "videohubOutput")
+  @@id([videohub_id, id], name: "videohub_output")
   @@map("outputs")
 }
 
 model PushButtonAction {
   id            Int        @id @default(autoincrement())
-  videohub      Videohub   @relation(fields: [videohub_id], references: [id])
+  videohub      Videohub   @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id   Int
-  output        Output     @relation(fields: [videohub_id, output_id], references: [videohub_id, id])
+  output        Output     @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
   output_id     Int
-  input         Input      @relation(fields: [videohub_id, input_id], references: [videohub_id, id])
+  input         Input      @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id      Int
-  pushbutton    PushButton @relation(fields: [pushbutton_id], references: [id])
+  pushbutton    PushButton @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
   pushbutton_id Int
 
-  @@map("pushbuttonactions")
+  @@map("pushbuttons_actions")
 }
 
 model PushButton {
   id          Int                @id @default(autoincrement())
-  videohub    Videohub           @relation(fields: [videohub_id], references: [id])
+  videohub    Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id Int
   label       String             @unique
   actions     PushButtonAction[]
@@ -97,14 +97,14 @@ model PushButton {
 
 model VideohubActivity {
   id          Int      @id @default(autoincrement())
-  videohub    Videohub @relation(fields: [videohub_id], references: [id])
+  videohub    Videohub @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id Int
   title       String
   description String?  @db.MediumText
   icon        String
   time        DateTime
 
-  @@map("videohubactivities")
+  @@map("videohub_activities")
 }
 
 // Accounts
@@ -140,6 +140,8 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
+  role          Role      @relation(fields: [role_id], references: [id])
+  role_id       Int
   name          String?
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
@@ -156,10 +158,12 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-  @@map("verificationtokens")
+  @@map("verification_tokens")
 }
 
-
 model Role {
-  
+  id    Int    @id @default(autoincrement())
+  users User[]
+
+  @@map("roles")
 }

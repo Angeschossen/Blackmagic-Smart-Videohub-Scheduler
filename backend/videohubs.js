@@ -208,7 +208,7 @@ class Input {
     async save(videohub) {
         await prisma.client.input.upsert({
             where: {
-                videohubInput: {
+                videohub_input: {
                     videohub_id: videohub.data.id,
                     id: this.id, // prisma requires id to start at 1
                 }
@@ -308,7 +308,7 @@ class Output {
         const input_id = this.input_id == undefined ? null : this.input_id;
         await prisma.client.output.upsert({
             where: {
-                videohubOutput: {
+                videohub_output: {
                     videohub_id: vid,
                     id: this.id, // prisma requires id to start at 1
                 }
