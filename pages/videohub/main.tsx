@@ -118,7 +118,7 @@ export const VideohubView = (props: VideohubViewProps) => {
 
   useEffect(() => {
     scheduleRetrieveData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
     const menuItems: IContextualMenuItem[] = [];
@@ -239,7 +239,7 @@ export const VideohubView = (props: VideohubViewProps) => {
 
               return getItems(videohubData.currentVideohub as Videohub);
             }} /> :
-            <p>You're not logged in or you're missing permission to schedule outputs.</p>}
+            <p>You are not logged in or you are missing permission to schedule outputs.</p>}
         </>}
       <PushButtons
         key={videohubData.pushButtonsKey}

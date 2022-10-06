@@ -1,7 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import prisma from '../../../database/prisma';
+import CredentialsProvider from "next-auth/providers/credentials"
+import prismadb from '../../../database/prismadb';
 
 // import EmailProvider from "next-auth/providers/email"
 // import AppleProvider from "next-auth/providers/apple"
@@ -9,23 +9,87 @@ import prisma from '../../../database/prisma';
 // For more information on each option (and a full list of options) go to
 // https://next-auth.js.org/configuration/options
 export default NextAuth({
-  adapter: PrismaAdapter(prisma.client),
+  session: {
+    strategy: 'jwt'
+  },
+  adapter: PrismaAdapter(prismadb),
 
   // https://next-auth.js.org/configuration/providers
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID || "",
-      clientSecret: process.env.GOOGLE_SECRET || "",
+    CredentialsProvider({
+      // The name to display on the sign in form (e.g. 'Sign in with...')
+      name: 'Credentials',
+      // The credentials is used to generate a suitable form on the sign in page.
+      // You can specify whatever fields you are expecting to be submitted.
+      // e.g. domain, username, password, 2FA token, etc.
+      // You can pass any HTML attribute to the <input> tag through the object.
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials: any, req: any) {
+        console.log("Authorize")
+        // You need to provide your own logic here that takes the credentials
+        // submitted and returns either a object representing a user or value
+        // that is false/null if the credentials are invalid.
+        // e.g. return { id: 1, name: 'J Smith', email: 'jsmith@example.com' }
+        // You can also use the `req` object to obtain additional parameters
+        // (i.e., the request IP address)
+
+        /*
+         const res = await fetch("/your/endpoint", {
+           method: 'POST',
+           body: JSON.stringify(credentials),
+           headers: { "Content-Type": "application/json" }
+         })
+         const user = await res.json()
+ 
+         // If no error and we have user data, return it
+         if (res.ok && user) {
+           return user
+         }
+         // Return null if user data could not be retrieved
+         return null */
+
+        const { username, password } = credentials as {
+          username: string,
+          password: string,
+        };
+
+        const credential = await prismadb.credential.findUnique({
+          where: {
+            username: username,
+          },
+          include: {
+            role: true,
+          }
+        });
+
+        if (credential != undefined && credential.password == password) {
+          const res = { id: credential.id, username: credential.username, role: credential.role };
+          return res;
+        }
+
+        return null;
+      }
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
-      if (session?.user != undefined) {
-        const obj: any = session.user;
-        obj.role = user.role; // Add role value to user object so it is passed along with session
+    async jwt({ token, user, account }: any) {
+      console.log(account);
+      // Persist the OAuth access_token and or the user id to the token right after signin
+      if (user) {
+        token.id = user.id;
       }
+
+      return token;
+    },
+
+    async session({ session, token }: any) {
+      // Send properties to the client, like an access_token and user id from a provider.
+      session.user.id = token.id
       return session;
-    }
+    },
   },
   secret: process.env.NEXTAUTH_URL,
 })

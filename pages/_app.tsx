@@ -5,7 +5,7 @@ import { initializeIcons } from '@fluentui/react';
 import React from 'react';
 import { Session } from 'next-auth';
 import { SessionProvider } from 'next-auth/react';
-import { LoginPage } from '../components/auth/Login';
+import { ProtectedPage } from '../components/common/ProtectedPage';
 
 export default function App({ Component, pageProps }: AppProps<{
   session: Session
@@ -14,12 +14,13 @@ export default function App({ Component, pageProps }: AppProps<{
     initializeIcons();
   }, []);
 
-  console.log("III: "+pageProps)
   return (
     <SessionProvider session={pageProps.session}>
+      <ProtectedPage>
         <Layout>
           <Component {...pageProps} />
-        </Layout> 
+        </Layout>
+      </ProtectedPage>
     </SessionProvider>
   )
 }

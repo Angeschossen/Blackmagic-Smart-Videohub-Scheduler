@@ -140,7 +140,7 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
-  role          Role?      @relation(fields: [role_id], references: [id])
+  role          Role?     @relation(fields: [role_id], references: [id])
   role_id       Int?
   name          String?
   email         String?   @unique
@@ -166,6 +166,7 @@ model Role {
   name        String
   users       User[]
   permissions RolePermission[]
+  Credential  Credential[]
 
   @@map("roles")
 }
@@ -177,4 +178,14 @@ model RolePermission {
 
   @@id([role_id, permission], name: "role_permissions")
   @@map("roles_permission")
+}
+
+model Credential {
+  id           Int     @id @default(autoincrement())
+  username     String  @unique /// @encrypted
+  usernameHash String? @unique @map("username_hash") /// @encryption:hash(username)
+  password     String /// @encrypted
+  role         Role?   @relation(fields: [role_id], references: [id])
+  role_id      Int?
+  @@map("credentials")
 }

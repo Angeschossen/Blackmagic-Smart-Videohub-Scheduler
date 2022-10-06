@@ -14,7 +14,6 @@ export const videohubPageStyle = { paddingBottom: '1vh', paddingTop: '1vh', padd
 export const VideohubPage = (p: InputProps) => {
 
     return (
-        <ProtectedPage>
             <Stack>
                 <Stack.Item style={{ justifyContent: 'flex-end', right: 0 }}>
                     <VideohubFooter videohub={p.videohub} />
@@ -26,6 +25,5 @@ export const VideohubPage = (p: InputProps) => {
                     {p.children}
                 </Stack>
             </Stack>
-        </ProtectedPage>
     )
 }
