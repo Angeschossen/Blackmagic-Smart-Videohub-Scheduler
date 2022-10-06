@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import EditVideohubModal from "../modals/EditVideohubModal";
 import { getRandomKey } from "../utils/commonutils";
 import { Videohub } from "../interfaces/Videohub";
-import { checkClientPermission } from "../auth/ClientAuthentication";
+import { useClientSession } from "../auth/ClientAuthentication";
 import Permissions from "../../backend/authentication/Permissions";
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
@@ -22,7 +22,7 @@ export const SelectVideohub = (props: InputProps) => {
         setModalKey(getRandomKey());
     }, [isOpen])
 
-    const canEdit = checkClientPermission(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
+    const canEdit = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
 
     function generateMenuItems(): IContextualMenuItem[] {
         const menuItems: IContextualMenuItem[] = [];

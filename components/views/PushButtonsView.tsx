@@ -11,7 +11,7 @@ import { threadId } from "worker_threads";
 import { useMediaQuery } from "react-responsive";
 import { useViewType } from "./DesktopView";
 import { useSession } from "next-auth/react";
-import { checkClientPermission } from "../auth/ClientAuthentication";
+import { useClientSession } from "../auth/ClientAuthentication";
 import Permissions from "../../backend/authentication/Permissions";
 
 const addIcon: IIconProps = { iconName: 'Add' };
@@ -43,11 +43,12 @@ export const PushButtons = (props: InputProps) => {
         }
     }
 
+    const canEdit:boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
     return (
         <Stack>
             <Stack horizontalAlign="start">
                 <h1>Push Buttons</h1>
-                {props.videohub != undefined && checkClientPermission(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT) && <DefaultButton
+                {canEdit && props.videohub != undefined && <DefaultButton
                     text="Edit"
                     onClick={() => {
                         if (props.videohub == undefined) {

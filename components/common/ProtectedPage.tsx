@@ -22,7 +22,7 @@ export const ProtectedPage = (props: InputProps) => {
     const sess: any = session;
     if (sess.user.permissions == undefined) {
         return (<Stack style={{ display: 'flex', justifyContent: "center", alignItems: "center", minHeight: '100vh' }}>
-            <h1>You haven't been verified yet.</h1>
+            <h1>You haven&apos;t been verified yet.</h1>
             <DefaultButton
                 onClick={() => signOut()}
             >Logout and try again.</DefaultButton>

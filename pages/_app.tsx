@@ -5,6 +5,7 @@ import { initializeIcons } from '@fluentui/react';
 import React from 'react';
 import { SessionProvider } from "next-auth/react"
 import { Session } from 'next-auth';
+import { ProtectedPage } from '../components/common/ProtectedPage';
 
 export default function App({ Component, pageProps }: AppProps<{
   session: Session
