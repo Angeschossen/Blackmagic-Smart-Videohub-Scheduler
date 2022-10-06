@@ -48,7 +48,7 @@ const Home = (p: InputProps) => {
           messageBarType={MessageBarType.info}
           isMultiline={false}
         >
-          You're logged in as {session?.user?.name}.
+          You're logged in as {session?.user?.name} ({session?.user?.email}).
         </MessageBar>
       </Stack>
       <VideohubActivityView activityItems={p.videohubActivities} />
