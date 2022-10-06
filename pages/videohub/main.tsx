@@ -12,7 +12,7 @@ import SelectVideohub from '../../components/buttons/SelectVideohub';
 import { PushButtons } from '../../components/views/PushButtonsView';
 import { useViewType } from '../../components/views/DesktopView';
 import { useSession } from 'next-auth/react';
-import { checkClientPermission } from '../../components/auth/ClientAuthentication';
+import { useClientSession } from '../../components/auth/ClientAuthentication';
 import Permissions from '../../backend/authentication/Permissions';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
@@ -201,8 +201,10 @@ export const VideohubView = (props: VideohubViewProps) => {
     retrievePushButtons(hub.id).then(pushbuttons => {
       setVideohubData(buildVideohubData({ videohubs: videohubData.videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
     });
-  }  
+  }
 
+  const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
+  
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
@@ -217,7 +219,7 @@ export const VideohubView = (props: VideohubViewProps) => {
           <h1>Schedule</h1>
           {session ? <DataTable
             key={videohubData.tableKey}
-            controlcolumns={checkClientPermission(Permissions.PERMISSION_VIDEOHUB_EDIT) ? [
+            controlcolumns={canEdit ? [
               {
                 key: "edit",
                 onClick(_event, item) {
@@ -232,7 +234,7 @@ export const VideohubView = (props: VideohubViewProps) => {
                 },
                 text: "Schedule"
               }
-            ]: []}
+            ] : []}
             getData={() => {
               console.log("Get data");
               if (videohubData.currentVideohub === undefined) {
