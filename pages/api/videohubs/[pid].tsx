@@ -3,8 +3,8 @@ import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/
 import * as videohubs from '../../../backend/videohubs'
 import { sendRoutingUpdate } from '../../../backend/videohubs';
 import prismadb from '../../../database/prismadb';
-import * as permissions from "../../../backend/permissions";
-import { checkPermission } from '../../../components/auth/Authentication';
+import * as permissions from "../../../backend/authentication/Permissions";
+import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
@@ -37,7 +37,7 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await checkPermission(req, res)) {
+    if (!await checkServerPermission(req, res)) {
         return;
     }
 
@@ -69,7 +69,7 @@ export default async function handler(
         }
 
         case "update": {
-            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_EDIT)) {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_EDIT)) {
                 return;
             }
 

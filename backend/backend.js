@@ -1,5 +1,5 @@
 const prismadb = require('../database/prismadb');
-const permissions = require('./permissions');
+const permissions = require('./authentication/Permissions');
 
 class Role {
     constructor(id, name, permissions) {

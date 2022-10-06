@@ -3,8 +3,8 @@ import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
-import * as permissions from "../../../backend/permissions";
-import { checkPermission } from '../../../components/auth/Authentication';
+import * as permissions from "../../../backend/authentication/Permissions";
+import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 
 export async function retrievePushButtonsServerSide(videohubId: number) {
     return await prismadb.pushButton.findMany({
@@ -21,7 +21,7 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await checkPermission(req, res)) {
+    if (!await checkServerPermission(req, res)) {
         return;
     }
 
@@ -47,7 +47,7 @@ export default async function handler(
         }
 
         case "update": {
-            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
                 return;
             }
 
@@ -124,10 +124,10 @@ export default async function handler(
         }
 
         case "delete": {
-            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
                 return;
             }
-            
+
             const id: number | undefined = body.id;
             if (id == undefined) {
                 res.status(405).json({ message: 'Button id required.' });

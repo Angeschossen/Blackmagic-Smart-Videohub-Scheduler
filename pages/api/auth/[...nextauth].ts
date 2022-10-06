@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
+import { getRoleById } from "../../../backend/backend";
 import prismadb from '../../../database/prismadb';
 
 // import EmailProvider from "next-auth/providers/email"
@@ -66,8 +67,8 @@ export default NextAuth({
       }
     }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID||"",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET||""
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
     }),
   ],
   callbacks: {
@@ -78,7 +79,16 @@ export default NextAuth({
       if (user) {
         //token.accessToken = account.access_token;
         token.id = user.id;
-        token.role_id = user.role_id;
+
+        const role_id = user.role_id;
+        if (role_id != undefined) {
+          const role = getRoleById(role_id);
+          if (role != undefined) {
+            token.permissions = Array.from(role.permissions);
+          }
+
+          token.role_id = role_id;
+        }
       }
 
       return token;
@@ -87,10 +97,10 @@ export default NextAuth({
     async session({ session, token, user }: any) {
       // Send properties to the client, like an access_token and user id from a provider.
       //session.accessToken = token.accessToken;
-      console.log("INITIAL");
-      console.log(token)
       session.user.id = token.id;
+      session.user.permissions = token.permissions;
       session.user.role_id = token.role_id;
+
       return session;
     },
   },

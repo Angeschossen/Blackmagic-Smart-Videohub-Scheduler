@@ -2,14 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prismadb';
 import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
-import { checkPermission } from '../../../components/auth/Authentication';
-import * as permissions from "../../../backend/permissions";
+import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import * as permissions from "../../../backend/authentication/Permissions";
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await checkPermission(req, res)) {
+    if (!await checkServerPermission(req, res)) {
         return;
     }
 
@@ -30,7 +30,7 @@ export default async function handler(
     let e;
     switch (pid) {
         case "update": {
-            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
                 return;
             }
 
@@ -128,7 +128,7 @@ export default async function handler(
         }
 
         case "delete": {
-            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
                 return;
             }
 
