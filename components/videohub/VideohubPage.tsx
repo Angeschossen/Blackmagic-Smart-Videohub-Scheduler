@@ -18,9 +18,6 @@ export const VideohubPage = (p: InputProps) => {
                 <Stack.Item style={{ justifyContent: 'flex-end', right: 0 }}>
                     <VideohubFooter videohub={p.videohub} />
                 </Stack.Item>
-                <Stack horizontal horizontalAlign="end">
-                    <Login></Login>
-                </Stack>
                 <Stack style={videohubPageStyle}>
                     {p.children}
                 </Stack>

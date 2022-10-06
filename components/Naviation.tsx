@@ -1,4 +1,5 @@
 import { INavLink, INavLinkGroup, INavStyles, Nav } from "@fluentui/react";
+import { signIn } from "next-auth/react";
 import React, { useState } from 'react';
 import MediaQuery, { useMediaQuery } from "react-responsive";
 import { desktopMinWidth } from "./utils/styles";
@@ -68,7 +69,7 @@ const links: INavLinkGroup[] = [
 
 export const Navigation = () => {
     const isDekstop = useViewType();
-    const [selectedKey, setSelectedKey] = useState<string|undefined>();
+    const [selectedKey, setSelectedKey] = useState<string | undefined>();
 
     return (
         < Nav

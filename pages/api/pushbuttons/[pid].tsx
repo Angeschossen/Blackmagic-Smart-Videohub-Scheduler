@@ -3,6 +3,7 @@ import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
+import { isLoggedIn } from '../videohubs/[pid]';
 
 export async function retrievePushButtonsServerSide(videohubId: number) {
     return await prismadb.pushButton.findMany({
@@ -19,6 +20,10 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
+    if (!await isLoggedIn(req, res)) {
+        return;
+    }
+
     if (req.method !== 'POST') {
         res.status(405).json({ message: 'POST required' });
         return;

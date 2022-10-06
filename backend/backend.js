@@ -12,6 +12,22 @@ class Role {
     }
 }
 
+async function createUser(user, role){
+    if (await prismadb.credential.findUnique({
+        where: {
+            username: user.username,
+        }
+    }) == undefined) {
+        await prismadb.credential.create({
+            data: {
+                username: user.username,
+                password: user.password,
+                role_id: role?.id,
+            }
+        });
+    }
+}
+
 module.exports = {
     PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE: "VIDEOHUB_OUTPUT_SCHEDULE",
     PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT: "VIDEOHUB_PUSHBUTTONS_EDIT",
@@ -57,21 +73,16 @@ module.exports = {
             }
         }
 
-        if (await prismadb.credential.findUnique({
-            where: {
-                username: 'admin',
-            }
-        }) == undefined) {
-            await prismadb.credential.create({
-                data: {
-                    username: 'admin',
-                    password: process.env.ADMIN_PASSWORD,
-                    role_id: roles[0].id,
-                }
-            });
+        await createUser({username: "Admin", password: process.env.ADMIN_PASSWORD}, roles[0]);
+        const add = JSON.parse(process.env.USER_ADD || "{}");
+        if(add.username != undefined && add.password != undefined){
+            await createUser(add);
         }
 
         console.log("Roles setup.");
+    },
+    getRoles(){
+        return roles;
     },
     setup: async function () {
         await this.setupRoles();
