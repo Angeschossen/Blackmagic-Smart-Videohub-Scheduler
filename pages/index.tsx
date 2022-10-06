@@ -1,7 +1,9 @@
-import { Stack } from '@fluentui/react'
+import { DefaultButton, DetailsHeader, Link, MessageBar, MessageBarButton, MessageBarType, Stack } from '@fluentui/react'
 import type { NextPage } from 'next'
+import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import Image from 'next/image'
+import Login from '../components/auth/Login'
 import { VideohubActivity } from '../components/interfaces/Videohub'
 import { VideohubActivityView } from '../components/views/VideohubActivityView'
 import styles from '../styles/Home.module.css'
@@ -26,12 +28,31 @@ interface InputProps {
 }
 
 const Home = (p: InputProps) => {
+  const { data: session } = useSession();
+
   p.videohubActivities.forEach(item => {
     item.time = new Date(item.time);
   });
 
   return (
-    <VideohubActivityView activityItems={p.videohubActivities} />
+    <>
+      <Stack>
+        <MessageBar
+          actions={
+            <div>
+              <MessageBarButton
+                onClick={() => { signOut() }}
+              >Logout</MessageBarButton>
+            </div>
+          }
+          messageBarType={MessageBarType.info}
+          isMultiline={false}
+        >
+          You're logged in as {session?.user?.name}.
+        </MessageBar>
+      </Stack>
+      <VideohubActivityView activityItems={p.videohubActivities} />
+    </>
   )
 }
 
