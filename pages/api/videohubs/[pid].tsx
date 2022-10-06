@@ -3,7 +3,8 @@ import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/
 import * as videohubs from '../../../backend/videohubs'
 import { sendRoutingUpdate } from '../../../backend/videohubs';
 import prismadb from '../../../database/prismadb';
-import { getToken } from 'next-auth/jwt';
+import * as permissions from "../../../backend/permissions";
+import { checkPermission } from '../../../components/auth/Authentication';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
@@ -32,21 +33,11 @@ export async function getVideohubActivityServerSide() {
     });
 }
 
-export async function isLoggedIn(req: any, res: any) {
-    const token = await getToken({ req: req });
-    if (!token) {
-        res.status(401).json({message: 'Unauthorized'});
-        return false;
-    } else {
-        return true;
-    }
-}
-
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await isLoggedIn(req, res)) {
+    if (!await checkPermission(req, res)) {
         return;
     }
 
@@ -78,6 +69,10 @@ export default async function handler(
         }
 
         case "update": {
+            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_EDIT)) {
+                return;
+            }
+
             if (req.method !== 'POST') {
                 res.status(405).json({ message: 'POST required' });
                 return;

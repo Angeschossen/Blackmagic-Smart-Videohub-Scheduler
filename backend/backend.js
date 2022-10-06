@@ -1,4 +1,5 @@
 const prismadb = require('../database/prismadb');
+const permissions = require('./permissions');
 
 class Role {
     constructor(id, name, permissions) {
@@ -12,7 +13,7 @@ class Role {
     }
 }
 
-async function createUser(user, role){
+async function createUser(user, role) {
     if (await prismadb.credential.findUnique({
         where: {
             username: user.username,
@@ -31,22 +32,18 @@ async function createUser(user, role){
 module.exports = {
     PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE: "VIDEOHUB_OUTPUT_SCHEDULE",
     PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT: "VIDEOHUB_PUSHBUTTONS_EDIT",
-    permissions: [],
-    roles: [],
+    roles: Map,
     setupRoles: async function () {
         console.log("Setting up roles...");
-        permissions = [
-            module.exports.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE,
-            module.exports.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT,
-        ];
+        roles = new Map();
 
-        roles = [
-            new Role(1, "Admin", this.permissions),
-            new Role(2, "Manager", this.permissions),
+        for (const role of [
+            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT]),
+            new Role(2, "Manager", [permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT]),
             new Role(3, "User", []),
-        ];
+        ]) {
+            roles.set(role.id, role);
 
-        for (const role of roles) {
             if (await prismadb.role.findUnique({
                 where: {
                     id: role.id,
@@ -73,16 +70,19 @@ module.exports = {
             }
         }
 
-        await createUser({username: "Admin", password: process.env.ADMIN_PASSWORD}, roles[0]);
+        await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles[0]);
         const add = JSON.parse(process.env.USER_ADD || "{}");
-        if(add.username != undefined && add.password != undefined){
+        if (add.username != undefined && add.password != undefined) {
             await createUser(add);
         }
 
         console.log("Roles setup.");
     },
-    getRoles(){
+    getRoles() {
         return roles;
+    },
+    getRoleById(id) {
+        return roles.get(id);
     },
     setup: async function () {
         await this.setupRoles();

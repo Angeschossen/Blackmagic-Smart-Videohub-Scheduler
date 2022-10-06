@@ -1,7 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { userAgent } from "next/server";
+import GoogleProvider from "next-auth/providers/google"
 import prismadb from '../../../database/prismadb';
 
 // import EmailProvider from "next-auth/providers/email"
@@ -58,36 +58,39 @@ export default NextAuth({
 
         const credential = await authenticateJWTAndGet(username, password);
         if (credential != undefined) {
-          const res = { id: credential.id, name: credential.username, role: credential.role };
+          const res = { name: credential.username, role_id: credential.role.id };
           return res;
         }
 
         return null;
       }
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID||"",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET||""
+    }),
   ],
   callbacks: {
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user, account, profile, isNewUser }: any) {
+      console.log(account);
+
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (user) {
-        if (!await doesJWTUserExist(user.name)) {
-          return null;
-        }
-
-        const u = { id: user.id, name: user.name, role_id: user.role_id };
-        token.user = u;
-      } else {
-        if (!await doesJWTUserExist(token.name)) {
-          throw Error("No longer valid.")
-        }
+        //token.accessToken = account.access_token;
+        token.id = user.id;
+        token.role_id = user.role_id;
       }
 
       return token;
     },
 
-    async session({ session, token }: any) {
+    async session({ session, token, user }: any) {
       // Send properties to the client, like an access_token and user id from a provider.
-      session.user = token.user;
+      //session.accessToken = token.accessToken;
+      console.log("INITIAL");
+      console.log(token)
+      session.user.id = token.id;
+      session.user.role_id = token.role_id;
       return session;
     },
   },

@@ -2,13 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../database/prismadb';
 import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
-import { isLoggedIn } from '../videohubs/[pid]';
+import { checkPermission } from '../../../components/auth/Authentication';
+import * as permissions from "../../../backend/permissions";
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await isLoggedIn(req, res)) {
+    if (!await checkPermission(req, res)) {
         return;
     }
 
@@ -29,6 +30,10 @@ export default async function handler(
     let e;
     switch (pid) {
         case "update": {
+            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+                return;
+            }
+
             const date_start: Date = new Date(body.start);
             const date_end: Date = new Date(body.end);
 
@@ -123,6 +128,10 @@ export default async function handler(
         }
 
         case "delete": {
+            if (!await checkPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+                return;
+            }
+
             const id: number = body.id;
             e = prisma.event.delete({
                 where: {
