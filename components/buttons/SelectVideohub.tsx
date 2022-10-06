@@ -1,8 +1,10 @@
 import { CommandBarButton, IContextualMenuItem, IIconProps } from "@fluentui/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import EditVideohubModal from "../modals/EditVideohubModal";
 import { getRandomKey } from "../utils/commonutils";
 import { Videohub } from "../interfaces/Videohub";
+import { checkClientPermission } from "../auth/ClientAuthentication";
+import Permissions from "../../backend/authentication/Permissions";
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
 interface InputProps {
@@ -10,60 +12,69 @@ interface InputProps {
     onSelectVideohub: (videohub: Videohub) => void,
 }
 
-export default class SelectVideohub extends React.Component<InputProps, { open?: boolean, modal?: number }> {
+//  { open?: boolean, modal?: number }
+export const SelectVideohub = (props: InputProps) => {
 
-    constructor(props: InputProps) {
-        super(props);
+    const [isOpen, setIsOpen] = useState(false);
+    const [modalKey, setModalKey] = useState<number>(getRandomKey());
 
-        this.state = { open: false };
-    }
+    useEffect(() => {
+        setModalKey(getRandomKey());
+    }, [isOpen])
 
-    generateMenuItems(): IContextualMenuItem[] {
+    const canEdit = checkClientPermission(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
+
+    function generateMenuItems(): IContextualMenuItem[] {
         const menuItems: IContextualMenuItem[] = [];
-        for (const hub of this.props.videohubs) {
+        for (const hub of props.videohubs) {
             menuItems.push({
                 key: hub.id.toString(),
                 text: hub.name,
                 iconProps: { iconName: 'Calendar' },
                 onClick: () => {
-                    this.props.onSelectVideohub(hub);
+                    props.onSelectVideohub(hub);
                 }
             });
         }
 
-        menuItems.push({
-            key: "add",
-            text: "Add",
-            iconProps: { iconName: 'Add' },
-            onClick: () => {
-                this.setState({ open: true, modal: getRandomKey() });
-            }
-        });
+        if (canEdit) {
+            menuItems.push({
+                key: "add",
+                text: "Add",
+                iconProps: { iconName: 'Add' },
+                onClick: () => {
+                    setIsOpen(true);
+                }
+            });
+        }
 
         return menuItems;
     }
 
-    render() {
-        const inst: SelectVideohub = this;
-        return (
-            <>
-                {this.state.open &&
-                    <EditVideohubModal
-                        key={this.state.modal}
-                        isOpen={true}
-                        videohubs={this.props.videohubs}
-                        onConfirm={function (videohub: Videohub): void {
-                            inst.props.videohubs.push(videohub);
-                        }} />
-                }
-                <CommandBarButton
-                    iconProps={videohubIcon}
-                    text={"Select Videohub"}
-                    menuProps={{
-                        items: this.generateMenuItems(),
-                    }}
-                />
-            </>
-        );
+    if (!canEdit && props.videohubs.length == 0) {
+        return <></>;
     }
+
+    return (
+        <>
+            {isOpen &&
+                <EditVideohubModal
+                    key={modalKey}
+                    isOpen={true}
+                    videohubs={props.videohubs}
+                    onConfirm={function (videohub: Videohub): void {
+                        props.videohubs.push(videohub);
+                    }} />
+            }
+            <CommandBarButton
+                iconProps={videohubIcon}
+                text={"Select Videohub"}
+                menuProps={{
+                    items: generateMenuItems(),
+                }}
+            />
+        </>
+    );
 }
+
+export default SelectVideohub;

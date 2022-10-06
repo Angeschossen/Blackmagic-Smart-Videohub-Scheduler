@@ -1,12 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../database/prisma';
+import prisma from '../../../database/prismadb';
 import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
+import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import * as permissions from "../../../backend/authentication/Permissions";
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
+    if (!await checkServerPermission(req, res)) {
+        return;
+    }
+
     const { pid } = req.query;
     const body = req.body;
 
@@ -24,6 +30,10 @@ export default async function handler(
     let e;
     switch (pid) {
         case "update": {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+                return;
+            }
+
             const date_start: Date = new Date(body.start);
             const date_end: Date = new Date(body.end);
 
@@ -34,7 +44,7 @@ export default async function handler(
             //console.log("Checking: End: " + date_check_end)
 
             const event: OutputEvent = body;
-            if (!await prisma.client.event.findMany({
+            if (!await prisma.event.findMany({
                 where: {
                     AND: [
                         {
@@ -85,9 +95,9 @@ export default async function handler(
             }
 
             const id: number = body.id;
-            const repeat:boolean = event.repeat_every_week===true;
+            const repeat: boolean = event.repeat_every_week === true;
             if (id === -1) {
-                e = prisma.client.event.create({
+                e = prisma.event.create({
                     data: {
                         output_id: event.output_id,
                         input_id: event.input_id,
@@ -100,7 +110,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prisma.client.event.update({
+                e = prisma.event.update({
                     where: {
                         id: id,
                     },
@@ -118,8 +128,12 @@ export default async function handler(
         }
 
         case "delete": {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
+                return;
+            }
+
             const id: number = body.id;
-            e = prisma.client.event.delete({
+            e = prisma.event.delete({
                 where: {
                     id: id,
                 }

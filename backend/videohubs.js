@@ -1,5 +1,5 @@
 const net = require('net');
-const prisma = require('../database/prisma');
+const prismadb = require('../database/prismadb');
 const dateutils = require('../components/utils/dateutils');
 
 const ICON_ERROR = "Error";
@@ -139,7 +139,7 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
         ]
     };
 
-    const e = await prisma.client.event.findMany({
+    const e = await prismadb.event.findMany({
         where: condition,
     });
 
@@ -206,9 +206,9 @@ class Input {
     }
 
     async save(videohub) {
-        await prisma.client.input.upsert({
+        await prismadb.input.upsert({
             where: {
-                videohubInput: {
+                videohub_input: {
                     videohub_id: videohub.data.id,
                     id: this.id, // prisma requires id to start at 1
                 }
@@ -306,9 +306,9 @@ class Output {
     async save(videohub) {
         const vid = Number(videohub.data.id);
         const input_id = this.input_id == undefined ? null : this.input_id;
-        await prisma.client.output.upsert({
+        await prismadb.output.upsert({
             where: {
-                videohubOutput: {
+                videohub_output: {
                     videohub_id: vid,
                     id: this.id, // prisma requires id to start at 1
                 }
@@ -339,7 +339,7 @@ class Videohub {
     }
 
     async logActivity(description, icon) {
-        await prisma.client.videohubActivity.create({
+        await prismadb.videohubActivity.create({
             data: {
                 title: this.data.name,
                 description: description,
@@ -711,7 +711,7 @@ class Videohub {
 
     async save() {
         this.info("Saving...");
-        await prisma.client.videohub.update({
+        await prismadb.videohub.update({
             where: {
                 id: this.data.id,
             },
@@ -774,7 +774,7 @@ module.exports = {
         console.log("Loading data...");
         hubs = [];
 
-        const arr = await prisma.client.videohub.findMany({
+        const arr = await prismadb.videohub.findMany({
             include: {
                 inputs: true,
                 outputs: true,

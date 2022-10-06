@@ -11,6 +11,9 @@ import { VideohubPage } from '../../components/videohub/VideohubPage';
 import SelectVideohub from '../../components/buttons/SelectVideohub';
 import { PushButtons } from '../../components/views/PushButtonsView';
 import { useViewType } from '../../components/views/DesktopView';
+import { useSession } from 'next-auth/react';
+import { checkClientPermission } from '../../components/auth/ClientAuthentication';
+import Permissions from '../../backend/authentication/Permissions';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -59,7 +62,7 @@ export async function getServerSideProps(context: any) {
   return {
     props: {
       videohubs: JSON.parse(JSON.stringify(hubs)),
-      videohub: selected?.id,
+      videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),
     } as VideohubViewProps,
   }
@@ -111,6 +114,7 @@ export const VideohubView = (props: VideohubViewProps) => {
   }
 
   const isDekstop = useViewType();
+  const { data: session } = useSession();
   const [videohubData, setVideohubData] = useState(buildVideohubData(props));
   let retrieveTimeout: NodeJS.Timeout | undefined;
 
@@ -197,7 +201,7 @@ export const VideohubView = (props: VideohubViewProps) => {
     retrievePushButtons(hub.id).then(pushbuttons => {
       setVideohubData(buildVideohubData({ videohubs: videohubData.videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
     });
-  }
+  }  
 
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
@@ -211,34 +215,33 @@ export const VideohubView = (props: VideohubViewProps) => {
       {isDekstop &&
         <>
           <h1>Schedule</h1>
-          {videohubData?.currentVideohub?.inputs.length != 0 ?
-            <DataTable
-              key={videohubData.tableKey}
-              controlcolumns={[
-                {
-                  key: "edit",
-                  onClick(_event, item) {
-                    if (videohubData.currentVideohub == undefined) {
-                      throw Error("Videohub is undefined");
-                    }
+          {session ? <DataTable
+            key={videohubData.tableKey}
+            controlcolumns={checkClientPermission(Permissions.PERMISSION_VIDEOHUB_EDIT) ? [
+              {
+                key: "edit",
+                onClick(_event, item) {
+                  if (videohubData.currentVideohub == undefined) {
+                    throw Error("Videohub is undefined");
+                  }
 
-                    Router.push({
-                      pathname: './events',
-                      query: { videohub: videohubData.currentVideohub.id, output: item.id },
-                    });
-                  },
-                  text: "Schedule"
-                }
-              ]}
-              getData={() => {
-                console.log("Get data");
-                if (videohubData.currentVideohub === undefined) {
-                  return undefined;
-                }
+                  Router.push({
+                    pathname: './events',
+                    query: { videohub: videohubData.currentVideohub.id, output: item.id },
+                  });
+                },
+                text: "Schedule"
+              }
+            ]: []}
+            getData={() => {
+              console.log("Get data");
+              if (videohubData.currentVideohub === undefined) {
+                return undefined;
+              }
 
-                return getItems(videohubData.currentVideohub as Videohub);
-              }} /> :
-            <p>Videohub must have been online for at least one time.</p>}
+              return getItems(videohubData.currentVideohub as Videohub);
+            }} /> :
+            <p>You are not logged in or you are missing permission to schedule outputs.</p>}
         </>}
       <PushButtons
         key={videohubData.pushButtonsKey}

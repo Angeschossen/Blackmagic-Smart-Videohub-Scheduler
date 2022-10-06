@@ -9,9 +9,8 @@ module.exports = async (phase) => {
   console.log("Starting at phase:", phase);
 
   if (phase === "phase-production-server" || phase === "phase-development-server") {
-    const videohubs = require('./backend/videohubs');
-    await videohubs.loadData();
-    videohubs.connect();
+    const backend = require('./backend/backend');
+    await backend.setup();
   }
 
   return nextConfig;

@@ -1,13 +1,18 @@
-import { CompoundButton, DefaultButton, IIconProps, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
+import { CommandBarButton, CompoundButton, DefaultButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
 import React, { useState } from "react";
 import { PushButton } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../interfaces/Videohub";
 import { getPostHeader } from "../utils/fetchutils";
-import {stackTokens } from "../utils/styles";
+import { commandBarItemStyles, desktopMinWidth, stackStyles, stackTokens } from "../utils/styles";
 import { BarMessage } from "../common/Messages";
 import Router from "next/router";
 import { getRandomKey } from "../utils/commonutils";
+import { threadId } from "worker_threads";
+import { useMediaQuery } from "react-responsive";
 import { useViewType } from "./DesktopView";
+import { useSession } from "next-auth/react";
+import { checkClientPermission } from "../auth/ClientAuthentication";
+import Permissions from "../../backend/authentication/Permissions";
 
 const addIcon: IIconProps = { iconName: 'Add' };
 
@@ -42,7 +47,7 @@ export const PushButtons = (props: InputProps) => {
         <Stack>
             <Stack horizontalAlign="start">
                 <h1>Push Buttons</h1>
-                <DefaultButton
+                {props.videohub != undefined && checkClientPermission(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT) && <DefaultButton
                     text="Edit"
                     onClick={() => {
                         if (props.videohub == undefined) {
@@ -54,17 +59,17 @@ export const PushButtons = (props: InputProps) => {
                             query: { videohub: props.videohub.id },
                         });
                     }}
-                />
+                />}
             </Stack>
-            {props.videohub != undefined &&
-                <>
-
-                    <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
-                        {getRequestStatus()}
-                    </Stack><Stack horizontalAlign={isDekstop ? "start" : "center"} wrap horizontal tokens={stackTokens}>
-                        {props.pushbuttons.length == 0 ?
-                            <p>No buttons setup yet.</p> :
-                            props.pushbuttons.map((button, key) => {
+            <Stack style={{ paddingTop: '1vh' }}>
+                {props.pushbuttons.length == 0 ?
+                    <p>No buttons setup yet.</p> :
+                    <>
+                        <Stack style={{ paddingTop: 10, paddingBottom: 10 }}>
+                            {getRequestStatus()}
+                        </Stack>
+                        <Stack horizontalAlign={isDekstop ? "start" : "center"} wrap horizontal tokens={stackTokens}>
+                            {props.pushbuttons.map((button, key) => {
                                 return (
                                     <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
                                         onClick={async () => {
@@ -119,8 +124,10 @@ export const PushButtons = (props: InputProps) => {
                                     </CompoundButton>
                                 );
                             })}
-                    </Stack>
-                </>}
+                        </Stack>
+                    </>}
+            </Stack>
+
         </Stack>
     );
 
