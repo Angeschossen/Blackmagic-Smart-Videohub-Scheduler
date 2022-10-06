@@ -10,12 +10,12 @@ export function checkClientPermission(permission?: string) {
         return false;
     }
 
-    if(permission == undefined){
+    if (permission == undefined) {
         return true;
     }
 
-    for(const permission of obj.user.permissions){
-        if(permission === permission){
+    for (const permission of obj.user.permissions) {
+        if (permission === permission) {
             return true;
         }
     }
