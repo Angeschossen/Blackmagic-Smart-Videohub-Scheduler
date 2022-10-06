@@ -28,7 +28,6 @@ module.exports = {
             new Role(3, "User", this.permissions),
         ];
 
-        await prisma.client.role.deleteMany(); // delete all because of permissions
         for (const role of roles) {
             if (await prisma.client.role.findUnique({
                 where: {

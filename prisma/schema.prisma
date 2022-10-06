@@ -140,8 +140,8 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
-  role          Role      @relation(fields: [role_id], references: [id])
-  role_id       Int
+  role          Role?      @relation(fields: [role_id], references: [id])
+  role_id       Int?
   name          String?
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
