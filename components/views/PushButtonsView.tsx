@@ -43,7 +43,8 @@ export const PushButtons = (props: InputProps) => {
         }
     }
 
-    const canEdit:boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
+    const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
+
     return (
         <Stack>
             <Stack horizontalAlign="start">
@@ -74,7 +75,7 @@ export const PushButtons = (props: InputProps) => {
                                 return (
                                     <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
                                         onClick={async () => {
-                                            if (props.videohub == undefined || (currentRequest != undefined && !currentRequest.success)) {
+                                            if (props.videohub == undefined || (currentRequest != undefined /*&& !currentRequest.success*/)) {
                                                 return;
                                             }
 
@@ -101,7 +102,6 @@ export const PushButtons = (props: InputProps) => {
                                                     request.success = true;
                                                 }
 
-                                                setCurrentRequest(request);
                                                 setStatusKey(getRandomKey());
 
                                                 if (br) {
@@ -119,7 +119,7 @@ export const PushButtons = (props: InputProps) => {
 
                                             setTimeout(() => {
                                                 setCurrentRequest(undefined);
-                                            }, 3500);
+                                            }, 2000);
                                         }}>
                                         {button.label}
                                     </CompoundButton>
