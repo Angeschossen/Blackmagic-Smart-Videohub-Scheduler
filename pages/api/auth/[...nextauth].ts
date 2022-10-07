@@ -59,7 +59,7 @@ export default NextAuth({
 
         const credential = await authenticateJWTAndGet(username, password);
         if (credential != undefined) {
-          const res = { name: credential.username, role_id: credential.role.id };
+          const res = { name: credential.username, role_id: credential.role?.id };
           return res;
         }
 
