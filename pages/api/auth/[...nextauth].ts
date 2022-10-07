@@ -2,6 +2,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
+import { OPTIMIZED_FONT_PROVIDERS } from "next/dist/shared/lib/constants";
 import { getRoleById } from "../../../backend/backend";
 import prismadb from '../../../database/prismadb';
 
@@ -32,6 +33,43 @@ export async function authenticateJWTAndGet(username: string, password: string) 
   }
 }
 
+
+const prodivers: any[] = [
+  CredentialsProvider({
+    // The name to display on the sign in form (e.g. 'Sign in with...')
+    name: 'Credentials',
+    // The credentials is used to generate a suitable form on the sign in page.
+    // You can specify whatever fields you are expecting to be submitted.
+    // e.g. domain, username, password, 2FA token, etc.
+    // You can pass any HTML attribute to the <input> tag through the object.
+    credentials: {
+      username: { label: "Username", type: "text" },
+      password: { label: "Password", type: "password" }
+    },
+    async authorize(credentials: any, req: any) {
+      const { username, password } = credentials as {
+        username: string,
+        password: string,
+      };
+
+      const credential = await authenticateJWTAndGet(username, password);
+      if (credential != undefined) {
+        const res = { name: credential.username, role_id: credential.role?.id };
+        return res;
+      }
+
+      return null;
+    }
+  })
+];
+
+if (process.env.GOOGLE_CLIENT_ID != undefined && process.env.GOOGLE_CLIENT_SECRET != undefined) {
+  prodivers.push(GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  }));
+}
+
 export default NextAuth({
   session: {
     strategy: 'jwt'
@@ -39,38 +77,7 @@ export default NextAuth({
   adapter: PrismaAdapter(prismadb),
 
   // https://next-auth.js.org/configuration/providers
-  providers: [
-    CredentialsProvider({
-      // The name to display on the sign in form (e.g. 'Sign in with...')
-      name: 'Credentials',
-      // The credentials is used to generate a suitable form on the sign in page.
-      // You can specify whatever fields you are expecting to be submitted.
-      // e.g. domain, username, password, 2FA token, etc.
-      // You can pass any HTML attribute to the <input> tag through the object.
-      credentials: {
-        username: { label: "Username", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials: any, req: any) {
-        const { username, password } = credentials as {
-          username: string,
-          password: string,
-        };
-
-        const credential = await authenticateJWTAndGet(username, password);
-        if (credential != undefined) {
-          const res = { name: credential.username, role_id: credential.role?.id };
-          return res;
-        }
-
-        return null;
-      }
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
-    }),
-  ],
+  providers: prodivers,
   callbacks: {
     async jwt({ token, user, account, profile, isNewUser }: any) {
       // Persist the OAuth access_token and or the user id to the token right after signin
@@ -103,4 +110,4 @@ export default NextAuth({
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-})
+});
