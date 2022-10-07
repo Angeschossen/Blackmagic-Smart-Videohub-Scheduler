@@ -63,7 +63,7 @@ module.exports = {
                 });
 
                 await prismadb.rolePermission.createMany({
-                    data: permissions.map((permission, _key) => {
+                    data: role.permissions.map((permission, _key) => {
                         return { permission: permission, role_id: role.id };
                     }),
                 });
