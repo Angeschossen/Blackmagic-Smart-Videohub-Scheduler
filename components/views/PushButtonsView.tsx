@@ -102,6 +102,7 @@ export const PushButtons = (props: InputProps) => {
                                                     request.success = true;
                                                 }
 
+                                                setCurrentRequest(request);
                                                 setStatusKey(getRandomKey());
 
                                                 if (br) {
