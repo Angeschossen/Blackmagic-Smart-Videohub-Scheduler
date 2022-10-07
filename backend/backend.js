@@ -70,7 +70,7 @@ module.exports = {
             }
         }
 
-        await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles[0]);
+        await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles.get(1));
         const add = JSON.parse(process.env.USER_ADD || "{}");
         if (add.username != undefined && add.password != undefined) {
             await createUser(add);
