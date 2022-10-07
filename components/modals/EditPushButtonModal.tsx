@@ -42,7 +42,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 
     render(): React.ReactNode {
-        return <>
+        return <Stack horizontal wrap tokens={stackTokens}>
             <Dropdown
                 required={this.props.required}
                 placeholder="Select an input"
@@ -65,7 +65,7 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
                     this.props.onSelectOutput(index);
                 }}
             />
-        </>;
+        </Stack>;
     }
 }
 

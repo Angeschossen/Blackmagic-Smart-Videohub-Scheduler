@@ -183,8 +183,12 @@ export const VideohubView = (props: VideohubViewProps) => {
 
       if (change) {
         let pushbuttons: PushButton[];
-        if (videohub != null && videohubData.currentVideohub?.id != videohub.id) {
-          pushbuttons = await retrievePushButtons(videohub.id);
+        if (videohub != undefined) {
+          if (videohubData.currentVideohub?.id != videohub.id) {
+            pushbuttons = await retrievePushButtons(videohub.id);
+          } else {
+            pushbuttons = videohubData.pushButtons;
+          }
         } else {
           pushbuttons = [];
         }
@@ -204,7 +208,7 @@ export const VideohubView = (props: VideohubViewProps) => {
   }
 
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
-  
+
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
