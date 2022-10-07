@@ -110,8 +110,6 @@ export const PushButtons = (props: InputProps) => {
                                             }
 
                                             if (err == null) {
-                                                setCurrentRequest(request);
-                                                setStatusKey(getRandomKey());
                                                 if (props.onRoutingUpdated != undefined) {
                                                     props.onRoutingUpdated();
                                                 }
@@ -119,6 +117,7 @@ export const PushButtons = (props: InputProps) => {
 
                                             setTimeout(() => {
                                                 setCurrentRequest(undefined);
+                                                setStatusKey(getRandomKey());
                                             }, 2000);
                                         }}>
                                         {button.label}
