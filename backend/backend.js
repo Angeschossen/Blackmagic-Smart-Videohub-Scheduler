@@ -20,13 +20,17 @@ async function createUser(user, role) {
         }
     }) == undefined) {
         console.log(`Creating user: ${user.username}`)
-        await prismadb.credential.create({
-            data: {
-                username: user.username,
-                password: user.password,
-                role_id: role?.id,
-            }
-        });
+        if (user.password == undefined || user.username == undefined || user.password === "") {
+            console.log(`Invalid user creation: ${user.username}`);
+        } else {
+            await prismadb.credential.create({
+                data: {
+                    username: user.username,
+                    password: user.password,
+                    role_id: role?.id,
+                }
+            });
+        }
     }
 }
 
@@ -74,9 +78,7 @@ module.exports = {
         await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles.get(1));
         const add = JSON.parse(process.env.USERS_ADD || "[]");
         for (const user of add) {
-            if (user.username != undefined && user.password != undefined) {
-                await createUser(user);
-            }
+            await createUser(user);
         }
 
         console.log("Roles setup.");
