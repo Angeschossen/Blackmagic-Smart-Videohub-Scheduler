@@ -14,8 +14,8 @@ export function useClientSession(permission?: string) {
         return true;
     }
 
-    for (const permission of obj.user.permissions) {
-        if (permission === permission) {
+    for (const check of obj.user.permissions) {
+        if (check === permission) {
             return true;
         }
     }
