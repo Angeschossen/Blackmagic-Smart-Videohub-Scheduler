@@ -1,7 +1,10 @@
-import { IStackStyles, IStackTokens } from "@fluentui/react";
+import { IDropdownStyles, IStackStyles, IStackTokens, ITextFieldStyles } from "@fluentui/react";
 
 export const desktopMinWidth = 700;
-export const stackTokens: IStackTokens = { childrenGap: 20 };
+export const dropdownStyles: Partial<IDropdownStyles> = {
+    dropdown: { width: 150 },
+};
+export const stackTokens: IStackTokens = { childrenGap: 15 };
 export const stackStyles: Partial<IStackStyles> = {
     root: {
         position: 'absolute',
@@ -12,4 +15,5 @@ export const stackStyles: Partial<IStackStyles> = {
         maxHeight: '100%'
     }
 }
+
 export const commandBarItemStyles: Partial<IStackStyles> = { root: { width: 70, height: 35 } };
