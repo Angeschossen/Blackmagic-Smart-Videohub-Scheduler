@@ -8,12 +8,9 @@ import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../interfaces/Videohub";
 import InputModal from "./InputModal";
 import { PickColor } from "../input/ColorPicker";
-import { threadId } from "worker_threads";
+import { dropdownStyles, stackTokens } from "../utils/styles";
 
-const stackTokens: IStackTokens = { childrenGap: 20 };
-const dropdownStyles: Partial<IDropdownStyles> = {
-    dropdown: { width: 300 },
-};
+
 
 
 interface InputProps extends IModalProps {
@@ -222,35 +219,43 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
 
                     return "Please specify at leat one complete routing with an input and output.";
                 }}>
-                <TextField label="Name" required
-                    onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
-                        this.label = val;
-                    }}
-                    defaultValue={this.button == undefined ? undefined : this.button.label}
-                    validateOnLoad={false}
-                    validateOnFocusOut={true}
-                    onGetErrorMessage={(value: string) => {
-                        return this.validateButtonLabel(value);
-                    }}
-                />
-                <Label>Color</Label>
-                <PickColor
-                    color={this.color}
-                    onChange={(color) => {
-                        this.color = color;
-                    }}
-                />
-                {this.routingComponents.map((component, index) => {
-                    return <React.Fragment key={index}>
-                        {component.render()}
-                    </React.Fragment>
-                })}
+                <Stack horizontal tokens={stackTokens}>
+                    <Stack tokens={stackTokens}>
+                        <TextField label="Name" required
+                            onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
+                                this.label = val;
+                            }}
+                            defaultValue={this.button == undefined ? undefined : this.button.label}
+                            validateOnLoad={false}
+                            validateOnFocusOut={true}
+                            onGetErrorMessage={(value: string) => {
+                                return this.validateButtonLabel(value);
+                            }}
+                        />
+                        <Label>Color</Label>
+                        <Stack horizontal horizontalAlign="center">
+                            <PickColor
+                                color={this.color}
+                                onChange={(color) => {
+                                    this.color = color;
+                                }}
+                            />
+                        </Stack>
+                    </Stack>
+                    <Stack wrap>
+                        {this.routingComponents.map((component, index) => {
+                            return <React.Fragment key={index}>
+                                {component.render()}
+                            </React.Fragment>
+                        })}
+                    </Stack>
+                </Stack>
                 <DefaultButton text="Add routing" onClick={() => {
                     this.addActionComponent(false, undefined);
                     this.forceUpdate();
                 }} allowDisabledFocus />
                 {this.button.id != -1 &&
-                    <DefaultButton text="Delete" style={{ backgroundColor: '#e61c1c' }} onClick={() => {
+                    <DefaultButton text="Delete" style={{ backgroundColor: '#ff6666' }} onClick={() => {
                         fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
                             const json = await res.json();
                             if (json.result) {

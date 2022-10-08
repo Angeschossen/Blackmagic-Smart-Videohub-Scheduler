@@ -1,5 +1,6 @@
 const prismadb = require('../database/prismadb');
 const permissions = require('./authentication/Permissions');
+const videohubs = require('./videohubs');
 
 class Role {
     constructor(id, name, permissions) {
@@ -35,8 +36,6 @@ async function createUser(user, role) {
 }
 
 module.exports = {
-    PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE: "VIDEOHUB_OUTPUT_SCHEDULE",
-    PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT: "VIDEOHUB_PUSHBUTTONS_EDIT",
     roles: Map,
     setupRoles: async function () {
         console.log("Setting up roles...");
@@ -91,7 +90,6 @@ module.exports = {
     },
     setup: async function () {
         await this.setupRoles();
-        const videohubs = require('./videohubs');
         await videohubs.loadData();
         videohubs.connect();
     },

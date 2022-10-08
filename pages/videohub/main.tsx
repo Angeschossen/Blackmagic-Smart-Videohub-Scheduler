@@ -167,7 +167,7 @@ export const VideohubView = (props: VideohubViewProps) => {
     });
   }
 
-  const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
+  const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE);
 
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.

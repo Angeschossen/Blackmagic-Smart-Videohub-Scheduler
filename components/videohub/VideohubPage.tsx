@@ -2,6 +2,7 @@ import { Stack } from "@fluentui/react";
 import Login from "../auth/Login";
 import { ProtectedPage } from "../common/ProtectedPage";
 import { Videohub } from "../interfaces/Videohub";
+import { stackTokens } from "../utils/styles";
 import { VideohubFooter } from "../VideohubFooter"
 
 interface InputProps {
