@@ -192,25 +192,26 @@ export const VideohubView = (props: VideohubViewProps) => {
           onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
       </Stack>
       <h1>Schedule</h1>
-      {isDekstop && session != undefined&&<DataTable
-        key={tableKey}
-        controlcolumns={canEdit ? [
-          {
-            key: "edit",
-            onClick(_event, item) {
-              if (videohubData?.currentVideohub == undefined) {
-                throw Error("Videohub is undefined");
-              }
+      {isDekstop && session != undefined &&
+        <DataTable
+          key={tableKey}
+          controlcolumns={canEdit ? [
+            {
+              key: "edit",
+              onClick(_event, item) {
+                if (videohubData?.currentVideohub == undefined) {
+                  throw Error("Videohub is undefined");
+                }
 
-              Router.push({
-                pathname: './events',
-                query: { videohub: videohubData.currentVideohub.id, output: item.id },
-              });
-            },
-            text: "Schedule"
-          }
-        ] : []}
-        getData={(last?: Date) => retrieveData(last)} />}
+                Router.push({
+                  pathname: './events',
+                  query: { videohub: videohubData.currentVideohub.id, output: item.id },
+                });
+              },
+              text: "Schedule"
+            }
+          ] : []}
+          getData={(last?: Date) => retrieveData(last)} />}
       <PushButtons
         key={pushButtonsKey}
         pushbuttons={videohubData?.pushButtons || []}
