@@ -121,7 +121,7 @@ export const PushButtons = (props: InputProps) => {
                                                 if (props.onRoutingUpdated != undefined) {
                                                     props.onRoutingUpdated(undefined);
                                                 }
-                                            }, 3500);
+                                            }, 2500);
                                         }}>
                                         {button.label}
                                     </CompoundButton>

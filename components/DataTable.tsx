@@ -34,13 +34,14 @@ interface TableData {
 export const DataTable = (props: TableInput) => {
 
     let tableData = React.useRef<TableData>({ columns: [], items: undefined, last: undefined });
-    const retrieveTimeout: any = React.useRef<NodeJS.Timeout | undefined>(null);
     const [data, setData] = React.useState<TableData>(tableData.current);
 
-    const getData:any = React.useRef(props.getData);
-    const controlcolumns:any = React.useRef(props.controlcolumns);
+    const getData: any = React.useRef(props.getData);
+    const controlcolumns: any = React.useRef(props.controlcolumns);
 
     React.useEffect(() => {
+        let retrieveTimeout: NodeJS.Timeout | undefined;
+
         async function loadData() {
             console.log("Retrieving table items...");
             const items: any[] | undefined = await getData.current(tableData?.current?.last);
@@ -48,12 +49,13 @@ export const DataTable = (props: TableInput) => {
                 console.log("No update.");
                 return; // no change
             }
-    
+
             let columns: IColumn[];
             if (items.length == 0) {
+                console.log("No items.");
                 return
             }
-    
+
             columns = buildColumns(items);
             for (const col of controlcolumns.current) {
                 columns.unshift({
@@ -63,7 +65,7 @@ export const DataTable = (props: TableInput) => {
                     maxWidth: 1,
                 });
             }
-    
+
             // remove internal id field
             let index: number = 0;
             let found: boolean = false;
@@ -75,30 +77,31 @@ export const DataTable = (props: TableInput) => {
                     break;
                 }
             }
-    
+
             if (found) {
                 columns.splice(index, 1);
             }
-    
+
             tableData.current = { columns: columns, items: items, last: new Date() };
             setData(tableData.current);
-    
+
             console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
         }
-    
+
         function scheduleRetrieveData(timeout: number) {
-            if (retrieveTimeout.current != undefined) {
-                clearTimeout(retrieveTimeout.current);
-            }
-    
-            retrieveTimeout.current = setTimeout(async () => {
+            clearTimeout(retrieveTimeout);
+
+            retrieveTimeout = setTimeout(async () => {
                 await loadData();
                 scheduleRetrieveData(1000);
             }, timeout);
         }
 
-        
         scheduleRetrieveData(0);
+        return () => {
+            clearTimeout(retrieveTimeout);
+            console.log("Timeout cleared: " + retrieveTimeout);
+        }
     }, []);
 
     function onRenderItemColumn(item?: any, index?: number, column?: IColumn): JSX.Element | string | number {
