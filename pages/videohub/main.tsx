@@ -192,9 +192,8 @@ export const VideohubView = (props: VideohubViewProps) => {
           onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
       </Stack>
       <h1>Schedule</h1>
-      <DataTable
+      {isDekstop && session != undefined&&<DataTable
         key={tableKey}
-        display={isDekstop && session != undefined}
         controlcolumns={canEdit ? [
           {
             key: "edit",
@@ -211,7 +210,7 @@ export const VideohubView = (props: VideohubViewProps) => {
             text: "Schedule"
           }
         ] : []}
-        getData={(last?: Date) => retrieveData(last)} />
+        getData={(last?: Date) => retrieveData(last)} />}
       <PushButtons
         key={pushButtonsKey}
         pushbuttons={videohubData?.pushButtons || []}

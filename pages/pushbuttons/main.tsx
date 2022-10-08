@@ -43,17 +43,19 @@ export async function getServerSideProps(context: any) {
     }
 }
 
-function getItems(pushButtons: PushButton[]): any[] {
-    const cloned: any[] = [];
-    for (const button of pushButtons) {
-        cloned.push({
-            id: button.id,
-            Name: button.label,
-            Actions: button.actions.length
-        });
-    }
+function getItems(pushButtons: PushButton[]): Promise<any[] | undefined> {
+    return new Promise((resolve) => {
+        const cloned: any[] = [];
+        for (const button of pushButtons) {
+            cloned.push({
+                id: button.id,
+                Name: button.label,
+                Actions: button.actions.length
+            });
+        }
 
-    return cloned;
+        resolve(cloned);
+    });
 }
 
 class PushButtonsList extends React.Component<InputProps, { key: number, currentEdit?: PushButton, pushButtons: PushButton[], modal?: number, isOpen?: boolean }>{
@@ -137,7 +139,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                                 text: "Edit",
                             },
                         ]}
-                        getData={() => {
+                        getData={(last?: Date) => {
                             return getItems(this.state.pushButtons);
                         }} />
                 </Stack.Item>
