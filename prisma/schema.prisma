@@ -177,7 +177,7 @@ model RolePermission {
   role_id    Int
 
   @@id([role_id, permission], name: "role_permissions")
-  @@map("roles_permission")
+  @@map("roles_permissions")
 }
 
 model Credential {
