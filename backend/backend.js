@@ -86,7 +86,6 @@ module.exports = {
     },
     setup: async function () {
         await this.setupRoles();
-
         const videohubs = require('./videohubs');
         await videohubs.loadData();
         videohubs.connect();
