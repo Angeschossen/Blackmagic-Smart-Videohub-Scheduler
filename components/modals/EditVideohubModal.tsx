@@ -5,7 +5,6 @@ import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Videohub } from "../interfaces/Videohub";
 
-const stackTokens: IStackTokens = { childrenGap: 20 };
 
 interface InputProps extends IModalProps {
     videohubs: Videohub[],
