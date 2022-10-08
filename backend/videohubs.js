@@ -1,6 +1,7 @@
 const net = require('net');
 const prismadb = require('../database/prismadb');
 const dateutils = require('../components/utils/dateutils');
+const { ThumbUpSharp } = require('@mui/icons-material');
 
 const ICON_ERROR = "Error";
 const ICON_CONNECTION_SUCCESS = "NetworkTower";
@@ -226,19 +227,44 @@ class Input {
 }
 
 class InputChangeRequest {
-    constructor(output_id, input_id, onSuccess) {
-        this.output_id = output_id;
-        this.input_id = input_id;
+    constructor(outputs, inputs, onSuccess) {
+        this.outputs = outputs;
+        this.inputs = inputs;
         this.onSuccess = onSuccess;
         this.result = false;
+        this.ackList = new Array(outputs.length);
     }
 
-    ack(){
-        this.onSuccess();
+    ack(output, input) {
+        let count = 0;
+        for (let i = 0; i < this.outputs.length; i++) {
+            // it can happen that a push button has two identical routing updates, if we don't use found, the request will never complete.
+            if (this.outputs[i] === output && this.inputs[i] === input) {
+                this.ackList[i] = true;
+                count++;
+            } else {
+                if (this.ackList[i] === true) {
+                    count++;
+                }
+            }
+        }
+
+        if (count >= this.ackList.length) {
+            this.onSuccess();
+            return true;
+        }
+
+        return false;
     }
 
     send(videohub) {
-        const send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}\n${this.output_id} ${this.input_id}\n\n`
+        let send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}`
+        for (let i = 0; i < this.outputs.length; i++) {
+            send += `\n${this.outputs[i]} ${this.inputs[i]}`;
+        }
+
+        send += '\n\n';
+
         videohub.info(`Sending routing update: ${send}`);
         videohub.client.write(send);
         videohub.requestQueque.push(this);
@@ -255,52 +281,6 @@ class Output {
     updateRouting(videohub, input_id) {
         videohub.info(`Updating routing: ${this.id} ${input_id}`);
         this.input_id = input_id;
-    }
-
-    sendRoutingUpdateRequest(videohub, input_id) {
-        // prepare
-        let _resolve;
-        let request;
-        request = new InputChangeRequest(this.id, input_id, () => {
-            videohub.info(`Request was successful: ${this.id} ${input_id}`);
-
-            this.updateRouting(videohub, input_id);
-            this.save(videohub);
-            request.result = true;
-            videohub.removeRequest(request);
-            _resolve(undefined);
-        });
-
-        // register and send
-        if (!videohub.data.connected) {
-            setTimeout(() => {
-                if (videohub.data.connected) {
-                    request.send(videohub);
-                } else {
-                    _resolve("Videohub not reachable.");
-                }
-            }, REQUEST_RECONNECT_GRACE_TIME);
-        } else {
-            request.send(videohub);
-        }
-
-        // handle res with timeout
-        const promise = new Promise((resolve) => {
-            _resolve = resolve;
-            setTimeout(() => {
-                if (!request.result) {
-                    videohub.info(`Request timed out: ${this.id} ${input_id}`);
-                    resolve(request.result, "Request timed out.");
-                } else {
-                    resolve(undefined);
-                }
-
-                videohub.removeRequest(request);
-
-            }, REQUEST_TIMEOUT);
-        });
-
-        return promise;
     }
 
     async save(videohub) {
@@ -336,6 +316,59 @@ class Videohub {
         this.data.connected = false;
         this.connectionAttempt = 0;
         this.checkConnectionHealthId = undefined;
+        this.data.lastRoutingUpdate = new Date();
+    }
+
+    sendRoutingUpdateRequest(outputs, inputs) {
+        // prepare
+        let _resolve;
+        let request;
+        request = new InputChangeRequest(outputs, inputs, () => {
+            this.info(`Request was successful: ${outputs} ${inputs}`);
+
+            // currently not needed
+            /*
+            for (let i = 0; i < outputs.length; i++) {
+                const output = this.getOutput(outputs[i])
+                output.updateRouting(this, inputs[i]);
+                output.save(this);
+            } */
+
+            request.result = true;
+            this.removeRequest(request);
+            _resolve(undefined);
+        });
+
+        // register and send
+        if (!this.data.connected) {
+            setTimeout(() => {
+                if (this.data.connected) {
+                    request.send(this);
+                } else {
+                    _resolve("Videohub not reachable.");
+                }
+            }, REQUEST_RECONNECT_GRACE_TIME);
+        } else {
+            request.send(this);
+        }
+
+        // handle res with timeout
+        const promise = new Promise((resolve) => {
+            _resolve = resolve;
+            setTimeout(() => {
+                if (!request.result) {
+                    this.info(`Request timed out: ${outputs} ${inputs}`);
+                    resolve("Request timed out.");
+                } else {
+                    resolve(undefined);
+                }
+
+                this.removeRequest(request);
+
+            }, REQUEST_TIMEOUT);
+        });
+
+        return promise;
     }
 
     async logActivity(description, icon) {
@@ -386,7 +419,7 @@ class Videohub {
 
         if (index != undefined) {
             this.requestQueque.splice(index, 1);
-            this.info(`Request removed: ${request.output_id} ${request.input_id}`);
+            this.info(`Request removed: ${request.outputs} ${request.inputs}`);
         }
     }
 
@@ -541,7 +574,7 @@ class Videohub {
             }
 
             const input = this.data.inputs[shortest_id];
-            output.sendRoutingUpdateRequest(this, shortest_id).then(async result => {
+            sendRoutingUpdateRequest([output.id], [shortest_id]).then(async result => {
                 const routing = `Input ${input.label} to output ${output.label}.`;
 
                 if (result != undefined) {
@@ -693,14 +726,10 @@ class Videohub {
         output.updateRouting(this, input_id);
 
         this.requestQueque = this.requestQueque.filter(req => {
-            if (req.output_id === output_id && req.input_id === input_id) {
-                req.ack(); // remove request and call success 
-                return false;
-            }
-
-            return true;
+            return !req.ack(output_id, input_id); // remove request and call success 
         });
 
+        this.data.lastRoutingUpdate = new Date();
         await output.save(this);
     }
 
@@ -812,8 +841,7 @@ module.exports = {
             throw Error("Client not found: " + request.videohub_id);
         }
 
-        const output = videohubClient.getOutput(request.output_id);
-        return output.sendRoutingUpdateRequest(videohubClient, request.input_id);
+        return videohubClient.sendRoutingUpdateRequest(request.outputs, request.inputs);
     }
 }
 

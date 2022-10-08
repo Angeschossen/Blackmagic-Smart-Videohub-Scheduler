@@ -1,10 +1,13 @@
 import * as React from 'react';
-import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKey, Selection, Link, Stack } from '@fluentui/react';
+import { IColumn, buildColumns, SelectionMode, Toggle, IListProps, IObjectWithKey, Selection, Link, Stack, RefObject } from '@fluentui/react';
 import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
+import { areArrayIdentical, getRandomKey } from './utils/commonutils';
+import { Key } from 'react';
 
 export interface TableInput {
     controlcolumns: ControlColumns[],
-    getData: () => any[] | undefined,
+    getData: (last?: Date) => Promise<any[] | undefined>,
+    display: boolean,
 }
 
 export interface ControlColumns {
@@ -22,27 +25,87 @@ const shimmeredDetailsListProps: IListProps = {
     renderedWindowsBehind: 0,
 };
 
-class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }> {
+interface TableData {
+    columns: IColumn[],
+    items?: any[],
+    last?: Date,
+}
 
-    private shimmerColumns: IColumn[] = [];
-    private mounted: boolean = false;
-    constructor(props: TableInput) {
-        super(props);
+// <TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }>
+export const DataTable = (props: TableInput) => {
 
-        this.state = {
-            visibleCount: 0,
-            lastIntervalId: undefined,
-            items: undefined,
+    let tableData = React.useRef<TableData>({ columns: [], items: undefined, last: undefined });
+    const retrieveTimeout: any = React.useRef<NodeJS.Timeout | undefined>(null);
+    const [data, setData] = React.useState<TableData>(tableData.current);
+
+    React.useEffect(() => {
+        scheduleRetrieveData(0);
+    }, []);
+
+    async function loadData() {
+        console.log("Retrieving table items...");
+        const items: any[] | undefined = await props.getData(tableData?.current?.last);
+        if (items == undefined) {
+            console.log("No update.");
+            return; // no change
         }
+
+        let columns: IColumn[];
+        if (items.length == 0) {
+            return
+        }
+
+        columns = buildColumns(items);
+        for (const col of props.controlcolumns) {
+            columns.unshift({
+                key: col.key,
+                name: '',
+                minWidth: 0,
+                maxWidth: 1,
+            });
+        }
+
+        // remove internal id field
+        let index: number = 0;
+        let found: boolean = false;
+        for (; index < columns.length; index++) {
+            const col: IColumn = columns[index];
+            if (col.key === "id") {
+                found = true;
+                index = index;
+                break;
+            }
+        }
+
+        if (found) {
+            columns.splice(index, 1);
+        }
+
+        tableData.current = { columns: columns, items: items, last: new Date()};
+        setData(tableData.current);
+        
+        console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
     }
 
-    onRenderItemColumn = (item?: any, index?: number, column?: IColumn): JSX.Element | string | number => {
+    function scheduleRetrieveData(timeout: number) {
+        if (retrieveTimeout.current != undefined) {
+            clearTimeout(retrieveTimeout.current);
+        }
+
+        retrieveTimeout.current = setTimeout(async () => {
+            await loadData();
+            scheduleRetrieveData(1000);
+        }, timeout);
+    }
+
+
+    function onRenderItemColumn(item?: any, index?: number, column?: IColumn): JSX.Element | string | number {
         if (column == undefined) {
             return <></>;
         }
 
         let control: ControlColumns | undefined;
-        for (const col of this.props.controlcolumns) {
+        for (const col of props.controlcolumns) {
             if (col.key === column.key) {
                 control = col;
                 break;
@@ -60,78 +123,22 @@ class DataTable<K, T> extends React.Component<TableInput, { visibleCount: number
         return item[column.key as keyof TableItem];
     };
 
-    componentDidMount() {
-        if (this.mounted) {
-            return;
-        }
 
-        this.mounted = true;
-        this.loadData();
-    }
-
-
-    loadData = (): void => {
-        console.log("Loading table items...")
-        const items: TableItem[] | undefined = this.props.getData();
-
-        if (items != undefined) {
-            this.shimmerColumns = buildColumns(items);
-
-            for (const col of this.props.controlcolumns) {
-                this.shimmerColumns.unshift({
-                    key: col.key,
-                    name: '',
-                    minWidth: 0,
-                    maxWidth: 1,
-                });
-            }
-
-            
-        // remove internal id field
-        let index: number = 0;
-        let found: boolean = false;
-        for (; index < this.shimmerColumns.length; index++) {
-            const col: IColumn = this.shimmerColumns[index];
-            if (col.key === "id") {
-                found = true;
-                index = index;
-                break;
-            }
-        }
-
-        if (found) {
-            this.shimmerColumns.splice(index, 1);
-        }
-
-        } else {
-            this.shimmerColumns = buildColumns([{ Loading: '' }]);
-        }
-
-        // refreshes view
-        this.setState({
-            items: items
-        }, () => {
-            console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
-        });
-    }
-
-    render() {
-        return (
-            <Stack>
-                <ShimmeredDetailsList
-                    setKey="items"
-                    items={this.state.items || []}
-                    columns={this.shimmerColumns}
-                    selectionMode={SelectionMode.none}
-                    onRenderItemColumn={this.onRenderItemColumn}
-                    enableShimmer={!this.state.items}
-                    ariaLabelForShimmer="Content is being fetched"
-                    ariaLabelForGrid="Item details"
-                    listProps={shimmeredDetailsListProps}
-                />
-            </Stack>
-        );
-    }
-};
+    return (
+        <>
+            {props.display && <ShimmeredDetailsList
+                setKey="items"
+                items={tableData.current.items || []}
+                columns={tableData.current.columns}
+                selectionMode={SelectionMode.none}
+                onRenderItemColumn={onRenderItemColumn}
+                enableShimmer={tableData.current.items == undefined}
+                ariaLabelForShimmer="Content is being fetched"
+                ariaLabelForGrid="Item details"
+                listProps={shimmeredDetailsListProps}
+            />}
+        </>
+    );
+}
 
 export default DataTable;

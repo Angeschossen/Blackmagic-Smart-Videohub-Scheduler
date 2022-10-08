@@ -1,6 +1,6 @@
 import { CommandBarButton, CompoundButton, DefaultButton, IIconProps, mergeStyles, MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
 import React, { useState } from "react";
-import { PushButton } from "../interfaces/PushButton";
+import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { RoutingRequest, Videohub } from "../interfaces/Videohub";
 import { getPostHeader } from "../utils/fetchutils";
 import { commandBarItemStyles, desktopMinWidth, stackStyles, stackTokens } from "../utils/styles";
@@ -18,27 +18,31 @@ const addIcon: IIconProps = { iconName: 'Add' };
 
 interface InputProps {
     videohub?: Videohub,
-    onRoutingUpdated?: () => void,
+    onRoutingUpdated?: (data?: RoutingRequest) => void,
     pushbuttons: PushButton[],
+}
+
+export interface RoutingData {
+    request?: RoutingRequest,
+    statusKey: number,
 }
 
 export const PushButtons = (props: InputProps) => {
     const isDekstop = useViewType();
-    const [statusKey, setStatusKey] = useState<string | number>();
-    const [currentRequest, setCurrentRequest] = useState<RoutingRequest>();
+    const [requestData, setRequestData] = useState<RoutingData>();
 
     const getRequestStatus = () => {
-        if (currentRequest == undefined || props.videohub == undefined) {
+        if (requestData?.request == undefined || props.videohub == undefined) {
             return <></>
         }
 
-        if (currentRequest.success) {
-            return <BarMessage key={statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
+        if (requestData.request.success) {
+            return <BarMessage key={requestData.statusKey} type={MessageBarType.success} text={"Routing update was successful."} />;
         } else {
-            if (currentRequest.error == undefined) {
-                return <ProgressIndicator key={statusKey} label={"Waiting for Response."} description="Please wait until the videohub acknowledged the change." />;
+            if (requestData.request.error == undefined) {
+                return <ProgressIndicator key={requestData.statusKey} label={`Waiting for Response.`} description="Please wait until the videohub acknowledged the change." />;
             } else {
-                return <BarMessage key={statusKey} type={MessageBarType.error} text={currentRequest.error} />;
+                return <BarMessage key={requestData.statusKey} type={MessageBarType.error} text={requestData.request.error} />;
             }
         }
     }
@@ -75,51 +79,49 @@ export const PushButtons = (props: InputProps) => {
                                 return (
                                     <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
                                         onClick={async () => {
-                                            if (props.videohub == undefined || (currentRequest != undefined /*&& !currentRequest.success*/)) {
+                                            if (props.videohub == undefined || (requestData?.request != undefined /*&& !currentRequest.success*/)) {
                                                 return;
                                             }
 
-                                            let err;
-                                            let request: RoutingRequest | undefined;
+                                            const inputs: number[] = [];
+                                            const outputs: number[] = [];
+
                                             for (const action of button.actions) {
-                                                request = {
-                                                    videohub_id: props.videohub.id,
-                                                    output_id: action.output_id,
-                                                    input_id: action.input_id,
-                                                    error: undefined,
-                                                    success: false,
-                                                };
-
-                                                setCurrentRequest(request);
-                                                const json = await (await fetch('/api/videohubs/routing', getPostHeader(request))).json();
-                                                err = json.result;
-
-                                                let br = false;
-                                                if (err != undefined) {
-                                                    request.error = `Error: ${err} Action: Input ${props.videohub.inputs[request.input_id].label} to output ${props.videohub.outputs[request.output_id].label}.`;
-                                                    br = true;
-                                                } else {
-                                                    request.success = true;
-                                                }
-
-                                                setCurrentRequest(request);
-                                                setStatusKey(getRandomKey());
-
-                                                if (br) {
-                                                    break;
-                                                }
+                                                outputs.push(action.output_id);
+                                                inputs.push(action.input_id);
                                             }
 
-                                            if (err == null) {
-                                                if (props.onRoutingUpdated != undefined) {
-                                                    props.onRoutingUpdated();
-                                                }
+                                            const request: RoutingRequest = {
+                                                videohub_id: props.videohub.id,
+                                                outputs: outputs,
+                                                inputs: inputs,
+                                                error: undefined,
+                                                success: false,
                                             }
+
+                                            setRequestData({ request: request, statusKey: getRandomKey() });
+                                            if (props.onRoutingUpdated != undefined) {
+                                                props.onRoutingUpdated(request);
+                                            }
+
+                                            const json = await (await fetch('/api/videohubs/routing', getPostHeader(request))).json();
+                                            const err: string = json.result;
+                                            console.log("Routing update result: " + (err == undefined ? "success" : err));
+
+                                            if (err != undefined) {
+                                                request.error = `Error: ${err}`;
+                                            } else {
+                                                request.success = true;
+                                            }
+
+                                            setRequestData({ request: request, statusKey: getRandomKey() });
 
                                             setTimeout(() => {
-                                                setCurrentRequest(undefined);
-                                                setStatusKey(getRandomKey());
-                                            }, 2000);
+                                                setRequestData({ request: undefined, statusKey: getRandomKey() });
+                                                if (props.onRoutingUpdated != undefined) {
+                                                    props.onRoutingUpdated(undefined);
+                                                }
+                                            }, 3500);
                                         }}>
                                         {button.label}
                                     </CompoundButton>
@@ -128,8 +130,6 @@ export const PushButtons = (props: InputProps) => {
                         </Stack>
                     </>}
             </Stack>
-
         </Stack>
     );
-
 }

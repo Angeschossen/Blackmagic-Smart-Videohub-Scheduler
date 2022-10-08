@@ -8,6 +8,7 @@ export interface Videohub extends TableItem {
     inputs: Input[],
     outputs: Output[],
     connected: boolean,
+    lastRoutingUpdate?: Date,
 }
 
 export interface VideohubActivity {
@@ -21,9 +22,9 @@ export interface VideohubActivity {
 
 export interface RoutingRequest {
     videohub_id: number,
-    output_id: number,
-    input_id: number,
-    error: string|null|undefined,
+    outputs: number[],
+    inputs: number[],
+    error: string | null | undefined,
     success: boolean,
 }
 

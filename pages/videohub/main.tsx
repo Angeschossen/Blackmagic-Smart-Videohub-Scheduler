@@ -1,19 +1,21 @@
 import { Stack, IStackStyles, IContextualMenuItem } from '@fluentui/react';
-import React, { useEffect, useState } from 'react';
+import React, { Key, useEffect, useState } from 'react';
 import Router from 'next/router'
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Videohub } from '../../components/interfaces/Videohub';
+import { RoutingRequest, Videohub } from '../../components/interfaces/Videohub';
 import DataTable from '../../components/DataTable';
 import { getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
 import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
 import SelectVideohub from '../../components/buttons/SelectVideohub';
-import { PushButtons } from '../../components/views/PushButtonsView';
+import { PushButtons, RoutingData } from '../../components/views/PushButtonsView';
 import { useViewType } from '../../components/views/DesktopView';
 import { useSession } from 'next-auth/react';
 import { useClientSession } from '../../components/auth/ClientAuthentication';
 import Permissions from '../../backend/authentication/Permissions';
+import { RequestData } from 'next/dist/server/web/types';
+import { convert_date_to_utc } from '../../components/utils/dateutils';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -92,9 +94,7 @@ interface VideohubData {
   menuItems: IContextualMenuItem[],
   currentVideohub?: Videohub,
   videohubs: Videohub[],
-  tableKey: number,
   pushButtons: PushButton[],
-  pushButtonsKey: number,
 }
 
 export function getVideohub(videohubs: Videohub[], id: number) {
@@ -108,19 +108,16 @@ export function getVideohub(videohubs: Videohub[], id: number) {
 }
 
 export const VideohubView = (props: VideohubViewProps) => {
-  function buildVideohubData(props: VideohubViewProps): VideohubData {
-    const videohub: Videohub | undefined = getVideohub(props.videohubs, props.videohub);
-    return { menuItems: generateMenuItems(props.videohubs), currentVideohub: videohub, videohubs: props.videohubs, tableKey: getRandomKey(), pushButtons: props.pushbuttons, pushButtonsKey: getRandomKey() };
+  function buildVideohubData(p: VideohubViewProps): VideohubData {
+    const videohub: Videohub | undefined = getVideohub(p.videohubs, p.videohub);
+    return { menuItems: generateMenuItems(p.videohubs), currentVideohub: videohub, videohubs: p.videohubs, pushButtons: p.pushbuttons };
   }
 
   const isDekstop = useViewType();
   const { data: session } = useSession();
-  const [videohubData, setVideohubData] = useState(buildVideohubData(props));
-  let retrieveTimeout: NodeJS.Timeout | undefined;
-
-  useEffect(() => {
-    scheduleRetrieveData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [pushButtonsKey, setPushButtonsKey] = useState<Key>("buttons_0");
+  const [tableKey, setTableKey] = useState<Key>("table_0");
+  const [videohubData, setVideohubData] = useState<VideohubData>(buildVideohubData(props));
 
   function generateMenuItems(res: Videohub[]): IContextualMenuItem[] {
     const menuItems: IContextualMenuItem[] = [];
@@ -138,73 +135,49 @@ export const VideohubView = (props: VideohubViewProps) => {
     return menuItems;
   }
 
-  function scheduleRetrieveData() {
-    if (retrieveTimeout != undefined) {
-      clearTimeout(retrieveTimeout);
-    }
-
-    retrieveTimeout = setTimeout(async () => {
-      await retrieveData();
-      scheduleRetrieveData();
-    }, 5000);
-  }
-
-  async function retrieveData() {
-    console.log("Retrieving videohubs.");
-    retrieveVideohubs().then(async res => {
+  async function retrieveData(last?: Date): Promise<any[] | undefined> {
+    return retrieveVideohubs().then(async res => {
       let videohub: Videohub | undefined;
       for (const hub of res) {
-        if (videohubData.currentVideohub == undefined || hub.id === videohubData.currentVideohub.id) {
+        const s: string = hub.lastRoutingUpdate as unknown as string; // because json format
+        hub.lastRoutingUpdate = new Date(s);
+
+        if (videohubData?.currentVideohub == undefined || hub.id === videohubData.currentVideohub.id) {
           videohub = hub;
           break;
         }
       }
 
       if (videohub == undefined) {
-        return;
+        return [];
       }
 
-      let change: boolean;
-      if (videohubData.currentVideohub != undefined) {
-        if (videohubData.currentVideohub.connected == videohub.connected) {
-          change = false;
-          for (let i = 0; i < videohub.outputs.length; i++) {
-            if (videohubData.currentVideohub.outputs[i].input_id != videohub.outputs[i].input_id) {
-              change = true;
-              break;
-            }
-          }
-        } else {
-          change = true;
+      const isDifferent = videohubData?.currentVideohub?.id != videohub.id;
+      if (!isDifferent && last != undefined) {
+        if (videohub.lastRoutingUpdate != undefined && convert_date_to_utc(videohub.lastRoutingUpdate) <= convert_date_to_utc(last)) {
+          return undefined; // same
         }
-      } else {
-        change = true;
       }
 
-      if (change) {
-        let pushbuttons: PushButton[];
-        if (videohub != undefined) {
-          if (videohubData.currentVideohub?.id != videohub.id) {
-            pushbuttons = await retrievePushButtons(videohub.id);
-          } else {
-            pushbuttons = videohubData.pushButtons;
-          }
-        } else {
-          pushbuttons = [];
-        }
-
-        setVideohubData(buildVideohubData({ videohubs: res, videohub: videohub.id, pushbuttons: pushbuttons }));
-        console.log("Loaded data.");
-      } else {
-        console.log("No change.");
-      }
+      return getItems(videohub);
     });
+  }
+
+  function updateView(data: VideohubData) {
+    setVideohubData(data);
+    setTableKey(getRandomKey());
   }
 
   function onSelectVideohub(hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
-      setVideohubData(buildVideohubData({ videohubs: videohubData.videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
+      updateView(buildVideohubData({ videohubs: props.videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
+      setPushButtonsKey(getRandomKey());
     });
+  }
+
+  function shouldComponentUpdate(nextProp: any, nextState: any) {
+    return false;
+
   }
 
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
@@ -212,50 +185,38 @@ export const VideohubView = (props: VideohubViewProps) => {
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
-    <VideohubPage videohub={videohubData.currentVideohub}>
+    <VideohubPage videohub={videohubData?.currentVideohub}>
       <Stack horizontal styles={stackStyles}>
         <SelectVideohub
-          videohubs={videohubData.videohubs}
+          videohubs={videohubData?.videohubs || []}
           onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
       </Stack>
-      {isDekstop &&
-        <>
-          <h1>Schedule</h1>
-          {session ? <DataTable
-            key={videohubData.tableKey}
-            controlcolumns={canEdit ? [
-              {
-                key: "edit",
-                onClick(_event, item) {
-                  if (videohubData.currentVideohub == undefined) {
-                    throw Error("Videohub is undefined");
-                  }
-
-                  Router.push({
-                    pathname: './events',
-                    query: { videohub: videohubData.currentVideohub.id, output: item.id },
-                  });
-                },
-                text: "Schedule"
-              }
-            ] : []}
-            getData={() => {
-              console.log("Get data");
-              if (videohubData.currentVideohub === undefined) {
-                return undefined;
+      <h1>Schedule</h1>
+      <DataTable
+        key={tableKey}
+        display={isDekstop && session != undefined}
+        controlcolumns={canEdit ? [
+          {
+            key: "edit",
+            onClick(_event, item) {
+              if (videohubData?.currentVideohub == undefined) {
+                throw Error("Videohub is undefined");
               }
 
-              return getItems(videohubData.currentVideohub as Videohub);
-            }} /> :
-            <p>You are not logged in or you are missing permission to schedule outputs.</p>}
-        </>}
+              Router.push({
+                pathname: './events',
+                query: { videohub: videohubData.currentVideohub.id, output: item.id },
+              });
+            },
+            text: "Schedule"
+          }
+        ] : []}
+        getData={(last?: Date) => retrieveData(last)} />
       <PushButtons
-        key={videohubData.pushButtonsKey}
-        pushbuttons={videohubData.pushButtons}
-        videohub={videohubData.currentVideohub}
-        onRoutingUpdated={async () => {
-          await retrieveData();
-        }} />
+        key={pushButtonsKey}
+        pushbuttons={videohubData?.pushButtons || []}
+        videohub={videohubData?.currentVideohub}
+      />
       <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh' }}>
       </Stack>
     </VideohubPage>
