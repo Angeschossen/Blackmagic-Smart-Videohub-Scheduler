@@ -16,6 +16,7 @@ import { useClientSession } from '../../components/auth/ClientAuthentication';
 import Permissions from '../../backend/authentication/Permissions';
 import { RequestData } from 'next/dist/server/web/types';
 import { convert_date_to_utc } from '../../components/utils/dateutils';
+import { stackTokens } from '../../components/utils/styles';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -186,38 +187,38 @@ export const VideohubView = (props: VideohubViewProps) => {
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
     <VideohubPage videohub={videohubData?.currentVideohub}>
-      <Stack horizontal styles={stackStyles}>
-        <SelectVideohub
-          videohubs={videohubData?.videohubs || []}
-          onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
-      </Stack>
-      <h1>Schedule</h1>
-      {isDekstop && session != undefined &&
-        <DataTable
-          key={tableKey}
-          controlcolumns={canEdit ? [
-            {
-              key: "edit",
-              onClick(_event, item) {
-                if (videohubData?.currentVideohub == undefined) {
-                  throw Error("Videohub is undefined");
-                }
+      <Stack tokens={stackTokens}>
+        <Stack horizontal styles={stackStyles}>
+          <SelectVideohub
+            videohubs={videohubData?.videohubs || []}
+            onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
+        </Stack>
+        <h1>Schedule</h1>
+        {isDekstop && session != undefined &&
+          <DataTable
+            key={tableKey}
+            controlcolumns={canEdit ? [
+              {
+                key: "edit",
+                onClick(_event, item) {
+                  if (videohubData?.currentVideohub == undefined) {
+                    throw Error("Videohub is undefined");
+                  }
 
-                Router.push({
-                  pathname: './events',
-                  query: { videohub: videohubData.currentVideohub.id, output: item.id },
-                });
-              },
-              text: "Schedule"
-            }
-          ] : []}
-          getData={(last?: Date) => retrieveData(last)} />}
-      <PushButtons
-        key={pushButtonsKey}
-        pushbuttons={videohubData?.pushButtons || []}
-        videohub={videohubData?.currentVideohub}
-      />
-      <Stack style={{ paddingTop: '2vh', paddingBottom: '2vh' }}>
+                  Router.push({
+                    pathname: './events',
+                    query: { videohub: videohubData.currentVideohub.id, output: item.id },
+                  });
+                },
+                text: "Schedule"
+              }
+            ] : []}
+            getData={(last?: Date) => retrieveData(last)} />}
+        <PushButtons
+          key={pushButtonsKey}
+          pushbuttons={videohubData?.pushButtons || []}
+          videohub={videohubData?.currentVideohub}
+        />
       </Stack>
     </VideohubPage>
   );
