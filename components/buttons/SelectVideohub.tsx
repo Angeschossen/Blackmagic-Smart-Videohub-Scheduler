@@ -22,7 +22,7 @@ export const SelectVideohub = (props: InputProps) => {
         setModalKey(getRandomKey());
     }, [isOpen])
 
-    const canEdit = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
+    const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
 
     function generateMenuItems(): IContextualMenuItem[] {
         const menuItems: IContextualMenuItem[] = [];
