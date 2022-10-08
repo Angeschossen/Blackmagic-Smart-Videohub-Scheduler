@@ -93,7 +93,7 @@ export const DataTable = (props: TableInput) => {
 
             retrieveTimeout = setTimeout(async () => {
                 await loadData();
-                scheduleRetrieveData(1000);
+                scheduleRetrieveData(2000);
             }, timeout);
         }
 
