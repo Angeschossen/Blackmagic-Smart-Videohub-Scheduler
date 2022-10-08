@@ -179,7 +179,7 @@ export const VideohubView = (props: VideohubViewProps) => {
             videohubs={videohubData.current.videohubs || []}
             onSelectVideohub={(hub: Videohub) => onSelectVideohub(videohubData.current.videohubs, hub)} />
         </Stack>
-        <h1>Schedule</h1>
+        <h1>Routing</h1>
         {isDekstop && session != undefined &&
           <DataTable
             key={keys.tableKey}
