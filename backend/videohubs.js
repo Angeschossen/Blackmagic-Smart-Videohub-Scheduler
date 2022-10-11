@@ -1,7 +1,6 @@
 const net = require('net');
 const prismadb = require('../database/prismadb');
 const dateutils = require('../components/utils/dateutils');
-const { ThumbUpSharp } = require('@mui/icons-material');
 
 const ICON_ERROR = "Error";
 const ICON_CONNECTION_SUCCESS = "NetworkTower";
@@ -371,6 +370,12 @@ class Videohub {
         return promise;
     }
 
+    onUpdate() {
+        const socketio = require('./socketio');
+        console.log(socketio.get())
+        //socketio.em("videohubUpdate_" + this.data.id, this.data);
+    }
+
     async logActivity(description, icon) {
         await prismadb.videohubActivity.create({
             data: {
@@ -448,6 +453,7 @@ class Videohub {
             this.clearReconnect();
             this.scheduleCheckConnectionHealth();
             this.startEventsCheck();
+            this.onUpdate();
 
             if (!isInitial) {
                 await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS);
@@ -498,6 +504,7 @@ class Videohub {
         }
 
         if (this.data.connected) {
+            this.onUpdate();
             await this.logActivity("Connection lost.", ICON_ERROR)
         }
 
@@ -688,6 +695,7 @@ class Videohub {
                     i++;
                 }
 
+                this.onUpdate();
                 return i;
             }
 
@@ -830,6 +838,10 @@ module.exports = {
             if (hub.isConnected()) {
                 throw Error("Already connected");
             }
+
+            setInterval(() => {
+                hub.onUpdate();
+            }, 2000);
 
             hub.reconnect(true);
         }
