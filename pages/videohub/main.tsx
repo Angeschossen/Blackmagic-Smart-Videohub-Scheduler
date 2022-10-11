@@ -139,15 +139,16 @@ export const VideohubView = (props: VideohubViewProps) => {
     channel = `videohubUpdate_${channel}`;
     console.log("Subscribing to channel: " + channel);
     socketio.current.on(channel, (data: Videohub) => {
-      if (data.id != videohubData.current.currentVideohub?.id) {
-        return;
-      }
+      console.log("Retrieved update.");
 
       for (let i = 0; i < videohubData.current.videohubs.length; i++) {
         const videohub: Videohub = videohubData.current.videohubs[i];
         if (videohub.id === data.id) {
           videohubData.current.videohubs[i] = data;
-          updateTable();
+          if (data.id === videohubData.current.currentVideohub?.id) {
+            updateTable();
+          }
+
           break;
         }
       }
