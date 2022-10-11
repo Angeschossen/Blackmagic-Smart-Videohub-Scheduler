@@ -1,6 +1,7 @@
 const prismadb = require('../database/prismadb');
 const permissions = require('./authentication/Permissions');
 const videohubs = require('./videohubs');
+const socketio = require('./socketio');
 
 class Role {
     constructor(id, name, permissions) {
@@ -36,7 +37,7 @@ async function createUser(user, role) {
 }
 
 module.exports = {
-    roles: Map,
+    roles: undefined,
     setupRoles: async function () {
         console.log("Setting up roles...");
         roles = new Map();
@@ -92,5 +93,6 @@ module.exports = {
         await this.setupRoles();
         await videohubs.loadData();
         videohubs.connect();
+
     },
 }

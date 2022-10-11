@@ -65,7 +65,7 @@ function getCorrespondingLines(lines, index) {
 
 function checkConnection(host, port, timeout) {
     return new Promise(function (resolve, reject) {
-        timeout = timeout || 10000;     // default of 10 seconds
+        timeout = timeout || 10000; // default of 10 seconds
         const timer = setTimeout(function () {
             reject("timeout");
             socket.end();
