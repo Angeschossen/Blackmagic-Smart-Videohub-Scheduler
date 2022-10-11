@@ -7,7 +7,7 @@ const ICON_ERROR = "Error";
 const ICON_CONNECTION_SUCCESS = "NetworkTower";
 const ICON_SUCCESS = "Accept";
 
-const VIDEOHUB_PORT = 9990;
+const VIDEOHUB_PORT = 9999;
 const CONNECTION_HEALT_CHECK_INTERVAL = 60000;
 
 const REQUEST_TIMEOUT = 5000;

@@ -1,6 +1,8 @@
 import { IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
+import { useEffect } from "react";
 import { render } from "react-dom"
 import { Videohub } from "./interfaces/Videohub"
+import { useForceUpdate } from "./utils/hooks";
 
 interface InputProps {
     videohub?: Videohub,
@@ -43,9 +45,11 @@ function getStatusComponent(videohub?: Videohub) {
 }
 
 export const VideohubFooter = (p: InputProps) => {
-    return (
-        <Stack>
-            {getStatusComponent(p.videohub)}
-        </Stack>
-    )
+    const forceUpdate = useForceUpdate();
+
+    useEffect(() => {
+        forceUpdate();
+    }, [p.videohub]);
+
+    return getStatusComponent(p.videohub)
 }
