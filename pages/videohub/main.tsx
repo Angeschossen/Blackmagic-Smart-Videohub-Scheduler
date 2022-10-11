@@ -120,10 +120,19 @@ interface Keys {
 
 export const VideohubView = (props: VideohubViewProps) => {
   const socketio: any = React.useRef();
+  const isDekstop = useViewType();
+  const { data: session } = useSession();
+  const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
+  const videohubData = React.useRef(buildVideohubData(props));
+  const [tableUpdate, setTableUpdate] = useState<number>(getRandomKey());
 
   function buildVideohubData(p: VideohubViewProps): VideohubData {
     const videohub: Videohub | undefined = getVideohub(p.videohubs, p.videohub);
     return { currentVideohub: videohub, videohubs: p.videohubs, pushButtons: p.pushbuttons };
+  }
+
+  function updateTable() {
+    setTableUpdate(getRandomKey());
   }
 
   function subscribe(channel: string | number) {
@@ -138,6 +147,7 @@ export const VideohubView = (props: VideohubViewProps) => {
         const videohub: Videohub = videohubData.current.videohubs[i];
         if (videohub.id === data.id) {
           videohubData.current.videohubs[i] = data;
+          updateTable();
           break;
         }
       }
@@ -161,12 +171,7 @@ export const VideohubView = (props: VideohubViewProps) => {
     });
   }, []);
 
-  const isDekstop = useViewType();
-  const { data: session } = useSession();
-  const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
-  const videohubData = React.useRef(buildVideohubData(props));
-
-  async function retrieveData(last?: Date): Promise<any[] | undefined> {
+  async function retrieveData(): Promise<any[] | undefined> {
     let videohub: Videohub | undefined;
     for (const hub of videohubData.current.videohubs) {
       if (videohubData.current.currentVideohub == undefined || hub.id === videohubData.current.currentVideohub.id) {
@@ -179,18 +184,9 @@ export const VideohubView = (props: VideohubViewProps) => {
       return [];
     }
 
-    const s: string = videohub.lastRoutingUpdate as unknown as string; // because json format
-    videohub.lastRoutingUpdate = new Date(s);
-
     if (videohubData.current.currentVideohub?.id != videohub.id || videohubData.current.currentVideohub?.connected != videohub.connected) {
       onSelectVideohub(videohubData.current.videohubs, videohub);
       return undefined; // since it updates all
-    }
-
-    if (last != undefined) {
-      if (videohub.lastRoutingUpdate != undefined && convert_date_to_utc(videohub.lastRoutingUpdate) <= convert_date_to_utc(last)) {
-        return undefined; // same
-      }
     }
 
     return getItems(videohub);
@@ -228,6 +224,7 @@ export const VideohubView = (props: VideohubViewProps) => {
         {isDekstop && session != undefined &&
           <DataTable
             key={keys.tableKey}
+            tableUpdate={tableUpdate || 0}
             controlcolumns={canEdit ? [
               {
                 key: "edit",
@@ -244,7 +241,7 @@ export const VideohubView = (props: VideohubViewProps) => {
                 text: "Schedule"
               }
             ] : []}
-            getData={(last?: Date) => retrieveData(last)} />}
+            getData={() => retrieveData()} />}
         <PushButtons
           key={keys.pushbuttonsKey}
           pushbuttons={videohubData.current.pushButtons || []}
