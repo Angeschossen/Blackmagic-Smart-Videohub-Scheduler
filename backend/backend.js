@@ -89,11 +89,9 @@ module.exports = {
     getRoleById(id) {
         return roles.get(id);
     },
-    setup: async function (server) {
+    setup: async function () {
         await this.setupRoles();
         await videohubs.loadData();
-
-        socketio.setup(server);
         videohubs.connect();
     },
 }

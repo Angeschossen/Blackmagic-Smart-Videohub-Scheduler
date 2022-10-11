@@ -1,8 +1,10 @@
-const { Server } = require("socket.io");
 
-module.exports = {
-    io: undefined,
-    setup: function (server) {
-        io = new Server(server);
+let Inst = module.exports = {
+    sock: null,
+    initialize: function(socket){
+        Inst.sock = socket;
+    },
+    get: function(){
+        return Inst.sock;
     }
 }

@@ -17,6 +17,8 @@ import Permissions from '../../backend/authentication/Permissions';
 import { RequestData } from 'next/dist/server/web/types';
 import { convert_date_to_utc } from '../../components/utils/dateutils';
 import { stackTokens } from '../../components/utils/styles';
+import io from "socket.io-client";
+import { Socket } from 'net';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -111,15 +113,44 @@ interface Keys {
   tableKey: Key,
   pushbuttonsKey: Key,
 }
+
+
 export const VideohubView = (props: VideohubViewProps) => {
+  const socketio: any = React.useRef();
+
   function buildVideohubData(p: VideohubViewProps): VideohubData {
     const videohub: Videohub | undefined = getVideohub(p.videohubs, p.videohub);
     return { currentVideohub: videohub, videohubs: p.videohubs, pushButtons: p.pushbuttons };
   }
 
+  function subscribe(channel: string | number) {
+    channel = `videohubUpdate_${channel}`;
+    console.log("Subscribing to channel: " + channel);
+    socketio.current.on(channel, (data: any) => {
+      console.log(data);
+    });
+  }
+
+  useEffect(() => {
+    fetch("/api/socket").then(() => {
+      if (socketio.current != undefined) {
+        return;
+      }
+      
+      socketio.current = io();
+      const id = videohubData.current.currentVideohub?.id;
+      
+      if (id != undefined) {
+        subscribe(id);
+      }
+
+      console.log("Socket setup.")
+    });
+  }, []);
+
   const isDekstop = useViewType();
   const { data: session } = useSession();
-  const [keys, setKeys] = useState<Keys>({tableKey: "table_0",pushbuttonsKey: "buttons_0"});
+  const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
   const videohubData = React.useRef(buildVideohubData(props));
   const [data, setData] = useState<VideohubData>(videohubData.current);
 
@@ -158,12 +189,16 @@ export const VideohubView = (props: VideohubViewProps) => {
   function updateView(data: VideohubData) {
     console.log("Update view");
     videohubData.current = data;
-    setKeys({tableKey: getRandomKey(), pushbuttonsKey: getRandomKey()});
+    setKeys({ tableKey: getRandomKey(), pushbuttonsKey: getRandomKey() });
   }
 
   function onSelectVideohub(videohubs: Videohub[], hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
       updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
+
+      if (hub != undefined && videohubData?.current.currentVideohub?.id != hub.id) {
+        subscribe(hub.id);
+      }
     });
   }
 
