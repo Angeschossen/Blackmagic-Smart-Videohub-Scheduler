@@ -6,7 +6,8 @@ import { Key } from 'react';
 
 export interface TableInput {
     controlcolumns: ControlColumns[],
-    getData: (last?: Date) => Promise<any[] | undefined>,
+    getData: () => Promise<any[] | undefined>,
+    tableUpdate: number,
 }
 
 export interface ControlColumns {
@@ -40,8 +41,6 @@ export const DataTable = (props: TableInput) => {
     const controlcolumns: any = React.useRef(props.controlcolumns);
 
     React.useEffect(() => {
-        let retrieveTimeout: NodeJS.Timeout | undefined;
-
         async function loadData() {
             //console.log("Retrieving table items...");
             const items: any[] | undefined = await getData.current(tableData?.current?.last);
@@ -84,25 +83,11 @@ export const DataTable = (props: TableInput) => {
 
             tableData.current = { columns: columns, items: items, last: new Date() };
             setData(tableData.current);
-
             //console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
         }
 
-        function scheduleRetrieveData(timeout: number) {
-            clearTimeout(retrieveTimeout);
-
-            retrieveTimeout = setTimeout(async () => {
-                await loadData();
-                scheduleRetrieveData(1000);
-            }, timeout);
-        }
-
-        scheduleRetrieveData(0);
-        return () => {
-            clearTimeout(retrieveTimeout);
-            console.log("Timeout cleared: " + retrieveTimeout);
-        }
-    }, []);
+        loadData();
+    }, [props.tableUpdate]);
 
     function onRenderItemColumn(item?: any, index?: number, column?: IColumn): JSX.Element | string | number {
         if (column == undefined) {
