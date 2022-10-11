@@ -43,16 +43,16 @@ export const DataTable = (props: TableInput) => {
         let retrieveTimeout: NodeJS.Timeout | undefined;
 
         async function loadData() {
-            console.log("Retrieving table items...");
+            //console.log("Retrieving table items...");
             const items: any[] | undefined = await getData.current(tableData?.current?.last);
             if (items == undefined) {
-                console.log("No update.");
+                //console.log("No update.");
                 return; // no change
             }
 
             let columns: IColumn[];
             if (items.length == 0) {
-                console.log("No items.");
+                //console.log("No items.");
                 return
             }
 
@@ -85,7 +85,7 @@ export const DataTable = (props: TableInput) => {
             tableData.current = { columns: columns, items: items, last: new Date() };
             setData(tableData.current);
 
-            console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
+            //console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
         }
 
         function scheduleRetrieveData(timeout: number) {
@@ -93,7 +93,7 @@ export const DataTable = (props: TableInput) => {
 
             retrieveTimeout = setTimeout(async () => {
                 await loadData();
-                scheduleRetrieveData(2000);
+                scheduleRetrieveData(1000);
             }, timeout);
         }
 

@@ -73,14 +73,17 @@ export async function getServerSideProps(context: any) {
   }
 }
 
-function getItems(videohub: Videohub): any[] {
+function getItems(videohub?: Videohub): any[] {
   const cloned: any[] = [];
-  for (const output of videohub.outputs) {
-    cloned.push({
-      id: output.id,
-      Output: output.label,
-      Input: (output.input_id == undefined ? "None" : videohub.inputs[output.input_id].label),
-    });
+
+  if (videohub != undefined) {
+    for (const output of videohub.outputs) {
+      cloned.push({
+        id: output.id,
+        Output: output.label,
+        Input: (output.input_id == undefined ? "None" : videohub.inputs[output.input_id].label),
+      });
+    }
   }
 
   return cloned;
@@ -126,8 +129,18 @@ export const VideohubView = (props: VideohubViewProps) => {
   function subscribe(channel: string | number) {
     channel = `videohubUpdate_${channel}`;
     console.log("Subscribing to channel: " + channel);
-    socketio.current.on(channel, (data: any) => {
-      console.log(data);
+    socketio.current.on(channel, (data: Videohub) => {
+      if (data.id != videohubData.current.currentVideohub?.id) {
+        return;
+      }
+
+      for (let i = 0; i < videohubData.current.videohubs.length; i++) {
+        const videohub: Videohub = videohubData.current.videohubs[i];
+        if (videohub.id === data.id) {
+          videohubData.current.videohubs[i] = data;
+          break;
+        }
+      }
     });
   }
 
@@ -136,10 +149,10 @@ export const VideohubView = (props: VideohubViewProps) => {
       if (socketio.current != undefined) {
         return;
       }
-      
+
       socketio.current = io();
       const id = videohubData.current.currentVideohub?.id;
-      
+
       if (id != undefined) {
         subscribe(id);
       }
@@ -152,38 +165,35 @@ export const VideohubView = (props: VideohubViewProps) => {
   const { data: session } = useSession();
   const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
   const videohubData = React.useRef(buildVideohubData(props));
-  const [data, setData] = useState<VideohubData>(videohubData.current);
 
   async function retrieveData(last?: Date): Promise<any[] | undefined> {
-    return retrieveVideohubs().then(async res => {
-      let videohub: Videohub | undefined;
-      for (const hub of res) {
-        const s: string = hub.lastRoutingUpdate as unknown as string; // because json format
-        hub.lastRoutingUpdate = new Date(s);
-
-        if (videohubData.current.currentVideohub == undefined || hub.id === videohubData.current.currentVideohub.id) {
-          videohub = hub;
-          break;
-        }
+    let videohub: Videohub | undefined;
+    for (const hub of videohubData.current.videohubs) {
+      if (videohubData.current.currentVideohub == undefined || hub.id === videohubData.current.currentVideohub.id) {
+        videohub = hub;
+        break;
       }
+    }
 
-      if (videohub == undefined) {
-        return [];
+    if (videohub == undefined) {
+      return [];
+    }
+
+    const s: string = videohub.lastRoutingUpdate as unknown as string; // because json format
+    videohub.lastRoutingUpdate = new Date(s);
+
+    if (videohubData.current.currentVideohub?.id != videohub.id || videohubData.current.currentVideohub?.connected != videohub.connected) {
+      onSelectVideohub(videohubData.current.videohubs, videohub);
+      return undefined; // since it updates all
+    }
+
+    if (last != undefined) {
+      if (videohub.lastRoutingUpdate != undefined && convert_date_to_utc(videohub.lastRoutingUpdate) <= convert_date_to_utc(last)) {
+        return undefined; // same
       }
+    }
 
-      if (videohubData.current.currentVideohub?.id != videohub.id || videohubData.current.currentVideohub?.connected != videohub.connected) {
-        onSelectVideohub(res, videohub);
-        return undefined; // since it updates all
-      }
-
-      if (last != undefined) {
-        if (videohub.lastRoutingUpdate != undefined && convert_date_to_utc(videohub.lastRoutingUpdate) <= convert_date_to_utc(last)) {
-          return undefined; // same
-        }
-      }
-
-      return getItems(videohub);
-    });
+    return getItems(videohub);
   }
 
   function updateView(data: VideohubData) {
