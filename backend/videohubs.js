@@ -372,7 +372,7 @@ class Videohub {
     }
 
     onUpdate() {
-        emit("videohubUpdate_" + this.data.id, this.data);
+        emit("videohubUpdate", this.data);
     }
 
     async logActivity(description, icon) {
@@ -502,12 +502,14 @@ class Videohub {
             this.client = undefined;
         }
 
-        if (this.data.connected) {
+        const wasConnected = this.data.connected;
+        this.data.connected = false;
+
+        if (wasConnected) {
             this.onUpdate();
             await this.logActivity("Connection lost.", ICON_ERROR)
         }
 
-        this.data.connected = false;
         this.stopEventsCheck();
 
         this.connectionAttempt++;

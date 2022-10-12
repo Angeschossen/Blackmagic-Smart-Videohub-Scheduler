@@ -45,11 +45,5 @@ function getStatusComponent(videohub?: Videohub) {
 }
 
 export const VideohubFooter = (p: InputProps) => {
-    const forceUpdate = useForceUpdate();
-
-    useEffect(() => {
-        forceUpdate();
-    }, [p.videohub]);
-
     return getStatusComponent(p.videohub)
 }

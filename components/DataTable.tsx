@@ -33,7 +33,6 @@ interface TableData {
 
 // <TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }>
 export const DataTable = (props: TableInput) => {
-
     let tableData = React.useRef<TableData>({ columns: [], items: undefined, last: undefined });
     const [data, setData] = React.useState<TableData>(tableData.current);
 
@@ -112,7 +111,6 @@ export const DataTable = (props: TableInput) => {
 
         return item[column.key as keyof TableItem];
     };
-
 
     return (
         <ShimmeredDetailsList

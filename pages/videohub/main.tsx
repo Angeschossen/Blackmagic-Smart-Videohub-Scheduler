@@ -131,22 +131,21 @@ export const VideohubView = (props: VideohubViewProps) => {
     return { currentVideohub: videohub, videohubs: p.videohubs, pushButtons: p.pushbuttons };
   }
 
-  function updateTable() {
+  function onVideohubUpdate(videohub: Videohub) {
     setTableUpdate(getRandomKey());
   }
 
   function subscribe(channel: string | number) {
-    channel = `videohubUpdate_${channel}`;
-    console.log("Subscribing to channel: " + channel);
+    console.log(`Subscribing to channel: ${channel}`);
     socketio.current.on(channel, (data: Videohub) => {
-      console.log("Retrieved update.");
+      console.log("Received update.");
 
       for (let i = 0; i < videohubData.current.videohubs.length; i++) {
         const videohub: Videohub = videohubData.current.videohubs[i];
         if (videohub.id === data.id) {
           videohubData.current.videohubs[i] = data;
           if (data.id === videohubData.current.currentVideohub?.id) {
-            updateTable();
+            onVideohubUpdate(data);
           }
 
           break;
@@ -162,12 +161,7 @@ export const VideohubView = (props: VideohubViewProps) => {
       }
 
       socketio.current = io();
-      const id = videohubData.current.currentVideohub?.id;
-
-      if (id != undefined) {
-        subscribe(id);
-      }
-
+      subscribe("videohubUpdate");
       console.log("Socket setup.")
     });
   }, []);
@@ -202,10 +196,6 @@ export const VideohubView = (props: VideohubViewProps) => {
   function onSelectVideohub(videohubs: Videohub[], hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
       updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
-
-      if (hub != undefined && videohubData?.current.currentVideohub?.id != hub.id) {
-        subscribe(hub.id);
-      }
     });
   }
 
