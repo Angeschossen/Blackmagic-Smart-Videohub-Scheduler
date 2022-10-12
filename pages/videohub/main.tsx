@@ -135,25 +135,6 @@ export const VideohubView = (props: VideohubViewProps) => {
     setTableUpdate(getRandomKey());
   }
 
-  function subscribe(channel: string | number) {
-    console.log(`Subscribing to channel: ${channel}`);
-    socketio.current.on(channel, (data: Videohub) => {
-      console.log("Received update.");
-
-      for (let i = 0; i < videohubData.current.videohubs.length; i++) {
-        const videohub: Videohub = videohubData.current.videohubs[i];
-        if (videohub.id === data.id) {
-          videohubData.current.videohubs[i] = data;
-          if (data.id === videohubData.current.currentVideohub?.id) {
-            onVideohubUpdate(data);
-          }
-
-          break;
-        }
-      }
-    });
-  }
-
   useEffect(() => {
     fetch("/api/socket").then(() => {
       if (socketio.current != undefined) {
@@ -161,7 +142,25 @@ export const VideohubView = (props: VideohubViewProps) => {
       }
 
       socketio.current = io();
-      subscribe("videohubUpdate");
+
+      const channel: string = "videohubUpdate";
+      console.log(`Subscribing to channel: ${channel}`);
+      socketio.current.on(channel, (data: Videohub) => {
+        console.log("Received update.");
+  
+        for (let i = 0; i < videohubData.current.videohubs.length; i++) {
+          const videohub: Videohub = videohubData.current.videohubs[i];
+          if (videohub.id === data.id) {
+            videohubData.current.videohubs[i] = data;
+            if (data.id === videohubData.current.currentVideohub?.id) {
+              onVideohubUpdate(data);
+            }
+  
+            break;
+          }
+        }
+      });
+
       console.log("Socket setup.")
     });
   }, []);
@@ -215,7 +214,7 @@ export const VideohubView = (props: VideohubViewProps) => {
         {isDekstop && session != undefined &&
           <DataTable
             key={keys.tableKey}
-            tableUpdate={tableUpdate || 0}
+            tableUpdate={tableUpdate}
             controlcolumns={canEdit ? [
               {
                 key: "edit",

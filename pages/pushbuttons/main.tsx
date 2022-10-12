@@ -124,6 +124,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                 </Stack>
                 <Stack.Item>
                     <DataTable
+                        tableUpdate={this.state.key}
                         key={this.state.key}
                         controlcolumns={[
                             {
