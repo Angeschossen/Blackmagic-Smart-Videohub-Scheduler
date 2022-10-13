@@ -1,12 +1,12 @@
 import { IModalProps, IStackTokens, Stack, TextField } from "@fluentui/react";
 import React from "react";
-import InputModal from "../modals/InputModal";
 import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Videohub } from "../interfaces/Videohub";
+import { InputModal, InputModalProps } from "./InputModal";
 
 
-interface InputProps extends IModalProps {
+interface InputProps extends InputModalProps {
     videohubs: Videohub[],
     edit?: Videohub,
     onConfirm: (videohub: Videohub) => void,
@@ -55,7 +55,8 @@ export default class EditVideohubModal extends React.Component<InputProps, { edi
         const inst: EditVideohubModal = this;
         return (
             <InputModal
-                modalKey={getRandomKey()}
+                close={this.props.close}
+                modalKey={this.props.modalKey}
                 isOpen={this.props.isOpen}
                 onCancel={function (): void {
                     // nothing, just cancel

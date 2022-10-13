@@ -58,7 +58,7 @@ function getItems(pushButtons: PushButton[]): Promise<any[] | undefined> {
     });
 }
 
-class PushButtonsList extends React.Component<InputProps, { key: number, currentEdit?: PushButton, pushButtons: PushButton[], modal?: number, isOpen?: boolean }>{
+class PushButtonsList extends React.Component<InputProps, { key: number, currentEdit?: PushButton, pushButtons: PushButton[], modalKey: number, isOpen?: boolean }>{
     private optionsOutput: IDropdownOption[];
     private optionsInput: IDropdownOption[];
     private mounted: boolean = false;
@@ -67,6 +67,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
         super(props);
 
         this.state = {
+            modalKey: getRandomKey(),
             key: getRandomKey(),
             isOpen: false,
             pushButtons: props.pushbuttons,
@@ -119,7 +120,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                     <CommandBarButton
                         iconProps={addIcon}
                         text={"Add"}
-                        onClick={() => this.setState({ isOpen: true, modal: getRandomKey() })} />
+                        onClick={() => this.setState({ isOpen: true, modalKey: getRandomKey() })} />
 
                 </Stack>
                 <Stack.Item>
@@ -132,7 +133,7 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                                 onClick(_event, item) {
                                     for (const button of inst.state.pushButtons) {
                                         if (button.id === item.id) {
-                                            inst.setState({ isOpen: true, modal: getRandomKey(), currentEdit: button });
+                                            inst.setState({ isOpen: true, modalKey: getRandomKey(), currentEdit: button });
                                             break;
                                         }
                                     }
@@ -146,14 +147,17 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                 </Stack.Item>
                 {this.state.isOpen &&
                     <EditPushButtonModal
-                        key={this.state.modal}
+                        close={() => {
+                            this.setState({ modalKey: getRandomKey(), isOpen: false, currentEdit:undefined });
+                        }}
+                        modalKey={this.state.modalKey}
                         isOpen={this.state.isOpen}
                         optionsInput={this.optionsInput}
                         optionsOutput={this.optionsOutput}
                         videohub={this.props.videohub}
                         buttons={this.state.pushButtons}
                         button={this.state.currentEdit}
-                        onConfirm={async (button: PushButton) => {
+                        onConfirm={(button?: any): string | undefined => {
                             fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
                                 const json = await res.json();
                                 const arr: PushButton[] = this.state.pushButtons.slice();
@@ -175,8 +179,10 @@ class PushButtonsList extends React.Component<InputProps, { key: number, current
                                     }
                                 }
 
-                                this.setState({ pushButtons: arr, key: this.state.key + 1, });
+                                this.setState({ pushButtons: arr, key: getRandomKey(), });
                             });
+
+                            return undefined;
                         }}
                         onDelete={(id: number) => {
                             let arr: PushButton[] = this.state.pushButtons.slice();

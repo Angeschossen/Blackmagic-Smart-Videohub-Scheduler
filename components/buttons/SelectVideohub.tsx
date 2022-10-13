@@ -5,6 +5,7 @@ import { getRandomKey } from "../utils/commonutils";
 import { Videohub } from "../interfaces/Videohub";
 import { useClientSession } from "../auth/ClientAuthentication";
 import Permissions from "../../backend/authentication/Permissions";
+import { Key } from "readline";
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
 interface InputProps {
@@ -15,13 +16,7 @@ interface InputProps {
 //  { open?: boolean, modal?: number }
 export const SelectVideohub = (props: InputProps) => {
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [modalKey, setModalKey] = useState<number>(getRandomKey());
-
-    useEffect(() => {
-        setModalKey(getRandomKey());
-    }, [isOpen])
-
+    const [modalData, setModalData] = useState<{ modalKey: number, isOpen: boolean }>({ modalKey: getRandomKey(), isOpen: false });
     const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
 
     function generateMenuItems(): IContextualMenuItem[] {
@@ -43,7 +38,7 @@ export const SelectVideohub = (props: InputProps) => {
                 text: "Add",
                 iconProps: { iconName: 'Add' },
                 onClick: () => {
-                    setIsOpen(true);
+                    setModalData({ modalKey: getRandomKey(), isOpen: true });
                 }
             });
         }
@@ -57,15 +52,16 @@ export const SelectVideohub = (props: InputProps) => {
 
     return (
         <>
-            {isOpen &&
-                <EditVideohubModal
-                    key={modalKey}
-                    isOpen={true}
-                    videohubs={props.videohubs}
-                    onConfirm={function (videohub: Videohub): void {
-                        props.videohubs.push(videohub);
-                    }} />
-            }
+            <EditVideohubModal
+                isOpen={modalData.isOpen}
+                videohubs={props.videohubs}
+                onConfirm={function (videohub: Videohub): void {
+                    props.videohubs.push(videohub);
+                }}
+                modalKey={modalData.modalKey}
+                close={function (): void {
+                    setModalData({ modalKey: getRandomKey(), isOpen: false });
+                }} />
             <CommandBarButton
                 iconProps={videohubIcon}
                 text={"Select Videohub"}

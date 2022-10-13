@@ -1,25 +1,29 @@
 import { DefaultButton, Dropdown, getColorFromString, IColor, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
-import React, { RefObject } from "react";
+import React, { Key, RefObject, useEffect } from "react";
 import { deepCopy, getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 import { Confirmation } from "../buttons/Confirmation";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../interfaces/Videohub";
-import InputModal from "./InputModal";
 import { PickColor } from "../input/ColorPicker";
 import { dropdownStyles, stackTokens } from "../utils/styles";
+import { useForceUpdate } from "../utils/hooks";
+import { InputModal, InputModalProps } from "./InputModal";
 
 
 
 
-interface InputProps extends IModalProps {
+interface InputProps {
+    onConfirm: (button: PushButton) => void;
+    isOpen: boolean | undefined;
     optionsInput: IDropdownOption[],
     optionsOutput: IDropdownOption[],
+    modalKey: number,
     videohub: Videohub,
     button?: PushButton,
     buttons: PushButton[],
-    onConfirm: (button: PushButton) => void,
+    close: () => void,
     onDelete: (buttonId: number) => void,
 }
 
@@ -66,59 +70,37 @@ class RoutingComponent extends React.Component<RoutingComponentProps, {}>{
     }
 }
 
-export class EditPushButtonModal extends React.Component<InputProps, { label?: string, modalKey?: number, isOpen?: boolean }> {
+export const EditPushButtonModal = (props: InputProps) => {
 
-    private routingComponents: RoutingComponent[] = [];
-    private mounted: boolean = false;
-    private button: PushButton;
-    private label?: string;
-    private color?: IColor;
+    const forceUpdate = useForceUpdate();
+    const button = React.useRef<PushButton>(props.button == undefined ? {
+        id: -1,
+        videohub_id: props.videohub.id,
+        label: undefined,
+        actions: [],
+    } : deepCopy(props.button));
 
-    constructor(props: InputProps) {
-        super(props);
-
-        this.button = props.button == undefined ? {
-            id: -1,
-            videohub_id: props.videohub.id,
-            label: undefined,
-            actions: []
-        } : deepCopy(props.button);
-
-        this.state = { modalKey: getRandomKey(), isOpen: this.props.isOpen };
-        this.label = this.button.label;
-        this.color = this.button.color == undefined ? undefined : getColorFromString(this.button.color);
-
-        this.addActionComponent = this.addActionComponent.bind(this);
-        this.validateButtonLabel = this.validateButtonLabel.bind(this);
-        this.setRouting = this.setRouting.bind(this);
-    }
-
-    componentDidMount() {
-        if (this.mounted) {
-            return;
-        }
-
-        this.mounted = true;
-
-        if (this.button.actions.length != 0) {
-            for (const action of this.button.actions) {
-                this.addActionComponent(false, action);
+    const routingComponents = React.useRef<RoutingComponent[]>([]);
+    if (routingComponents.current.length == 0) {
+        if (button.current.actions.length != 0) {
+            for (const action of button.current.actions) {
+                addActionComponent(false, action);
             }
         } else {
-            this.addActionComponent(true, undefined);
+            addActionComponent(true, undefined);
         }
-
-        this.setState({ label: this.button.label });
     }
 
-    addActionComponent(initial: boolean, action?: PushButtonAction) {
+    function addActionComponent(initial: boolean, action?: PushButtonAction) {
         let key: number | undefined;
+        let ac;
         if (action == undefined) {
-            key = this.setRouting(undefined, undefined, undefined);
-            action = this.button.actions[key];
+            key = setRouting(undefined, undefined, undefined);
+            ac = button.current.actions[key];
         } else {
-            for (let i = 0; i < this.button.actions.length; i++) {
-                if (this.button.actions[i].id === action.id) {
+            ac = action;
+            for (let i = 0; i < button.current.actions.length; i++) {
+                if (button.current.actions[i].id === action.id) {
                     key = i;
                     break;
                 }
@@ -129,32 +111,34 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
             }
         }
 
-        this.routingComponents.push(new RoutingComponent({
+        routingComponents.current.push(new RoutingComponent({
             required: initial,
-            optionsOutput: this.props.optionsOutput,
-            optionsInput: this.props.optionsInput,
+            optionsOutput: props.optionsOutput,
+            optionsInput: props.optionsInput,
             onSelectOutput: (index?: number) => {
-                this.setRouting(key, index, undefined);
+                setRouting(key, index, undefined);
             },
-            routing: action,
+            routing: ac,
             onSelectInput: (index?: number) => {
-                this.setRouting(key, undefined, index);
+                setRouting(key, undefined, index);
             }
         }));
     }
 
-    setRouting(index?: number, output?: number, input?: number): number {
+    function setRouting(index?: number, output?: number, input?: number): number {
+        let i;
         if (index == undefined) {
-            index = this.button.actions.length;
-            this.button.actions.push({
+            i = button.current.actions.length;
+            button.current.actions.push({
                 id: -1,
                 output_id: output == undefined ? -1 : output,
                 input_id: input == undefined ? -1 : input,
-                videohub_id: this.props.videohub.id,
-                pushbutton_id: this.button.id,
+                videohub_id: props.videohub.id,
+                pushbutton_id: button.current.id,
             });
         } else {
-            const action: PushButtonAction = this.button.actions[index];
+            i = index;
+            const action: PushButtonAction = button.current.actions[index];
             if (output != undefined) {
                 action.output_id = output;
             }
@@ -164,17 +148,21 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
             }
         }
 
-        return index;
+        return i;
     }
 
-    validateButtonLabel(input: string): string | undefined {
+    function validateButtonLabel(input: string): string | undefined {
         if (input.length > 42) {
             return "Name can't be longer than 42 characters.";
         }
 
+        if(input.trim().length < 1){
+            return "Name is too short."
+        }
+
         input = input.toLowerCase();
-        for (const b of this.props.buttons) {
-            if (b.label.toLowerCase() === input && b.id != this.button.id) {
+        for (const b of props.buttons) {
+            if (b.label.toLowerCase() === input && b.id != button.current.id) {
                 return "A button with this name already exists.";
             }
         }
@@ -182,89 +170,85 @@ export class EditPushButtonModal extends React.Component<InputProps, { label?: s
         return undefined;
     }
 
-    render(): React.ReactNode {
-        const inst: EditPushButtonModal = this;
-        return (
-            <InputModal
-                modalKey={this.state.modalKey}
-                isOpen={this.state.isOpen}
-                onCancel={function (): void {
-                    // just let it close
-                }} onConfirm={function (): string | undefined {
-                    if (inst.label == undefined) {
-                        return "Please insert a name.";
+    return (
+        <InputModal
+            modalKey={props.modalKey}
+            isOpen={props.isOpen}
+            onCancel={function (): void {
+                // just close
+            }} onConfirm={function (): string | undefined {
+                if (button.current.label == undefined) {
+                    return "Please insert a name.";
+                }
+
+                const err = validateButtonLabel(button.current.label);
+                if (err != undefined) {
+                    return err;
+                }
+
+                const actions: PushbuttonAction[] = [];
+                for (const action of button.current.actions) {
+                    if (action.input_id == -1 || action.output_id == -1) {
+                        continue;
                     }
 
-                    const err = inst.validateButtonLabel(inst.label);
-                    if (err != undefined) {
-                        return err;
-                    }
+                    actions.push(action);
+                }
 
-                    const actions: PushbuttonAction[] = [];
-                    for (const action of inst.button.actions) {
-                        if (action.input_id == -1 || action.output_id == -1) {
-                            continue;
-                        }
+                if (actions.length != 0) {
+                    button.current.actions = actions;
+                    props.onConfirm(button.current);
+                    return undefined;
+                }
 
-                        actions.push(action);
-                    }
-
-                    if (actions.length != 0) {
-                        inst.button.label = inst.label;
-                        inst.button.actions = actions;
-                        inst.button.color = inst.color == undefined ? undefined : inst.color.str;
-                        inst.props.onConfirm(inst.button);
-                        return undefined;
-                    }
-
-                    return "Please specify at leat one complete routing with an input and output.";
-                }}>
-                <Stack horizontal tokens={stackTokens}>
-                    <Stack tokens={stackTokens}>
-                        <TextField label="Name" required
-                            onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
-                                this.label = val;
-                            }}
-                            defaultValue={this.button == undefined ? undefined : this.button.label}
-                            validateOnLoad={false}
-                            validateOnFocusOut={true}
-                            onGetErrorMessage={(value: string) => {
-                                return this.validateButtonLabel(value);
+                return "Please specify at leat one complete routing with an input and output.";
+            }}
+            close={props.close}>
+            <Stack horizontal tokens={stackTokens}>
+                <Stack tokens={stackTokens}>
+                    <TextField label="Name" required
+                        onChange={(_e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>, val?: string) => {
+                            button.current.label = val||"";
+                        }}
+                        defaultValue={button.current.label}
+                        validateOnLoad={false}
+                        validateOnFocusOut={true}
+                        onGetErrorMessage={(value: string) => {
+                            return validateButtonLabel(value);
+                        }}
+                    />
+                    <Label>Color</Label>
+                    <Stack horizontal horizontalAlign="center">
+                        <PickColor
+                            color={button.current.color != undefined ? getColorFromString(button.current.color) : undefined}
+                            onChange={(color) => {
+                                button.current.color = color.str;
                             }}
                         />
-                        <Label>Color</Label>
-                        <Stack horizontal horizontalAlign="center">
-                            <PickColor
-                                color={this.color}
-                                onChange={(color) => {
-                                    this.color = color;
-                                }}
-                            />
-                        </Stack>
-                    </Stack>
-                    <Stack wrap>
-                        {this.routingComponents.map((component, index) => {
-                            return <React.Fragment key={index}>
-                                {component.render()}
-                            </React.Fragment>
-                        })}
                     </Stack>
                 </Stack>
-                <DefaultButton text="Add routing" onClick={() => {
-                    this.addActionComponent(false, undefined);
-                    this.forceUpdate();
-                }} allowDisabledFocus />
-                {this.button.id != -1 &&
-                    <DefaultButton text="Delete" style={{ backgroundColor: '#ff6666' }} onClick={() => {
-                        fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: this.props.videohub.id, id: this.button.id })).then(async (res) => {
-                            const json = await res.json();
-                            if (json.result) {
-                                this.props.onDelete(this.button.id);
-                                this.setState({ modalKey: getRandomKey(), isOpen: false });
-                            }
-                        });
-                    }} allowDisabledFocus />}
-            </InputModal>
-        );
-    }
+                <Stack wrap>
+                    {routingComponents.current.map((component, index) => {
+                        return <React.Fragment key={index}>
+                            {component.render()}
+                        </React.Fragment>
+                    })}
+                </Stack>
+            </Stack>
+            <DefaultButton text="Add routing" onClick={() => {
+                addActionComponent(false, undefined);
+                forceUpdate();
+            }} allowDisabledFocus />
+            {button.current.id != -1 &&
+                <DefaultButton text="Delete" style={{ backgroundColor: '#ff6666' }} onClick={() => {
+                    fetch('/api/pushbuttons/delete', getPostHeader({ videohub_id: props.videohub.id, id: button.current.id })).then(async (res) => {
+                        const json = await res.json();
+                        if (json.result) {
+                            props.onDelete(button.current.id);
+                            props.close();
+                        }
+                    });
+                }} allowDisabledFocus />}
+        </InputModal>
+    );
 }
