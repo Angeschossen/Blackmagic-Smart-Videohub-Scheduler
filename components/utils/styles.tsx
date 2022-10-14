@@ -4,7 +4,7 @@ export const desktopMinWidth = 700;
 export const dropdownStyles: Partial<IDropdownStyles> = {
     dropdown: { width: 150 },
 };
-export const stackTokens: IStackTokens = { childrenGap: 15 };
+export const stackTokens: IStackTokens = { childrenGap: 10 };
 export const stackStyles: Partial<IStackStyles> = {
     root: {
         position: 'absolute',

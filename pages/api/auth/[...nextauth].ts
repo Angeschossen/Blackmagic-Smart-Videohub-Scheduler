@@ -46,7 +46,7 @@ const prodivers: any[] = [
       username: { label: "Username", type: "text" },
       password: { label: "Password", type: "password" }
     },
-    async authorize(credentials: any, req: any) {
+    async authorize(credentials: any, req: any): Promise<any> {
       const { username, password } = credentials as {
         username: string,
         password: string,

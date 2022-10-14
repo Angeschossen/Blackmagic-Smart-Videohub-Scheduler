@@ -1,12 +1,12 @@
 import { Scheduler } from "@aldabil/react-scheduler";
-import { SelectOption } from "@aldabil/react-scheduler/dist/components/inputs/SelectInput";
-import { EventActions, ProcessedEvent } from "@aldabil/react-scheduler/dist/types";
 import React from "react";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
 import { getPostHeader } from "./main";
 import { Videohub } from "../../components/interfaces/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { Stack } from "@fluentui/react";
+import { SelectOption } from "@aldabil/react-scheduler/components/inputs/SelectInput";
+import { EventActions, ProcessedEvent } from "@aldabil/react-scheduler/types";
 
 const HOUR_SART = 0, HOUR_END = 23, DAY_STEP_MINUTES = 60;
 
