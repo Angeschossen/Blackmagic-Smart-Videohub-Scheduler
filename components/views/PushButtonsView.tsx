@@ -71,7 +71,7 @@ export const PushButtons = (props: InputProps) => {
             <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={stackTokens}>
               {props.pushbuttons.map((button, key) => {
                 return (
-                  <Stack.Item>
+                  <Stack.Item key={"pushbutton_" + key}>
                     <CompoundButton primary key={key} secondaryText={`Click to execute ${button.actions.length} action(s).`} styles={{ root: { width: '250px', backgroundColor: button.color, borderColor: button.color } }}
                       onClick={async () => {
                         if (props.videohub == undefined || (requestData?.request != undefined /*&& !currentRequest.success*/)) {
