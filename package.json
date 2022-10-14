@@ -7,8 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "start_prod": "node server.js -p $PORT"
+    "lint": "next lint"
   },
   "dependencies": {
     "@aldabil/react-scheduler": "^2.3.1",
@@ -26,7 +25,6 @@
     "express": "^4.18.1",
     "net": "^1.0.2",
     "next": "^12.3.1",
-    "next-auth": "^4.14.0",
     "node-cron": "^3.0.2",
     "npm": "^8.19.2",
     "prisma-field-encryption": "^1.4.0-beta.5",
