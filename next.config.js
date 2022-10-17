@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  output: 'standalone',
+  reactStrictMode: false,
+  //swcMinify: true,
+  //output: 'standalone',
 }
 
 module.exports = async (phase) => {
@@ -13,5 +13,6 @@ module.exports = async (phase) => {
     await backend.setup();
   }
 
+  console.log(nextConfig)
   return nextConfig;
 };

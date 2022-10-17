@@ -1,11 +1,9 @@
 const PrismaClient = require('@prisma/client');
 const fieldEncryptionMiddleware = require('prisma-field-encryption');
 
-let global = {}
+if (global.prisma == undefined) {
+    global.prisma = new PrismaClient.PrismaClient();
+    global.prisma.$use(fieldEncryptionMiddleware.fieldEncryptionMiddleware());
+}
 
-const prisma = global.prisma || new PrismaClient.PrismaClient()
-prisma.$use(fieldEncryptionMiddleware.fieldEncryptionMiddleware());
-
-if (process.env.NODE_ENV === 'development') global.prisma = prisma
-
-module.exports = prisma;
+module.exports = global.prisma;

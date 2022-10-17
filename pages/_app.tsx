@@ -6,21 +6,36 @@ import React from 'react';
 import { SessionProvider } from "next-auth/react"
 import { Session } from 'next-auth';
 import { ProtectedPage } from '../components/common/ProtectedPage';
+import {
+  createDOMRenderer,
+  FluentProvider,
+  GriffelRenderer,
+  SSRProvider,
+  RendererProvider,
+  webLightTheme,
+} from '@fluentui/react-components';
 
-export default function App({ Component, pageProps }: AppProps<{
-  session: Session
-}>) {
+
+type EnhancedAppProps = AppProps<{ session: Session }> & { renderer?: GriffelRenderer };
+
+export default function App({ Component, pageProps, renderer }: EnhancedAppProps) {
   React.useEffect(() => {
     initializeIcons();
   }, []);
 
   return (
-    <SessionProvider session={pageProps.session}>
-      <ProtectedPage>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </ProtectedPage>
-    </SessionProvider>
+    // Accepts a renderer from <Document /> or creates a default one<
+    // Also triggers rehydration a client
+    <RendererProvider renderer={renderer || createDOMRenderer()}>
+        <FluentProvider theme={webLightTheme}>
+          <SessionProvider session={pageProps.session}>
+            <ProtectedPage>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </ProtectedPage>
+          </SessionProvider>
+        </FluentProvider>
+    </RendererProvider>
   )
 }

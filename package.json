@@ -16,6 +16,8 @@
     "@emotion/styled": "^11.10.4",
     "@fluentui/example-data": "^8.4.2",
     "@fluentui/react": "^8.96.2",
+    "@fluentui/react-components": "^9.5.1",
+    "@fluentui/react-icons": "^2.0.185",
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.7",
     "@mui/x-date-pickers": "^5.0.3",

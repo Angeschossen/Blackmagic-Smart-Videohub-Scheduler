@@ -62,6 +62,20 @@ const links: INavLinkGroup[] = [
                     }
                 }
             },
+            {
+                name: 'Admin',
+                url: '/admin/main',
+                key: 'admin',
+                iconProps: {
+                    iconName: 'TVMonitorSelected',
+                    styles: {
+                        root: {
+                            fontSzize: 40,
+                            color: '#106ebe',
+                        }
+                    }
+                }
+            }
         ],
     }
 ];
