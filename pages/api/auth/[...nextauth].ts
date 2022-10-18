@@ -13,11 +13,11 @@ import prismadb from '../../../database/prismadb';
 // https://next-auth.js.org/configuration/options
 
 export async function doesJWTUserExist(username: string) {
-  return await prismadb.credential.findUnique({ where: { username: username } });
+  return await prismadb.user.findUnique({ where: { username: username } });
 }
 
 export async function authenticateJWTAndGet(username: string, password: string) {
-  const credential = await prismadb.credential.findUnique({
+  const credential = await prismadb.user.findUnique({
     where: {
       username: username,
     },
@@ -62,13 +62,6 @@ const prodivers: any[] = [
     }
   })
 ];
-
-if (process.env.GOOGLE_CLIENT_ID != undefined && process.env.GOOGLE_CLIENT_SECRET != undefined) {
-  prodivers.push(GoogleProvider({
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  }));
-}
 
 export default NextAuth({
   session: {

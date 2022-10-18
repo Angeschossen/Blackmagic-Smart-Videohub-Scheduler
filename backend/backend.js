@@ -8,6 +8,7 @@ class Role {
         this.id = id;
         this.name = name;
         this.permissions = new Set(permissions);
+        this.outputs = [];
     }
 
     hasPermission(permission) {
@@ -16,7 +17,7 @@ class Role {
 }
 
 async function createUser(user, role) {
-    if (await prismadb.credential.findUnique({
+    if (await prismadb.user.findUnique({
         where: {
             username: user.username,
         }
@@ -25,7 +26,7 @@ async function createUser(user, role) {
         if (user.password == undefined || user.username == undefined || user.password === "") {
             console.log(`Invalid user creation: ${user.username}`);
         } else {
-            await prismadb.credential.create({
+            await prismadb.user.create({
                 data: {
                     username: user.username,
                     password: user.password,
@@ -43,17 +44,22 @@ module.exports = {
         roles = new Map();
 
         for (const role of [
-            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT]),
+            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT]),
             new Role(2, "Manager", [permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT]),
             new Role(3, "User", []),
         ]) {
             roles.set(role.id, role);
 
-            if (await prismadb.role.findUnique({
+            const r = await prismadb.role.findUnique({
                 where: {
                     id: role.id,
+                },
+                include: {
+                    outputs: true
                 }
-            }) == undefined) {
+            });
+
+            if (r == undefined) {
                 await prismadb.role.upsert({
                     where: {
                         id: role.id,
@@ -72,6 +78,8 @@ module.exports = {
                         return { permission: permission, role_id: role.id };
                     }),
                 });
+            } else {
+                role.outputs = r.outputs
             }
         }
 

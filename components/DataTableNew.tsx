@@ -17,7 +17,6 @@ export interface DataTableItem {
     cells: JSX.Element[],
 }
 
-
 interface TableData {
     items?: DataTableItem[],
 }
@@ -57,7 +56,7 @@ export const DataTable = (props: TableInput) => {
     React.useEffect(() => {
         async function loadData() {
             //console.log("Retrieving table items...");
-            const items: DataTableItem[] | undefined = await getItems();
+            const items: DataTableItem[] | undefined = await getItems.current();
             if (items == undefined) {
                 //console.log("No update.");
                 return; // no change

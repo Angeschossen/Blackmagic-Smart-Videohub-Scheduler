@@ -7,7 +7,7 @@ import prismadb from '../../../database/prismadb';
 
 
 export async function retrieveUsersServerSide() {
-    return await prismadb.credential.findMany()
+    return await prismadb.user.findMany()
         .then((r: any) => {
             const arr: User[] = [];
             for(const user of r){

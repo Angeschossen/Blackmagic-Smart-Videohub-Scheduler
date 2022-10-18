@@ -182,7 +182,6 @@ export const VideohubView = (props: VideohubViewProps) => {
       }
     }
 
-    console.log(items);
     return items
   }
 

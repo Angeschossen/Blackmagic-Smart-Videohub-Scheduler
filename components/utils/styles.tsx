@@ -1,4 +1,5 @@
-import { IDropdownStyles, IStackStyles, IStackTokens, ITextFieldStyles } from "@fluentui/react";
+import { IDropdownStyles, IStackStyles, IStackTokens } from "@fluentui/react";
+import { makeStyles, shorthands } from "@fluentui/react-components";
 
 export const desktopMinWidth = 700;
 export const dropdownStyles: Partial<IDropdownStyles> = {
@@ -17,3 +18,13 @@ export const stackStyles: Partial<IStackStyles> = {
 }
 
 export const commandBarItemStyles: Partial<IStackStyles> = { root: { width: 70, height: 35 } };
+
+export const useInputStyles = makeStyles({
+  root: {
+    // Stack the label above the field
+    display: 'flex',
+    flexDirection: 'column',
+    // Use 2px gap below the label (per the design system)
+    ...shorthands.gap('2px'),
+  }
+});
