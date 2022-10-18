@@ -1,50 +1,61 @@
 import React from "react";
 import { Dialog, DialogTrigger, DialogSurface, DialogTitle, DialogBody, DialogActions, DialogContent, Button, DialogTriggerProps, Label, Input, makeStyles, DialogProps, DialogOpenChangeEvent, DialogOpenChangeData } from "@fluentui/react-components";
+import { setDefaultTarget } from "@fluentui/react/lib/components/Layer/Layer.notification";
 
 
-interface InputProps {
-    onConfirm: (obj?: any) => string | undefined,
+interface InputProps extends InputModalProps {
+}
+
+export interface InputModalProps {
     trigger?: JSX.Element,
     title: string,
     children?: React.ReactNode,
     open?: boolean,
-    onOpenChange?: (event: DialogOpenChangeEvent, data: DialogOpenChangeData) => void,
-}
-
-export interface InputModalProps {
-
+    onOpenChange?: (open: boolean) => void,
+    handleSubmit: () => Promise<string | undefined>,
 }
 
 const useStyles = makeStyles({
     content: {
         display: 'flex',
         flexDirection: 'column',
-        rowGap: '10px'
+        rowGap: '10px',
     }
 });
 
 export const InputModal = (props: InputProps) => {
-    const [data, setData] = React.useState<{ error?: string }>({ error: undefined });
+    const [error, setError] = React.useState<string | undefined>();
+    const [open, setOpen] = React.useState<boolean>(props.open || false)
+
     const styles = useStyles();
     const handleSubmit = (ev: React.FormEvent) => {
         ev.preventDefault();
-        const err: string | undefined = props.onConfirm();
-        if (err == undefined) {
-            close();
-        } else {
-            setData({ error: err });
-        }
+
+        props.handleSubmit().then(err => {
+            setError(err);
+
+            if (err == undefined) {
+                setOpen(false);
+            }
+        });
     };
 
     return (
         <Dialog
-            open={props.open}
-            onOpenChange={props.onOpenChange}
+            open={open}
+            onOpenChange={(_event: DialogOpenChangeEvent, data: DialogOpenChangeData) => {
+                if (props.onOpenChange != undefined) {
+                    props.onOpenChange(data.open);
+                }
+
+                setOpen(data.open)
+            }}
             modalType="non-modal">
             <>
-                {props.trigger != undefined && <DialogTrigger>
-                    {props.trigger}
-                </DialogTrigger>}
+                {props.trigger != undefined &&
+                    <DialogTrigger>
+                        {props.trigger}
+                    </DialogTrigger>}
             </>
             <DialogSurface>
                 <form onSubmit={handleSubmit}>

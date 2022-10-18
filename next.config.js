@@ -13,6 +13,5 @@ module.exports = async (phase) => {
     await backend.setup();
   }
 
-  console.log(nextConfig)
   return nextConfig;
 };

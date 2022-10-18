@@ -1,14 +1,14 @@
 import { CommandBarButton, IContextualMenuItem, IIconProps } from "@fluentui/react";
 import React, { useEffect, useState } from "react";
-import EditVideohubModal from "../modals/EditVideohubModal";
 import { getRandomKey } from "../utils/commonutils";
 import { Videohub } from "../interfaces/Videohub";
 import { useClientSession } from "../auth/ClientAuthentication";
 import Permissions from "../../backend/authentication/Permissions";
 import { Key } from "readline";
-import { Button, Menu, MenuTrigger, MenuList, MenuItemRadio, MenuItem, MenuPopover, MenuProps, DialogTrigger } from "@fluentui/react-components";
+import { Button, Menu, MenuTrigger, MenuList, MenuItemRadio, MenuItem, MenuPopover, MenuProps, DialogTrigger, MenuButton, useId } from "@fluentui/react-components";
 import { Clock12Filled } from "@fluentui/react-icons";
 import { InputModal } from "../modals/InputModalNew";
+import { EditVideohubModal } from "../modals/EditVideohubModalNew";
 
 const videohubIcon: IIconProps = { iconName: 'HardDriveGroup' };
 
@@ -18,7 +18,7 @@ interface InputProps {
 }
 
 export const SelectVideohub = (props: InputProps) => {
-
+    const [modalKey, setModalKey] = React.useState(getRandomKey());
     const [open, setOpen] = React.useState(false);
     const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_EDIT);
     const [checkedValues, setCheckedValues] = React.useState<Record<string, string[]>>({
@@ -39,12 +39,11 @@ export const SelectVideohub = (props: InputProps) => {
         });
     };
 
-    console.log(open)
     return (
         <>
             <Menu>
                 <MenuTrigger>
-                    <Button>Select Videohub</Button>
+                    <MenuButton>Select Videohub</MenuButton>
                 </MenuTrigger>
                 <MenuPopover>
                     <MenuList checkedValues={checkedValues} onCheckedValueChange={onChange}>
@@ -53,26 +52,24 @@ export const SelectVideohub = (props: InputProps) => {
                                 {videohub.name}
                             </MenuItemRadio>
                         )}
-                        <DialogTrigger>
-                            <MenuItem
-                                disabled={!canEdit}
-                                onClick={() => {
-                                    setOpen(true)
-                                }}>
-                                Add
-                            </MenuItem>
-                        </DialogTrigger>
+                        <MenuItem
+                            disabled={!canEdit}
+                            onClick={() => {
+                                setOpen(true)
+                                setModalKey(getRandomKey())
+                            }}>
+                            Add
+                        </MenuItem>
                     </MenuList>
                 </MenuPopover>
             </Menu>
-            <InputModal
+            <EditVideohubModal
+            key={modalKey}
                 open={open}
-                onOpenChange={(_e, data) => { setOpen(data.open) }}
-                onConfirm={function (obj?: any): string | undefined {
-                    throw new Error("Function not implemented.");
-                }}
-                title={"Add Videohub"}>
-            </InputModal>
+                onOpenChange={(state: boolean) => setOpen(state)}
+                videohubs={props.videohubs}
+                onVideohubUpdate={(videohub: Videohub) => setOpen(false)}
+                title={"Add Videohub"} />
         </>
     );
     /*
