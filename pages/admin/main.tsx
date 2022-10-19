@@ -1,5 +1,5 @@
 import { PresenceBadgeStatus, Checkbox, CheckboxProps, Avatar, Label, Input, Radio, RadioGroup } from "@fluentui/react-components";
-import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout } from "@fluentui/react-components/unstable";
+import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout, Toolbar, ToolbarButton } from "@fluentui/react-components/unstable";
 import * as React from 'react';
 import { FolderRegular, EditRegular, OpenRegular, DocumentRegular, PeopleRegular, DocumentPdfRegular, VideoRegular } from '@fluentui/react-icons';
 import DataTable, { DataTableItem } from "../../components/DataTableNew";
@@ -13,12 +13,13 @@ import SelectVideohub from "../../components/buttons/SelectVideohubNew";
 import { Videohub } from "../../components/interfaces/Videohub";
 import { retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
 import { UserOutput } from "../../components/modals/admin/UserOutputModal";
-import { retrieveRolesServerSide } from "../api/roles/[pid]";
+import { retrievePermissionsServerSide, retrieveRolesServerSide } from "../api/roles/[pid]";
 import { RolesView } from "../../components/views/admin/RolesView";
 import { UsersView } from "../../components/views/admin/UsersView";
 import { stackTokens } from "../../components/utils/styles";
 import { CheckBoxModal } from "../../components/modals/admin/CheckBoxModal";
 import { getPostHeader } from "../../components/utils/fetchutils";
+import { RoleModal } from "../../components/modals/admin/RoleModal";
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 const tableStackTokens: IStackTokens = { childrenGap: 30 };
@@ -28,6 +29,7 @@ interface InputProps {
   videohubs: Videohub[],
   roles: Role[],
   users: User[],
+  permissions: string[],
 }
 
 export async function getServerSideProps(context: any) {
@@ -45,66 +47,43 @@ export async function getServerSideProps(context: any) {
       videohubs: JSON.parse(JSON.stringify(hubs)),
       roles: JSON.parse(JSON.stringify(roles)),
       users: JSON.parse(JSON.stringify(users)),
+      permissions: retrievePermissionsServerSide(),
     } as InputProps,
   }
 }
 
 export const Default = (props: InputProps) => {
   const [videohub, setVideohub] = React.useState<Videohub | undefined>(props.videohubs?.length == 0 ? undefined : props.videohubs[0])
-
-  function buildItems(roles: Role[]): DataTableItem[] {
-    const items: DataTableItem[] = [];
-
-    if (videohub != undefined) {
-      for (const role of roles) {
-        const cells: JSX.Element[] = [
-          <TableCellLayout key={role.name}>{role.name}</TableCellLayout>,
-          <TableCellLayout key={"outputs"}>
-            <CheckBoxModal
-              title={"Outputs"}
-              trigger={<Button>
-                Outputs
-              </Button>}
-              handleSubmit={async function (checked: string[]): Promise<string | undefined> {
-                const arr: number[] = checked.map(value => Number(value));
-                console.log(arr)
-                return fetch('/api/roles/setoutputs', getPostHeader({ videohub_id: videohub.id, role_id: role.id, outputs: arr })).then(res => {
-                  return undefined;
-                });
-              }}
-              defaultChecked={role.outputs.filter(output => output.videohub_id === videohub.id).map(output => output.output_id.toString())}
-              choices={videohub.outputs.map(output => {
-                return { value: output.id.toString(), label: output.label };
-              })} />
-          </TableCellLayout>
-        ]
-
-        items.push({ key: role.name, cells: cells })
-      }
-    }
-
-    return items;
-  }
-
+  const [roles, setRoles] = React.useState(props.roles)
 
   return (
     <Stack style={videohubPageStyle}>
-      <Stack horizontal styles={stackStyles}>
+      <Stack horizontal tokens={stackTokens}>
         <SelectVideohub
           videohubs={props.videohubs || []}
           onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
+        <RoleModal
+          roles={roles}
+          trigger={<Button>
+            Add Role
+          </Button>} onRoleUpdate={function (role: Role): void {
+
+          }} />
       </Stack>
       <Stack tokens={tableStackTokens}>
         <Stack.Item>
           <h1>Roles</h1>
           <RolesView
             videohub={videohub}
-            roles={props.roles} />
+            roles={roles}
+            permissions={props.permissions.map(perm => {
+              return { value: perm, label: perm }
+            })} />
         </Stack.Item>
         <Stack.Item>
           <h1>Users</h1>
           <UsersView
-            roles={props.roles}
+            roles={roles}
             users={props.users} />
         </Stack.Item>
       </Stack>
