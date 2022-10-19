@@ -37,11 +37,39 @@ async function createUser(user, role) {
     }
 }
 
+async function createRole(role) {
+    if (await prismadb.role.findUnique({
+        where: {
+            name: role.name,
+        }
+    }) == undefined) {
+        const r = await prismadb.role.create({
+            data: {
+                name: role.name,
+            }
+        })
+
+        return new Role(r.id, r.name, )
+    }
+}
+
 module.exports = {
     roles: undefined,
     setupRoles: async function () {
         console.log("Setting up roles...");
         roles = new Map();
+
+        const rolesAdd = JSON.parse(process.env.ROLES_ADD || "[]");
+        for (const role of rolesAdd) {
+            const name = role.name;
+            if (await prismadb.role.findUnique({
+                where: {
+                    name: role.name,
+                }
+            }) == undefined) {
+               
+            }
+        }
 
         for (const role of [
             new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT]),

@@ -146,7 +146,6 @@ model RoleOutput {
   videohub_id Int
   output      Output   @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
   output_id   Int
-  state       Boolean
 
   @@unique([role_id, videohub_id, output_id])
   @@map("roles_outputs")

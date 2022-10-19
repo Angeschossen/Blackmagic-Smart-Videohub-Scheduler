@@ -2,7 +2,8 @@ import { RoleOutput } from "@prisma/client";
 
 export interface User {
     username: string,
-    role?: Role,
+    roleId: number,
+    roleName: string
 }
 
 export interface Role {

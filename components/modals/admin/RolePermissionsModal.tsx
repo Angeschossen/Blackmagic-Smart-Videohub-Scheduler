@@ -1,10 +1,10 @@
 import { Button, Checkbox, CheckboxOnChangeData, MenuList, MenuProps } from "@fluentui/react-components";
 import React, { ChangeEvent } from "react";
-import { Role } from "../interfaces/User";
-import { Videohub } from "../interfaces/Videohub";
-import { getPostHeader } from "../utils/fetchutils";
-import { useInputStyles } from "../utils/styles";
-import { InputModal } from "./InputModalNew";
+import { Role } from "../../interfaces/User";
+import { Videohub } from "../../interfaces/Videohub";
+import { getPostHeader } from "../../utils/fetchutils";
+import { useInputStyles } from "../../utils/styles";
+import { InputModal } from "../InputModalNew";
 
 
 interface Props {
@@ -41,7 +41,7 @@ export const UserOutput = (props: Props) => {
             }}>
             <div className={styles.root}>
                 {props.videohub.outputs.map(output =>
-                    <Checkbox checked={checkedValues.indexOf(output.id) != -1} label={output.label} onChange={(_ev: ChangeEvent<HTMLInputElement>, data: CheckboxOnChangeData) => {
+                    <Checkbox key={`checkbox_${output.id}`} checked={checkedValues.indexOf(output.id) != -1} label={output.label} onChange={(_ev: ChangeEvent<HTMLInputElement>, data: CheckboxOnChangeData) => {
                         if (data.checked) {
                             handleSelected(output.id)
                         } else {

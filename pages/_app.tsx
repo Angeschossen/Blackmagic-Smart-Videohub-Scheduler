@@ -10,13 +10,16 @@ import {
   createDOMRenderer,
   FluentProvider,
   GriffelRenderer,
-  SSRProvider,
+  SSRProvider as OrgiginalSSRProvider,
   RendererProvider,
   webLightTheme,
 } from '@fluentui/react-components';
 
 
 type EnhancedAppProps = AppProps<{ session: Session }> & { renderer?: GriffelRenderer };
+
+const SSRProvider: React.FC<{ children: React.ReactNode }> =
+  OrgiginalSSRProvider
 
 export default function App({ Component, pageProps, renderer }: EnhancedAppProps) {
   React.useEffect(() => {
@@ -26,7 +29,9 @@ export default function App({ Component, pageProps, renderer }: EnhancedAppProps
   return (
     // Accepts a renderer from <Document /> or creates a default one<
     // Also triggers rehydration a client
+    // @ts-nocheck 
     <RendererProvider renderer={renderer || createDOMRenderer()}>
+      <SSRProvider>
         <FluentProvider theme={webLightTheme}>
           <SessionProvider session={pageProps.session}>
             <ProtectedPage>
@@ -36,6 +41,7 @@ export default function App({ Component, pageProps, renderer }: EnhancedAppProps
             </ProtectedPage>
           </SessionProvider>
         </FluentProvider>
+      </SSRProvider >
     </RendererProvider>
   )
 }

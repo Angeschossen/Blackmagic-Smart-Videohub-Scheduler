@@ -1,6 +1,6 @@
 import { prisma, RoleOutput } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
-import Permissions from "../../../backend/authentication/Permissions";
+import Permissions, { editable } from "../../../backend/authentication/Permissions";
 import { getRoleById, getRoles } from "../../../backend/backend";
 import { checkServerPermission } from "../../../components/auth/ServerAuthentication";
 import { Role } from "../../../components/interfaces/User";
@@ -26,9 +26,52 @@ export default async function handler(
     }
 
     const { pid } = req.query;
+    const body: any = req.body;
+
     switch (pid) {
         case "get": {
             res.status(200).json(retrieveRolesServerSide())
+            return
+        }
+
+        case "setpermissions": {
+            if (!await checkServerPermission(req, res, Permissions.PERMISSION_ROLE_EDIT)) {
+                return;
+            }
+
+            const role_id = body.role_id
+            let permissions: string[] = body.permissions
+            if (role_id == undefined || permissions == undefined) {
+                res.status(405).json({ message: 'Invalid request.' });
+                return
+            }
+
+            const role = getRoleById(role_id)
+            if (role == undefined) {
+                res.status(405).json({ message: 'Invalid request.' });
+                return
+            }
+
+            // delete
+            await prismadb.rolePermission.deleteMany({
+                where: {
+                    role_id: role_id,
+                }
+            });
+
+            permissions = permissions.filter(perm => editable.indexOf(perm) != -1);
+
+            // create
+            await prismadb.rolePermission.createMany({
+                data: permissions.map(perm => {
+                    return { permission: perm, role_id: role_id }
+                }),
+            }).then((_res: any) => {
+                console.log(_res)
+                role.permissions = permissions
+            });
+
+            res.status(200).json({ message: 'Updated' })
             return
         }
 
@@ -37,7 +80,6 @@ export default async function handler(
                 return;
             }
 
-            const body: any = req.body;
             const videohub_id = body.videohub_id
             const role_id = body.role_id
             const outputs: number[] = body.outputs
