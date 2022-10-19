@@ -8,7 +8,7 @@ import { useInputStyles } from "../../utils/styles";
 import { InputModal } from "../InputModalNew";
 
 
-interface CheckboxChoice {
+export interface CheckboxChoice {
     value: string,
     label: string
 }
@@ -19,15 +19,13 @@ interface Props {
     handleSubmit: (checked: string[]) => Promise<string | undefined>,
     title: string,
     trigger: JSX.Element,
+    description?: string,
 }
 
 export const CheckBoxModal = (props: Props) => {
-    const [checkedValues, setCheckedValues] = React.useState<string[]>([]);
+    const [checkedValues, setCheckedValues] = React.useState<string[]>(props.defaultChecked);
     const styles = useInputStyles();
 
-    useEffect(() => {
-        setCheckedValues(props.defaultChecked)
-    }, []);
 
     const handleSelected = (id: string) => {
         setCheckedValues(prev => [...prev, id]);
@@ -44,6 +42,7 @@ export const CheckBoxModal = (props: Props) => {
 
     return (
         <InputModal
+            description={props.description}
             title={props.title}
             trigger={props.trigger}
             handleSubmit={async function (): Promise<string | undefined> {

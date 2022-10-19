@@ -6,6 +6,9 @@ import { User } from "../../../components/interfaces/User";
 import prismadb from '../../../database/prismadb';
 
 
+function getSanitizedUser(user: any): User {
+    return { id: user.id, username: user.username, roleId: user.role?.id, roleName: user.role?.name };
+}
 export async function retrieveUsersServerSide() {
     return await prismadb.user.findMany({
         include: {
@@ -14,8 +17,8 @@ export async function retrieveUsersServerSide() {
     })
         .then((r: any) => {
             const arr: User[] = [];
-            for(const user of r){
-                arr.push({username: user.username, roleId: user.role?.id, roleName: user.role?.name});
+            for (const user of r) {
+                arr.push(getSanitizedUser(user));
             }
 
             return arr;
@@ -31,10 +34,40 @@ export default async function handler(
     }
 
     const { pid } = req.query;
+    const body: any = req.body;
     switch (pid) {
         case "get": {
             res.status(200).json(await retrieveUsersServerSide());
             return;
+        }
+
+        case "setrole": {
+            console.log(body)
+            const userId = body.user_id
+            const roleId = body.role_id
+            if (userId == undefined || roleId == undefined) {
+                res.status(405).json({ message: 'Invalid request.' });
+                return
+            }
+
+            const role = getRoleById(roleId);
+            if (role == undefined || role.id == 0) {
+                res.status(405).json({ message: 'Invalid request.' });
+                return
+            }
+
+            await prismadb.user.update({
+                where: {
+                    id: userId,
+                },
+                data: {
+                    role_id: role.id,
+                }
+            }).then((_r: any) => {
+                res.status(200).json({ message: 'Updated.' });
+            })
+
+            return
         }
 
         default: {

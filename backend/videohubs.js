@@ -1,5 +1,5 @@
 const net = require('net');
-const prismadb = require('../database/prismadb');
+const prismadb = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
 const emit = require('./socketio').emit;
 

@@ -1,9 +1,10 @@
 import { prisma, RoleOutput } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
-import Permissions, { editable } from "../../../backend/authentication/Permissions";
-import { getRoleById, getRoles } from "../../../backend/backend";
+import Permissions, { toggleablePermissions } from "../../../backend/authentication/Permissions";
+import { addRole, getRoleById, getRoles } from "../../../backend/backend";
 import { checkServerPermission } from "../../../components/auth/ServerAuthentication";
 import { Role } from "../../../components/interfaces/User";
+import { sendResponseInvalid } from "../../../components/utils/requestutils";
 import prismadb from '../../../database/prismadb';
 
 
@@ -11,10 +12,14 @@ export function retrieveRolesServerSide(): Role[] {
     const roles: any[] = getRoles()
     const arr: Role[] = [];
     roles.forEach(role => {
-        arr.push({ id: role.id, outputs: role.outputs, name: role.name })
+        arr.push({ id: role.id, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
     })
 
     return arr;
+}
+
+export function retrievePermissionsServerSide(): string[] {
+    return toggleablePermissions;
 }
 
 export default async function handler(
@@ -31,6 +36,56 @@ export default async function handler(
     switch (pid) {
         case "get": {
             res.status(200).json(retrieveRolesServerSide())
+            return
+        }
+
+        case "getpermissions": {
+            if (!await checkServerPermission(req, res, Permissions.PERMISSION_ROLE_EDIT)) {
+                return;
+            }
+
+            res.status(200).json(retrievePermissionsServerSide());
+            return
+        }
+
+        case "upsert": {
+            if (!await checkServerPermission(req, res, Permissions.PERMISSION_ROLE_EDIT)) {
+                return;
+            }
+
+            const role: Role = body.role;
+            if (role == undefined) {
+                sendResponseInvalid(res)
+                return
+            }
+
+            // name len
+            if (role.name.length > 32) {
+                sendResponseInvalid(res);
+                return
+            }
+
+            let p: any;
+            if (role.id == -1) {
+                p = await prismadb.role.create({
+                    data: {
+                        name: role.name,
+                    }
+                });
+
+                addRole(p);
+            } else {
+                p = await prismadb.role.update({
+                    where: {
+                        id: role.id,
+                    },
+                    data: {
+                        name: role.name,
+                    }
+                })
+            }
+
+            res.status(200).json(p);
             return
         }
 
@@ -59,7 +114,7 @@ export default async function handler(
                 }
             });
 
-            permissions = permissions.filter(perm => editable.indexOf(perm) != -1);
+            permissions = permissions.filter(perm => toggleablePermissions.indexOf(perm) != -1);
 
             // create
             await prismadb.rolePermission.createMany({

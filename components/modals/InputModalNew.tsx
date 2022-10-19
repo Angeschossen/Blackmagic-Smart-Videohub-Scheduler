@@ -13,6 +13,7 @@ export interface InputModalProps {
     open?: boolean,
     onOpenChange?: (open: boolean) => void,
     handleSubmit: () => Promise<string | undefined>,
+    description?: string,
 }
 
 const useStyles = makeStyles({
@@ -62,6 +63,7 @@ export const InputModal = (props: InputProps) => {
                     <DialogBody>
                         <DialogTitle>{props.title}</DialogTitle>
                         <DialogContent className={styles.content}>
+                            {props.description}
                             {props.children}
                         </DialogContent>
                         <DialogActions>

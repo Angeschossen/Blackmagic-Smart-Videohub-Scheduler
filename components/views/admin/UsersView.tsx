@@ -4,6 +4,7 @@ import { Role, User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { UserOutput } from "../../modals/admin/UserOutputModal";
 import { Dropdown, Option, DropdownProps } from "@fluentui/react-components/unstable";
+import { getPostHeader } from "../../utils/fetchutils";
 
 interface Props {
     roles: Role[],
@@ -19,11 +20,17 @@ export const UsersView = (props: Props) => {
             const cells: JSX.Element[] = [
                 <TableCellLayout key={user.username}>{user.username}</TableCellLayout>,
                 <TableCellLayout key={`${user.username}_role`}>
-                    <Dropdown defaultSelectedOptions={user.roleName == undefined ? [] : [user.roleName]} placeholder={user.roleName || "Select a role"} 
-                    onOptionSelect={(_event: any, data: any)=>{
-                        
-                    }}
-                    {...props}>
+                    <Dropdown defaultSelectedOptions={user.roleName == undefined ? [] : [user.roleName]} placeholder={user.roleName || "Select a role"}
+                        onOptionSelect={async (_event: any, data: any) => {
+                            const name: string = data.optionValue;
+                            for (const role of props.roles) {
+                                if (role.name === name) {
+                                    await fetch('/api/users/setrole', getPostHeader({ user_id: user.id, role_id: role.id }));
+                                    break;
+                                }
+                            }
+                        }}
+                        {...props}>
                         {props.roles.map(role => <Option key={role.id.toString()} value={role.name} disabled={role.id === 0}>
                             {role.name}
                         </Option>)}

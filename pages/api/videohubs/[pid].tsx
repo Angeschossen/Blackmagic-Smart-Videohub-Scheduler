@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
 import * as videohubs from '../../../backend/videohubs'
 import { sendRoutingUpdate } from '../../../backend/videohubs';
-import prismadb from '../../../database/prismadb';
+import prismadb from '../../../database/prisma';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 

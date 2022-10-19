@@ -1,4 +1,4 @@
-const prismadb = require('../database/prismadb');
+const prismadb = require('../database/prisma');
 const permissions = require('./authentication/Permissions');
 const videohubs = require('./videohubs');
 const socketio = require('./socketio');
@@ -49,7 +49,7 @@ async function createRole(role) {
             }
         })
 
-        return new Role(r.id, r.name, )
+        return new Role(r.id, r.name,)
     }
 }
 
@@ -59,22 +59,9 @@ module.exports = {
         console.log("Setting up roles...");
         roles = new Map();
 
-        const rolesAdd = JSON.parse(process.env.ROLES_ADD || "[]");
-        for (const role of rolesAdd) {
-            const name = role.name;
-            if (await prismadb.role.findUnique({
-                where: {
-                    name: role.name,
-                }
-            }) == undefined) {
-               
-            }
-        }
-
+        // create necesarry roles
         for (const role of [
-            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT]),
-            new Role(2, "Manager", [permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT]),
-            new Role(3, "User", []),
+            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT]),
         ]) {
             roles.set(role.id, role);
 
@@ -111,6 +98,12 @@ module.exports = {
             }
         }
 
+        // load custom roles
+        const customRoles = await prismadb.role.findMany()
+        for(const role of customRoles){
+            this.addRole(role);
+        }
+
         await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles.get(1));
         const add = JSON.parse(process.env.USERS_ADD || "[]");
         for (const user of add) {
@@ -125,7 +118,11 @@ module.exports = {
     getRoleById(id) {
         return roles.get(id);
     },
-    setup: async function () {
+    addRole(data) {
+        if (roles.get(data.id) == undefined) {
+            roles.set(data.id, new Role(data.id, data.name, []))
+        }
+    }, setup: async function () {
         await this.setupRoles();
         await videohubs.loadData();
         videohubs.connect();

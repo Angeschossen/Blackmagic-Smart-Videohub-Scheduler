@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import prisma from '../../../database/prismadb';
+import prisma from '../../../database/prisma';
 import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';

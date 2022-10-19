@@ -2,7 +2,7 @@ import { ColumnActionsMode } from '@fluentui/react';
 import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
-import prismadb from '../../../database/prismadb';
+import prismadb from '../../../database/prisma';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 
