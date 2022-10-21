@@ -24,7 +24,7 @@ export const OutputsView = (props: { videohub?: Videohub, user: User }) => {
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
-
+console.log(props)
         if (props.videohub != undefined) {            
             for (const output of props.videohub.outputs) {
                 const key: number = output.id

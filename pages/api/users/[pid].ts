@@ -36,19 +36,22 @@ export async function retrieveUsersServerSide() {
 }
 
 export async function retrieveUserServerSide(userId: string) {
-    return await prismadb.user.findUnique({
+    const user = await prismadb.user.findUnique({
         where: {
             id: userId,
         },
-        select: (selectUserParams & {
+        select: {
+            ...selectUserParams,
             role: {
                 include: {
                     permissions: true,
                     outputs: true,
                 }
-            } 
-        } as any) as Prisma.UserSelect // does include role
+            }
+        } // does include role
     })
+
+    return user == undefined ? undefined : sanitizeUser(user)
 }
 
 export default async function handler(

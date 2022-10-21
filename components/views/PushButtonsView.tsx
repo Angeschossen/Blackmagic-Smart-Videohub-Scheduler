@@ -45,22 +45,6 @@ export const PushButtons = (props: InputProps) => {
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT);
   return (
     <>
-      <Stack horizontalAlign="start">
-        {canEdit && props.videohub != undefined && <DefaultButton
-          text="Edit"
-          onClick={() => {
-            if (props.videohub == undefined) {
-              return;
-            }
-
-            Router.push({
-              pathname: '../pushbuttons/main',
-              query: { videohub: props.videohub.id },
-            });
-          }}
-        />}
-      </Stack>
-      <>
         {props.pushbuttons.length == 0 ?
           <p>No buttons setup yet.</p> :
           <>
@@ -125,6 +109,5 @@ export const PushButtons = (props: InputProps) => {
             </Stack>
           </>}
       </>
-    </>
   );
 }

@@ -1,4 +1,4 @@
-import { prisma, RoleOutput } from "@prisma/client";
+import { prisma, RoleOutput, RolePermission } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions, { toggleablePermissions } from "../../../backend/authentication/Permissions";
 import { addRole, getRoleById, getRoles, removeRole } from "../../../backend/backend";
@@ -18,8 +18,8 @@ export function retrieveRolesServerSide(): Role[] {
     return arr;
 }
 
-export function sanitizeRole(role: any): Role | undefined {
-    return role == undefined ? undefined : { id: role.id, editable: role.editable, name: role.name, outputs: role.outputs || [], permissions: role.permissions == undefined ? [] : Array.from(role.permissions) }
+export function sanitizeRole(role: {id: number, editable: boolean, name: string, outputs?: RoleOutput[], permissions?: RolePermission[]}): Role | undefined {
+    return role == undefined ? undefined : { id: role.id, editable: role.editable, name: role.name, outputs: role.outputs || [], permissions: role.permissions == undefined ? [] : Array.from(role.permissions).map((entry:RolePermission) => entry.permission) }
 }
 
 export function getRoleByIdBackendUsage(id: number): Role | undefined {

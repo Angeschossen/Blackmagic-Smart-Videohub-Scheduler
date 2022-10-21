@@ -1,6 +1,7 @@
 import { IStackStyles, MessageBar, MessageBarType, Stack } from "@fluentui/react";
 import { useEffect } from "react";
 import { render } from "react-dom"
+import { AlertMessage } from "./common/AlertMessage";
 import { Videohub } from "./interfaces/Videohub"
 import { useForceUpdate } from "./utils/hooks";
 
@@ -8,38 +9,14 @@ interface InputProps {
     videohub?: Videohub,
 }
 
-interface MessageBarProps {
-    text: string
-}
-const VideohubOffline = (p: MessageBarProps) => (
-    <MessageBar
-        messageBarType={MessageBarType.error}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-    >
-        {p.text}
-    </MessageBar>
-);
-
-const VideohubOnline = () => (
-    <MessageBar
-
-        messageBarType={MessageBarType.success}
-        isMultiline={false}
-    >
-        The videohub is reachable and can be controlled.
-    </MessageBar>
-);
-
-
 function getStatusComponent(videohub?: Videohub) {
     if (videohub == undefined) {
-        return <VideohubOffline text="No videohub setup yet." />
+        return <AlertMessage intent="info" message="No videohub setup yet." />
     } else {
         if (videohub.connected) {
-            return <VideohubOnline />;
+            return <AlertMessage intent="success" message="The videohub is reachable and can be controlled." />;
         } else {
-            return <VideohubOffline text="The videohub is currently not reachable. Therefore, it can't be controlled and shown data might be outdated." />
+            return <AlertMessage intent="warning" message="The videohub is currently not reachable. Therefore, it can't be controlled and shown data might be outdated." />
         }
     }
 }

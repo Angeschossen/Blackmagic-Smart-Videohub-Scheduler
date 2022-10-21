@@ -1,28 +1,24 @@
-import { Stack, IStackStyles } from '@fluentui/react';
+import { Stack, IStackStyles, IContextualMenuItem } from '@fluentui/react';
 import React, { Key, useEffect, useState } from 'react';
 import Router from 'next/router'
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Output, Videohub } from '../../components/interfaces/Videohub';
-import DataTable, { DataTableItem } from '../../components/DataTableNew';
+import { RoutingRequest, Videohub } from '../../components/interfaces/Videohub';
+import DataTable from '../../components/DataTable';
 import { getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
 import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
-import SelectVideohub from '../../components/buttons/SelectVideohubNew';
-import { PushButtons } from '../../components/views/PushButtonsView';
+import SelectVideohub from '../../components/buttons/SelectVideohub';
+import { PushButtons, RoutingData } from '../../components/views/PushButtonsView';
 import { useViewType } from '../../components/views/DesktopView';
 import { useSession } from 'next-auth/react';
 import { useClientSession } from '../../components/auth/ClientAuthentication';
 import Permissions from '../../backend/authentication/Permissions';
+import { RequestData } from 'next/dist/server/web/types';
+import { convert_date_to_utc } from '../../components/utils/dateutils';
+import { stackTokens } from '../../components/utils/styles';
 import io from "socket.io-client";
-import { TableCellLayout } from "@fluentui/react-components/unstable";
-import { Button } from '@fluentui/react-components';
-import { Clock12Filled } from '@fluentui/react-icons';
-import OutputView from './events';
-import { OutputsView } from '../../components/views/OutputsView';
-import { User } from '../../components/interfaces/User';
-import { retrieveUserServerSide } from '../api/users/[pid]';
-import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
+import { Socket } from 'net';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -70,19 +66,34 @@ export async function getServerSideProps(context: any) {
 
   return {
     props: {
-      user: JSON.parse(JSON.stringify(await retrieveUserServerSide(await getUserIdFromToken(context.req)))),
       videohubs: JSON.parse(JSON.stringify(hubs)),
       videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),
-    },
+    } as VideohubViewProps,
   }
 }
+
+function getItems(videohub?: Videohub): any[] {
+  const cloned: any[] = [];
+
+  if (videohub != undefined) {
+    for (const output of videohub.outputs) {
+      cloned.push({
+        id: output.id,
+        Output: output.label,
+        Input: (output.input_id == undefined ? "None" : videohub.inputs[output.input_id].label),
+      });
+    }
+  }
+
+  return cloned;
+}
+
 
 interface VideohubViewProps {
   videohubs: Videohub[],
   videohub: number,
   pushbuttons: PushButton[],
-  user: User,
 }
 
 interface VideohubData {
@@ -110,9 +121,9 @@ interface Keys {
 export const VideohubView = (props: VideohubViewProps) => {
   const socketio: any = React.useRef();
   const isDekstop = useViewType();
+  const { data: session } = useSession();
   const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
   const videohubData = React.useRef(buildVideohubData(props));
-  const [outputs, setOutputs] = React.useState<Output[]>()
   const [tableUpdate, setTableUpdate] = useState<number>(getRandomKey());
 
   function buildVideohubData(p: VideohubViewProps): VideohubData {
@@ -136,7 +147,7 @@ export const VideohubView = (props: VideohubViewProps) => {
       console.log(`Subscribing to channel: ${channel}`);
       socketio.current.on(channel, (data: Videohub) => {
         console.log("Received update.");
-
+  
         for (let i = 0; i < videohubData.current.videohubs.length; i++) {
           const videohub: Videohub = videohubData.current.videohubs[i];
           if (videohub.id === data.id) {
@@ -144,7 +155,7 @@ export const VideohubView = (props: VideohubViewProps) => {
             if (data.id === videohubData.current.currentVideohub?.id) {
               onVideohubUpdate(data);
             }
-
+  
             break;
           }
         }
@@ -154,45 +165,7 @@ export const VideohubView = (props: VideohubViewProps) => {
     });
   }, []);
 
-  function getItems(canEdit: boolean, videohub?: Videohub): DataTableItem[] {
-    const items: DataTableItem[] = [];
-
-    if (videohub != undefined) {
-      for (const output of videohub.outputs) {
-        const cells: JSX.Element[] = [
-          <TableCellLayout key={`output_${output.id}_output`}>{output.label}</TableCellLayout>,
-          <TableCellLayout key={`output_${output.id}_input`}>{(output.input_id == undefined ? "None" : videohub.inputs[output.input_id].label)}</TableCellLayout>,
-        ]
-
-        if (canEdit) {
-          cells.push(
-            <TableCellLayout key={`output_${output.id}_edit`}>
-              <Button
-                onClick={() => {
-                  if (videohubData.current.currentVideohub == undefined) {
-                    throw Error("Videohub is undefined");
-                  }
-
-                  Router.push({
-                    pathname: './events',
-                    query: { videohub: videohubData.current.currentVideohub.id, output: output.id },
-                  });
-                }}
-                icon={<Clock12Filled />}>
-                Schedule
-              </Button>
-            </TableCellLayout>
-          );
-        }
-
-        items.push({ key: output.id, cells: cells })
-      }
-    }
-
-    return items
-  }
-
-  async function retrieveData(canEdit: boolean): Promise<DataTableItem[] | undefined> {
+  async function retrieveData(): Promise<any[] | undefined> {
     let videohub: Videohub | undefined;
     for (const hub of videohubData.current.videohubs) {
       if (videohubData.current.currentVideohub == undefined || hub.id === videohubData.current.currentVideohub.id) {
@@ -210,7 +183,7 @@ export const VideohubView = (props: VideohubViewProps) => {
       return undefined; // since it updates all
     }
 
-    return getItems(canEdit, videohub);
+    return getItems(videohub);
   }
 
   function updateView(data: VideohubData) {
@@ -221,55 +194,50 @@ export const VideohubView = (props: VideohubViewProps) => {
 
   function onSelectVideohub(videohubs: Videohub[], hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
-      updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons, user: props.user }));
+      updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
     });
   }
 
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE);
-  const columns = [
-    {
-      key: 'output',
-      label: 'Output'
-    },
-    {
-      key: 'input',
-      label: 'Input'
-    },
-  ];
-
-  if (canEdit) {
-    columns.push({
-      key: 'schedule',
-      label: 'Schedule',
-    });
-  }
 
   // Here we use a Stack to simulate a command bar.
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
     <VideohubPage videohub={videohubData.current.currentVideohub}>
-      <Stack horizontal>
-        <SelectVideohub
-          videohubs={videohubData.current.videohubs || []}
-          onSelectVideohub={(hub: Videohub) => onSelectVideohub(videohubData.current.videohubs, hub)} />
-      </Stack>
-      {isDekstop &&
-        <Stack.Item>
-          <h1>Routing</h1>
-          <OutputsView
-            user={props.user}
-            videohub={videohubData.current.currentVideohub}
-          />
-        </Stack.Item>
-      }
-      <Stack.Item>
-        <h1>Push Buttons</h1>
+      <Stack tokens={stackTokens}>
+        <Stack horizontal styles={stackStyles}>
+          <SelectVideohub
+            videohubs={videohubData.current.videohubs || []}
+            onSelectVideohub={(hub: Videohub) => onSelectVideohub(videohubData.current.videohubs, hub)} />
+        </Stack>
+        <h1>Routing</h1>
+        {isDekstop && session != undefined &&
+          <DataTable
+            key={keys.tableKey}
+            tableUpdate={tableUpdate}
+            controlcolumns={canEdit ? [
+              {
+                key: "edit",
+                onClick(_event, item) {
+                  if (videohubData.current.currentVideohub == undefined) {
+                    throw Error("Videohub is undefined");
+                  }
+
+                  Router.push({
+                    pathname: './events',
+                    query: { videohub: videohubData.current.currentVideohub.id, output: item.id },
+                  });
+                },
+                text: "Schedule"
+              }
+            ] : []}
+            getData={() => retrieveData()} />}
         <PushButtons
           key={keys.pushbuttonsKey}
           pushbuttons={videohubData.current.pushButtons || []}
           videohub={videohubData.current.currentVideohub}
         />
-      </Stack.Item>
+      </Stack>
     </VideohubPage>
   );
 }

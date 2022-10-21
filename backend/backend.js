@@ -40,26 +40,26 @@ async function createUser(user, role) {
 
 module.exports = {
     roles: undefined,
+    ROLE_ADMIN_ID: 1,
     setupRoles: async function () {
         console.log("Setting up roles...");
         roles = new Map();
 
+        // load custom roles
+        const customRoles = await prismadb.role.findMany()
+        for (const role of customRoles) {
+            this.addRole(role);
+        }
+
+        const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [{permission: permissions.PERMISSION_VIDEOHUB_EDIT}, {permission:permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE}, {permission: permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT}, {permission: permissions.PERMISSION_ROLE_EDIT}, {permission: permissions.PERMISSION_USER_EDIT}])
+        roles.set(adminRole.id, adminRole)
+
         // create necesarry roles
-        for (const role of [
-            new Role(1, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT]),
-        ]) {
-            roles.set(role.id, role);
+        for (const role of [adminRole]) {
+            // if not editable, then override
+            if (roles.get(role.id) == undefined || !role.editable) {
+                roles.set(role.id, role)
 
-            const r = await prismadb.role.findUnique({
-                where: {
-                    id: role.id,
-                },
-                include: {
-                    outputs: true
-                }
-            });
-
-            if (r == undefined) {
                 await prismadb.role.upsert({
                     where: {
                         id: role.id,
@@ -74,20 +74,18 @@ module.exports = {
                     },
                 });
 
-                await prismadb.rolePermission.createMany({
-                    data: Array.from(role.permissions).map((permission, _key) => {
-                        return { permission: permission, role_id: role.id };
-                    }),
-                });
-            } else {
-                role.outputs = r.outputs
-            }
-        }
+                await prismadb.rolePermission.deleteMany({
+                    where: {
+                        role_id: role.id,
+                    }
+                })
 
-        // load custom roles
-        const customRoles = await prismadb.role.findMany()
-        for (const role of customRoles) {
-            this.addRole(role);
+                await prismadb.rolePermission.createMany({
+                    data: Array.from(role.permissions).map(entry => {
+                        return { permission: entry.permission, role_id: role.id };
+                    }),
+                })
+            } 
         }
 
         await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles.get(1));
@@ -118,8 +116,32 @@ module.exports = {
             roles.set(data.id, new Role(data.id, true, data.name, []))
         }
     }, setup: async function () {
-        await this.setupRoles();
-        await videohubs.loadData();
-        videohubs.connect();
+        await this.setupRoles()
+        await videohubs.loadData()
+
+        // make sure admin role has all outputs
+        await prismadb.roleOutput.deleteMany({
+            where:{
+                role_id: this.ROLE_ADMIN_ID,
+            }
+        })
+
+        // set
+        const setOutputsAdmin = []
+        videohubs.getVideohubs().forEach(hub => {
+            hub.outputs.forEach(output=>{
+                setOutputsAdmin.push({
+                    videohub_id: hub.id,
+                    output_id: output.id,
+                    role_id: this.ROLE_ADMIN_ID,
+                })
+            })
+        })
+
+        await prismadb.roleOutput.createMany({
+            data: setOutputsAdmin
+        })
+
+        videohubs.connect()
     },
 }

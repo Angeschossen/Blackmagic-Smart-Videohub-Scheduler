@@ -97,6 +97,7 @@ export default NextAuth({
       session.user = token.user
       console.log("SESSION")
       console.log(session)
+      console.log(session.user.role.permissions)
       return session;
     },
   },
