@@ -83,6 +83,12 @@ export default async function handler(
                         version: videohub.version,
                     }
                 })
+
+                // also add outputs to admin
+                await prismadb.roleOutput.createMany({
+                    data: videohub.outputs.map,
+                })
+
             } else {
                 await prismadb.videohub.update({
                     where: {
