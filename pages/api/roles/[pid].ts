@@ -12,12 +12,15 @@ export function retrieveRolesServerSide(): Role[] {
     const roles: any[] = getRoles()
     const arr: Role[] = [];
     roles.forEach(role => {
-        arr.push({ id: role.id, editable: role.editable, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
+        arr.push(sanitizeRole(role) as Role)
     })
 
     return arr;
 }
 
+export function sanitizeRole(role: any): Role | undefined {
+    return role == undefined ? undefined : { id: role.id, editable: role.editable, name: role.name, outputs: role.outputs || [], permissions: role.permissions == undefined ? [] : Array.from(role.permissions) }
+}
 
 export function getRoleByIdBackendUsage(id: number): Role | undefined {
     return getRoleById(id) as Role
@@ -104,15 +107,16 @@ export default async function handler(
                 p = await prismadb.role.create({
                     data: {
                         name: role.name,
+                        editable: true, // always editable
                     }
-                });
+                })
             } else {
                 p = await prismadb.role.update({
                     where: {
                         id: role.id,
                     },
                     data: {
-                        name: role.name,
+                        name: role.name, // do not override editable
                     }
                 })
             }

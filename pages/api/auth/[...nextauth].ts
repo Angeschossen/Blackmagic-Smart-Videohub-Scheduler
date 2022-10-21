@@ -5,6 +5,8 @@ import GoogleProvider from "next-auth/providers/google"
 import { OPTIMIZED_FONT_PROVIDERS } from "next/dist/shared/lib/constants";
 import { getRoleById } from "../../../backend/backend";
 import prismadb from '../../../database/prisma';
+import { sanitizeRole } from "../roles/[pid]";
+import { sanitizeUser } from "../users/[pid]";
 
 // import EmailProvider from "next-auth/providers/email"
 // import AppleProvider from "next-auth/providers/apple"
@@ -17,17 +19,28 @@ export async function doesJWTUserExist(username: string) {
 }
 
 export async function authenticateJWTAndGet(username: string, password: string) {
-  const credential = await prismadb.user.findUnique({
-    where: {
-      username: username,
-    },
-    include: {
-      role: true,
-    }
-  })
+  let user
+  try {
+    user = await prismadb.user.findUnique({
+      where: {
+        username: username,
+      },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+            outputs: true,
+          }
+        }
+      }
+    })
+  } catch (ex) {
+    console.log("Login failed:")
+    console.log(ex)
+  }
 
-  if (credential != undefined && credential.password == password) {
-    return { id: credential.id, username: credential.username, role: credential.role }
+  if (user != undefined && user.password == password) {
+    return sanitizeUser(user)
   } else {
     return undefined
   }
@@ -52,13 +65,7 @@ const prodivers: any[] = [
         password: string,
       };
 
-      const credential = await authenticateJWTAndGet(username, password);
-      if (credential != undefined) {
-        const res = { name: credential.username, role_id: credential.role?.id };
-        return res;
-      }
-
-      return null;
+      return await authenticateJWTAndGet(username, password)
     }
   })
 ];
@@ -74,19 +81,11 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user, account, profile, isNewUser }: any) {
       // Persist the OAuth access_token and or the user id to the token right after signin
+      console.log("JWT")
+      console.log(user)
       if (user) {
         //token.accessToken = account.access_token;
-        token.id = user.id;
-
-        const role_id = user.role_id;
-        if (role_id != undefined) {
-          const role = getRoleById(role_id);
-          if (role != undefined) {
-            token.permissions = Array.from(role.permissions);
-          }
-
-          token.role_id = role_id;
-        }
+        token.user = user
       }
 
       return token;
@@ -95,10 +94,9 @@ export default NextAuth({
     async session({ session, token, user }: any) {
       // Send properties to the client, like an access_token and user id from a provider.
       //session.accessToken = token.accessToken;
-      session.user.id = token.id;
-      session.user.permissions = token.permissions;
-      session.user.role_id = token.role_id;
-
+      session.user = token.user
+      console.log("SESSION")
+      console.log(session)
       return session;
     },
   },
