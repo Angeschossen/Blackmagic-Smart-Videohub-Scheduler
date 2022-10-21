@@ -2,7 +2,7 @@ import { Stack } from "@fluentui/react";
 import { Button } from "@fluentui/react-components";
 import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout } from "@fluentui/react-components/unstable";
 import React from "react";
-import { DataTable, DataTableItem } from "../../DataTableNew";
+import { DataTable, DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { Role } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { CheckboxChoice, CheckBoxModal } from "../../modals/admin/CheckBoxModal";
@@ -18,7 +18,22 @@ interface Props {
     onRoleDeleted: (role: Role) => void
 }
 
-export function getRoleByName(roles: Role[], name: string): Role|undefined {
+const columns: DataTableColumn[] = [
+    {
+        label: 'Role',
+    },
+    {
+        label: 'Permissions'
+    },
+    {
+        label: 'Outputs',
+    },
+    {
+        label: 'Delete'
+    }
+]
+
+export function getRoleByName(roles: Role[], name: string): Role | undefined {
     for (const role of roles) {
         if (role.name === name) {
             return role
@@ -28,10 +43,12 @@ export function getRoleByName(roles: Role[], name: string): Role|undefined {
     return undefined
 }
 
-export function getRoleById(roles: Role[], id: number): Role|undefined {
-    for (const role of roles) {
-        if (role.id === id) {
-            return role
+export function getRoleById(roles: Role[], id?: number): Role | undefined {
+    if (id != undefined) {
+        for (const role of roles) {
+            if (role.id === id) {
+                return role
+            }
         }
     }
 
@@ -101,8 +118,7 @@ export const RolesView = (props: Props) => {
                     </TableCellLayout>
                 ]
 
-                const item: DataTableItem = { key: role.name, cells: cells };
-                items.push(item)
+                items.push({ key: key, cells: cells })
             }
         }
 
@@ -112,24 +128,7 @@ export const RolesView = (props: Props) => {
     return (
         <Stack.Item>
             <DataTable
-                columns={[
-                    {
-                        key: 'role',
-                        label: 'Role',
-                    },
-                    {
-                        key: 'permissions',
-                        label: 'Permissions'
-                    },
-                    {
-                        key: 'outputs',
-                        label: 'Outputs',
-                    },
-                    {
-                        key: 'delete',
-                        label: 'Delete'
-                    }
-                ]} 
+                columns={columns}
                 items={buildItems(props.roles)} />
         </Stack.Item>
     );

@@ -2,7 +2,7 @@ import { Stack, IStackStyles } from '@fluentui/react';
 import React, { Key, useEffect, useState } from 'react';
 import Router from 'next/router'
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Videohub } from '../../components/interfaces/Videohub';
+import { Output, Videohub } from '../../components/interfaces/Videohub';
 import DataTable, { DataTableItem } from '../../components/DataTableNew';
 import { getRandomKey } from '../../components/utils/commonutils';
 import { PushButton } from '../../components/interfaces/PushButton';
@@ -18,6 +18,11 @@ import io from "socket.io-client";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import { Button } from '@fluentui/react-components';
 import { Clock12Filled } from '@fluentui/react-icons';
+import OutputView from './events';
+import { OutputsView } from '../../components/views/OutputsView';
+import { User } from '../../components/interfaces/User';
+import { retrieveUserServerSide } from '../api/users/[pid]';
+import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
 
 const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 
@@ -65,10 +70,11 @@ export async function getServerSideProps(context: any) {
 
   return {
     props: {
+      user: JSON.parse(JSON.stringify(await retrieveUserServerSide(await getUserIdFromToken(context.req)))),
       videohubs: JSON.parse(JSON.stringify(hubs)),
       videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),
-    } as VideohubViewProps,
+    },
   }
 }
 
@@ -76,6 +82,7 @@ interface VideohubViewProps {
   videohubs: Videohub[],
   videohub: number,
   pushbuttons: PushButton[],
+  user: User,
 }
 
 interface VideohubData {
@@ -103,9 +110,9 @@ interface Keys {
 export const VideohubView = (props: VideohubViewProps) => {
   const socketio: any = React.useRef();
   const isDekstop = useViewType();
-  const { data: session } = useSession();
   const [keys, setKeys] = useState<Keys>({ tableKey: "table_0", pushbuttonsKey: "buttons_0" });
   const videohubData = React.useRef(buildVideohubData(props));
+  const [outputs, setOutputs] = React.useState<Output[]>()
   const [tableUpdate, setTableUpdate] = useState<number>(getRandomKey());
 
   function buildVideohubData(p: VideohubViewProps): VideohubData {
@@ -214,7 +221,7 @@ export const VideohubView = (props: VideohubViewProps) => {
 
   function onSelectVideohub(videohubs: Videohub[], hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
-      updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons }));
+      updateView(buildVideohubData({ videohubs: videohubs, videohub: hub.id, pushbuttons: pushbuttons, user: props.user }));
     });
   }
 
@@ -241,25 +248,28 @@ export const VideohubView = (props: VideohubViewProps) => {
   // The real CommandBar control also uses CommandBarButtons internally.
   return (
     <VideohubPage videohub={videohubData.current.currentVideohub}>
-      <Stack>
-        <Stack horizontal styles={stackStyles}>
-          <SelectVideohub
-            videohubs={videohubData.current.videohubs || []}
-            onSelectVideohub={(hub: Videohub) => onSelectVideohub(videohubData.current.videohubs, hub)} />
-        </Stack>
-        <h1>Routing</h1>
-        {isDekstop && session != undefined &&
-          <DataTable
-            key={keys.tableKey}
-            tableUpdate={tableUpdate}
-            columns={columns}
-            getItems={() => retrieveData(canEdit)} />}
+      <Stack horizontal>
+        <SelectVideohub
+          videohubs={videohubData.current.videohubs || []}
+          onSelectVideohub={(hub: Videohub) => onSelectVideohub(videohubData.current.videohubs, hub)} />
+      </Stack>
+      {isDekstop &&
+        <Stack.Item>
+          <h1>Routing</h1>
+          <OutputsView
+            user={props.user}
+            videohub={videohubData.current.currentVideohub}
+          />
+        </Stack.Item>
+      }
+      <Stack.Item>
+        <h1>Push Buttons</h1>
         <PushButtons
           key={keys.pushbuttonsKey}
           pushbuttons={videohubData.current.pushButtons || []}
           videohub={videohubData.current.currentVideohub}
         />
-      </Stack>
+      </Stack.Item>
     </VideohubPage>
   );
 }

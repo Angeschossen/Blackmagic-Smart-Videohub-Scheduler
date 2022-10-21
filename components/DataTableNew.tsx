@@ -7,7 +7,7 @@ export interface TableInput {
 }
 
 export interface DataTableColumn {
-    key: string,
+    key?: string,
     label: string,
 }
 
@@ -52,7 +52,7 @@ export const DataTable = (props: TableInput) => {
         <Table>
             <TableHeader>
                 <TableRow>
-                    {props.columns.map(column => <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>)}
+                    {props.columns.map(column => <TableHeaderCell key={column.key || column.label.toLowerCase()}>{column.label}</TableHeaderCell>)}
                 </TableRow>
             </TableHeader>
             <TableBody>

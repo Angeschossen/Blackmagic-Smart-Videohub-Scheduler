@@ -59,7 +59,6 @@ export const RoleModal = (props: Props) => {
                     const json = await res.json();
 
                     const resRole: Role = { id: json.id, name: json.name, outputs: role.outputs, permissions: role.permissions, editable: json.editable }
-                    console.log(create)
                     if (create) {
                         if (props.onRoleCreate != undefined) {
                             props.onRoleCreate(resRole)

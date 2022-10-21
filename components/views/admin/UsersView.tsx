@@ -1,5 +1,5 @@
 import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout } from "@fluentui/react-components/unstable";
-import { DataTable, DataTableItem } from "../../DataTableNew";
+import { DataTable, DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { Role, User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { UserOutput } from "../../modals/admin/UserOutputModal";
@@ -16,16 +16,30 @@ interface Props {
     onUserDeleted: (user: User) => void
 }
 
+const columns:DataTableColumn[] = [
+    {
+        label: 'Name',
+    },
+    {
+        label: 'Role',
+    },
+    {
+        label: 'Delete',
+    }
+]
+
 export const UsersView = (props: Props) => {
 
     function buildItems(users: User[]): DataTableItem[] {
         const items: DataTableItem[] = [];
 
         for (const user of users) {
-            const role: Role | undefined = getRoleById(props.roles, user.roleId)
+            const role: Role | undefined = getRoleById(props.roles, user.role_id)
+            const key: string = user.id
+
             const cells: JSX.Element[] = [
-                <TableCellLayout key={user.username}>{user.username}</TableCellLayout>,
-                <TableCellLayout key={`${user.username}_role`}>
+                <TableCellLayout key={`${key}_username`}>{user.username}</TableCellLayout>,
+                <TableCellLayout key={`${key}_role`}>
                     <Dropdown disabled={role != null && !role.editable} defaultSelectedOptions={role == undefined ? [] : [role.name]} placeholder={"Select a role"}
                         onOptionSelect={async (_event: any, data: any) => {
                             const name: string = data.optionValue;
@@ -41,7 +55,7 @@ export const UsersView = (props: Props) => {
                             </Option>)}
                     </Dropdown>
                 </TableCellLayout>,
-                <TableCellLayout>
+                <TableCellLayout key={`${key}_delete`}>
                     <Button
                         color="#bc2f32"
                         icon={<Delete16Regular />}
@@ -58,7 +72,7 @@ export const UsersView = (props: Props) => {
                 </TableCellLayout>,
             ]
 
-            items.push({ key: user.username, cells: cells })
+            items.push({ key: key, cells: cells })
         }
 
 
@@ -68,19 +82,6 @@ export const UsersView = (props: Props) => {
     return (
         <DataTable
         items={buildItems(props.users)}
-        columns={[
-            {
-                key: 'name',
-                label: 'Name',
-            },
-            {
-                key: 'role',
-                label: 'Role',
-            },
-            {
-                key: 'delete',
-                label: 'Delete',
-            }
-        ]} />
+        columns={columns} />
     );
 }

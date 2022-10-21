@@ -12,9 +12,14 @@ export async function checkServerPermission(req: any, res: any, permission?: str
     return true;
 }
 
+export async function getUserIdFromToken(req: any) {
+    const token: any = await getToken({ req: req });
+    return token.user.id
+}
+
 export function handleCheckPermission(obj: any, permission?: string) {
-    if (obj != undefined && obj.role_id != undefined) {
-        const role = getRoleById(obj.role_id);
+    if (obj != undefined && obj.user.role_id != undefined) {
+        const role = getRoleById(obj.user.role_id);
         if (role != undefined) {
             if (permission == undefined || role.hasPermission(permission)) {
                 return true;

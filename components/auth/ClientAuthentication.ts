@@ -6,7 +6,7 @@ export function useClientSession(permission?: string) {
     const { data: session } = useSession();
 
     const obj: any = session;
-    if (obj.user.permissions == undefined) {
+    if (obj.user.role?.permissions == undefined) {
         return false;
     }
 
@@ -14,7 +14,7 @@ export function useClientSession(permission?: string) {
         return true;
     }
 
-    for (const check of obj.user.permissions) {
+    for (const check of obj.user.role.permissions) {
         if (check === permission) {
             return true;
         }

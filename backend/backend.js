@@ -67,6 +67,7 @@ module.exports = {
                     create: {
                         id: role.id,
                         name: role.name,
+                        editable: role.editable,
                     },
                     update: {
                         name: role.name,

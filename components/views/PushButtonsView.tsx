@@ -46,7 +46,6 @@ export const PushButtons = (props: InputProps) => {
   return (
     <>
       <Stack horizontalAlign="start">
-        <h1>Push Buttons</h1>
         {canEdit && props.videohub != undefined && <DefaultButton
           text="Edit"
           onClick={() => {

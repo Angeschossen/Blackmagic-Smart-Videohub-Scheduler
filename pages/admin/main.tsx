@@ -69,7 +69,6 @@ export const Default = (props: InputProps) => {
             Add Role
           </Button>}
           onRoleCreate={(role: Role) => {
-            console.log(role)
             const arr = [...roles]
             arr.push(role)
             setRoles(arr)
@@ -104,11 +103,8 @@ export const Default = (props: InputProps) => {
             users={users}
             onUserDeleted={(user: User) => {
               const arr = [...users]
-              console.log(user)
-              console.log(arr.indexOf(user))
               arr.splice(arr.indexOf(user), 1)
-              setUsers(users)
-              console.log(users)
+              setUsers(arr)
             }} />
         </Stack.Item>
       </Stack>

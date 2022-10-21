@@ -19,7 +19,7 @@ export const VideohubPage = (p: InputProps) => {
                 <Stack.Item style={{ justifyContent: 'flex-end', right: 0 }}>
                     <VideohubFooter videohub={p.videohub} />
                 </Stack.Item>
-                <Stack style={videohubPageStyle}>
+                <Stack style={videohubPageStyle} tokens={stackTokens}>
                     {p.children}
                 </Stack>
             </Stack>

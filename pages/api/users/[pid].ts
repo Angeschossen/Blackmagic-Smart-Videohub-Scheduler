@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions from "../../../backend/authentication/Permissions";
 import { addRole, getRoleById } from "../../../backend/backend";
@@ -5,26 +6,49 @@ import { checkServerPermission } from "../../../components/auth/ServerAuthentica
 import { Role, User } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
 import prismadb from '../../../database/prismadb';
-import { getRoleByIdBackendUsage } from "../roles/[pid]";
+import { getRoleByIdBackendUsage, sanitizeRole } from "../roles/[pid]";
 
 
-function getSanitizedUser(user: any): User {
-    return { id: user.id, username: user.username, roleId: user.role?.id, roleName: user.role?.name };
+export function sanitizeUser(user: any): User {
+    return { id: user.id, username: user.username, role_id: user.role_id, role: sanitizeRole(user.role) }
 }
-export async function retrieveUsersServerSide() {
-    return await prismadb.user.findMany({
-        include: {
-            role: true
-        }
-    })
-        .then((r: any) => {
-            const arr: User[] = [];
-            for (const user of r) {
-                arr.push(getSanitizedUser(user));
-            }
 
-            return arr;
-        });
+export const selectUserParams: any = {
+    password: false, // NO password
+    usernameHash: false, // NO username
+    id: true,
+    username: true,
+    role_id: true,
+}
+
+export async function retrieveUsersServerSide() {
+    const users = await prismadb.user.findMany({
+        select: selectUserParams // dpes not include role
+    })
+
+    const arr: User[] = [];
+    for (const user of users) {
+        arr.push(sanitizeUser(user))
+    }
+
+    return arr;
+
+}
+
+export async function retrieveUserServerSide(userId: string) {
+    return await prismadb.user.findUnique({
+        where: {
+            id: userId,
+        },
+        select: (selectUserParams & {
+            role: {
+                include: {
+                    permissions: true,
+                    outputs: true,
+                }
+            } 
+        } as any) as Prisma.UserSelect // does include role
+    })
 }
 
 export default async function handler(
@@ -44,8 +68,52 @@ export default async function handler(
     const body: any = req.body;
     switch (pid) {
         case "get": {
-            sendResponseValid(req, res, await retrieveUsersServerSide())
+            const userId = body.id
+            if (userId == undefined) {
+                sendResponseValid(req, res, await retrieveUsersServerSide())
+            } else {
+                const user = await prismadb.user.findUnique({
+                    where: {
+                        id: userId,
+                    },
+                    include: {
+                        role: true
+                    }
+                })
+
+                if (user == undefined) {
+                    sendResponseInvalid(req, res, "User doesn't exist.")
+                    return
+                }
+
+                sendResponseValid(req, res, sanitizeUser(user))
+            }
+
             return
+        }
+
+        case "getrole": {
+            const userId = body.id
+            if (userId == undefined) {
+                sendResponseInvalid(req, res, "Params missing.")
+                return
+            }
+
+            const user = await prismadb.user.findUnique({
+                where: {
+                    id: userId,
+                },
+                include: {
+                    role: true
+                }
+            })
+
+            if (user == undefined) {
+                sendResponseInvalid(req, res, "User doesn't exist.")
+                return
+            }
+
+            sendResponseValid(req, res, user.role)
         }
 
         case "delete": {
