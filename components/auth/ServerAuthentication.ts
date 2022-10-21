@@ -1,10 +1,11 @@
 import { getToken } from "next-auth/jwt";
 import { getRoleById } from "../../backend/backend";
+import { sendResponseInvalid } from "../utils/requestutils";
 
 export async function checkServerPermission(req: any, res: any, permission?: string) {
     const token = await getToken({ req: req });
     if (!handleCheckPermission(token, permission)) {
-        res.status(401).json({ message: "Unauthorized" });
+        sendResponseInvalid(req, res, "Unauthorized.")
         return false;
     }
 

@@ -5,6 +5,7 @@ import { sendRoutingUpdate } from '../../../backend/videohubs';
 import prismadb from '../../../database/prisma';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import { isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[];
@@ -42,45 +43,38 @@ export default async function handler(
     }
 
     const { pid } = req.query;
-    let e;
     switch (pid) {
         case "get": {
-            res.status(200).json(retrieveVideohubsServerSide());
-            return;
+            sendResponseValid(req, res, retrieveVideohubsServerSide())
+            return
         }
 
         case "getactivity": {
-            res.status(200).json(getVideohubActivityServerSide());
+            sendResponseValid(req, res, getVideohubActivityServerSide())
             return;
         }
 
         case "routing": {
-            if (req.method !== 'POST') {
-                res.status(405).json({ message: 'POST required' });
-                return;
+            if (!isPost(req, res)){
+                return
             }
 
-            const request = req.body as RoutingRequest;
-            await sendRoutingUpdate(request).then((result: string | undefined) => {
-                res.status(200).json({ result: result });
-            });
-
-            return;
+            sendResponseValid(req, res, await sendRoutingUpdate(req.body as RoutingRequest))
+            return
         }
 
         case "update": {
             if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_EDIT)) {
-                return;
+                return
             }
 
-            if (req.method !== 'POST') {
-                res.status(405).json({ message: 'POST required' });
-                return;
+            if (!isPost(req, res)){
+                return
             }
 
             const videohub: Videohub = req.body as Videohub;
             if (videohub.id == -1) {
-                e = prismadb.videohub.create({
+                await prismadb.videohub.create({
                     data: {
                         name: videohub.name,
                         ip: videohub.ip,
@@ -88,7 +82,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prismadb.videohub.update({
+                await prismadb.videohub.update({
                     where: {
                         id: videohub.id,
                     },
@@ -96,16 +90,13 @@ export default async function handler(
                 });
             }
 
-            break;
+            sendResponseValid(req, res)
+            return
         }
 
         default: {
-            res.status(405).json({ message: 'Invalid PID' });
-            return;
+            sendResponseInvalid(req, res, "Invalid PID.")
+            return
         }
     }
-
-    await e.then((r: any) => {
-        res.status(200).json(r);
-    });
 }

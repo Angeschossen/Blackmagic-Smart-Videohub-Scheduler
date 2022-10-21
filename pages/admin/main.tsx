@@ -64,11 +64,22 @@ export const Default = (props: InputProps) => {
           onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
         <RoleModal
           roles={roles}
+          role={undefined}
           trigger={<Button>
             Add Role
-          </Button>} onRoleUpdate={function (role: Role): void {
-
-          }} />
+          </Button>}
+          onRoleCreate={(role: Role) => {
+            const arr = [...roles]
+            arr.push(role)
+            setRoles(arr)
+            console.log("SETT")
+          }}
+          onRoleUpdate={(role: Role) => {
+            const arr = [...roles]
+            arr[arr.indexOf(role)] = role
+            setRoles(arr)
+          }}
+        />
       </Stack>
       <Stack tokens={tableStackTokens}>
         <Stack.Item>
@@ -78,7 +89,13 @@ export const Default = (props: InputProps) => {
             roles={roles}
             permissions={props.permissions.map(perm => {
               return { value: perm, label: perm }
-            })} />
+            })}
+            onRoleDeleted={(role: Role) => {
+              const arr = [...roles]
+              arr.splice(arr.indexOf(role), 1)
+              setRoles(arr)
+            }}
+          />
         </Stack.Item>
         <Stack.Item>
           <h1>Users</h1>

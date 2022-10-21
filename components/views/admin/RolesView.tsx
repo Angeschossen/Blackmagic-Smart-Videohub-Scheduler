@@ -1,20 +1,45 @@
 import { Stack } from "@fluentui/react";
 import { Button } from "@fluentui/react-components";
 import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout } from "@fluentui/react-components/unstable";
+import React from "react";
 import { DataTable, DataTableItem } from "../../DataTableNew";
 import { Role } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { CheckboxChoice, CheckBoxModal } from "../../modals/admin/CheckBoxModal";
 import { UserOutput } from "../../modals/admin/UserOutputModal";
 import { getPostHeader } from "../../utils/fetchutils";
+import { useListRef } from "../../utils/menuUtils";
+import { Delete16Regular } from '@fluentui/react-icons';
 
 interface Props {
     videohub?: Videohub
     roles: Role[],
     permissions: CheckboxChoice[],
+    onRoleDeleted: (role: Role) => void
+}
+
+export function getRoleByName(roles: Role[], name: string): Role|undefined {
+    for (const role of roles) {
+        if (role.name === name) {
+            return role
+        }
+    }
+
+    return undefined
+}
+
+export function getRoleById(roles: Role[], id: number): Role|undefined {
+    for (const role of roles) {
+        if (role.id === id) {
+            return role
+        }
+    }
+
+    return undefined
 }
 
 export const RolesView = (props: Props) => {
+
     function buildItems(roles: Role[]): DataTableItem[] {
         const items: DataTableItem[] = [];
 
@@ -58,9 +83,25 @@ export const RolesView = (props: Props) => {
                                 return { value: output.id.toString(), label: output.label };
                             })} />
                     </TableCellLayout>,
+                    <TableCellLayout>
+                        <Button
+                            color="#bc2f32"
+                            icon={<Delete16Regular />}
+                            disabled={!role.editable}
+                            onClick={async () => {
+                                await fetch('/api/roles/delete', getPostHeader({ role_id: role.id })).then(res => {
+                                    if (res.status === 200) {
+                                        props.onRoleDeleted(role)
+                                    }
+                                });
+                            }}>
+                            Delete
+                        </Button>
+                    </TableCellLayout>
                 ]
 
-                items.push({ key: role.name, cells: cells })
+                const item: DataTableItem = { key: role.name, cells: cells };
+                items.push(item)
             }
         }
 
@@ -70,9 +111,6 @@ export const RolesView = (props: Props) => {
     return (
         <Stack.Item>
             <DataTable
-                getItems={async function (): Promise<DataTableItem[] | undefined> {
-                    return Promise.resolve(buildItems(props.roles));
-                }}
                 tableUpdate={props.videohub?.id || 0}
                 columns={[
                     {
@@ -86,8 +124,12 @@ export const RolesView = (props: Props) => {
                     {
                         key: 'outputs',
                         label: 'Outputs',
+                    },
+                    {
+                        key: 'delete',
+                        label: 'Delete'
                     }
-                ]} />
+                ]} items={buildItems(props.roles)} />
         </Stack.Item>
     );
 }

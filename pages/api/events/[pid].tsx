@@ -4,34 +4,34 @@ import { OutputEvent } from '../../videohub/events';
 import { retrieveEvents } from '../../../backend/videohubs'
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 import * as permissions from "../../../backend/authentication/Permissions";
+import { sendResponseInvalid, sendResponseInvalidTransparent, sendResponseValid } from '../../../components/utils/requestutils';
 
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await checkServerPermission(req, res)) {
-        return;
-    }
-
-    const { pid } = req.query;
-    const body = req.body;
-
     if (req.method !== 'POST') {
-        res.status(405).json({ message: 'POST required' });
-        return;
+        sendResponseInvalid(req, res, "POST required.")
+        return
     }
+
+    if (!await checkServerPermission(req, res)) {
+        return
+    }
+
+    const { pid } = req.query
+    const body = req.body
 
     const videohub_id = body.videohub_id;
     if (videohub_id === undefined) {
-        res.status(405).json({ message: 'Videohub id required.' });
-        return;
+        sendResponseInvalid(req, res, "Parameters missing.")
+        return
     }
 
-    let e;
     switch (pid) {
         case "update": {
             if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
-                return;
+                return
             }
 
             const date_start: Date = new Date(body.start);
@@ -88,16 +88,16 @@ export default async function handler(
                     ]
                 }
             }).then((r: any) => {
-                return true; // we allow max one another event
+                return true // we allow max one another event
             })) {
-                res.status(409).json({ message: 'Event overlaps with another event' });
+                sendResponseInvalid(req, res, "Event overlaps with another event.")
                 return;
             }
 
             const id: number = body.id;
             const repeat: boolean = event.repeat_every_week === true;
             if (id === -1) {
-                e = prisma.event.create({
+               await prisma.event.create({
                     data: {
                         output_id: event.output_id,
                         input_id: event.input_id,
@@ -110,7 +110,7 @@ export default async function handler(
                     }
                 });
             } else {
-                e = prisma.event.update({
+                await prisma.event.update({
                     where: {
                         id: id,
                     },
@@ -124,44 +124,45 @@ export default async function handler(
                 });
             }
 
-            break;
+            sendResponseValid(req, res)
+            return
         }
 
         case "delete": {
             if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)) {
-                return;
+                return
             }
 
             const id: number = body.id;
-            e = prisma.event.delete({
+            await prisma.event.delete({
                 where: {
                     id: id,
                 }
             });
 
-            break;
+            sendResponseValid(req, res)
+            return
         }
 
         case "get": {
-            const date_start = new Date(body.start as string);
-            const date_end = new Date(body.end as string);
-            const output: number = Number(body.output);
+            const date_start = new Date(body.start as string)
+            const date_end = new Date(body.end as string)
+            const output: number = Number(body.output)
+            if (date_start == undefined || date_end == undefined || output == undefined) {
+                sendResponseInvalid(req, res, "Missing parameters.")
+                return
+            }
 
             //console.log("Start: " + date_start);
             //console.log("End: " + date_end);
 
-            e = await retrieveEvents(videohub_id, output, date_start, date_end, false);
-            res.status(200).json(e); // since it returns and array
-            return;
+            sendResponseValid(req, res, await retrieveEvents(videohub_id, output, date_start, date_end, false))
+            return
         }
 
         default: {
-            res.status(405).json({ message: 'Invalid PID' });
-            return;
+            sendResponseInvalid(req, res, "Invalid PID.")
+            return
         }
     }
-
-    await e.then((r: any) => {
-        res.status(200).json(r);
-    });
 }

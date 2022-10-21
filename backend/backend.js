@@ -4,11 +4,12 @@ const videohubs = require('./videohubs');
 const socketio = require('./socketio');
 
 class Role {
-    constructor(id, name, permissions) {
-        this.id = id;
-        this.name = name;
-        this.permissions = new Set(permissions);
-        this.outputs = [];
+    constructor(id, editable, name, permissions) {
+        this.id = id
+        this.name = name
+        this.permissions = new Set(permissions)
+        this.outputs = []
+        this.editable = editable
     }
 
     hasPermission(permission) {
@@ -37,22 +38,6 @@ async function createUser(user, role) {
     }
 }
 
-async function createRole(role) {
-    if (await prismadb.role.findUnique({
-        where: {
-            name: role.name,
-        }
-    }) == undefined) {
-        const r = await prismadb.role.create({
-            data: {
-                name: role.name,
-            }
-        })
-
-        return new Role(r.id, r.name,)
-    }
-}
-
 module.exports = {
     roles: undefined,
     setupRoles: async function () {
@@ -61,7 +46,7 @@ module.exports = {
 
         // create necesarry roles
         for (const role of [
-            new Role(1, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT]),
+            new Role(1, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT]),
         ]) {
             roles.set(role.id, role);
 
@@ -100,7 +85,7 @@ module.exports = {
 
         // load custom roles
         const customRoles = await prismadb.role.findMany()
-        for(const role of customRoles){
+        for (const role of customRoles) {
             this.addRole(role);
         }
 
@@ -118,9 +103,18 @@ module.exports = {
     getRoleById(id) {
         return roles.get(id);
     },
+    removeRole(id) {
+        const role = roles.get(id)
+        if (role == undefined || role.isRequired()) {
+            return
+        }
+
+        roles.delete(id)
+    },
     addRole(data) {
-        if (roles.get(data.id) == undefined) {
-            roles.set(data.id, new Role(data.id, data.name, []))
+        const prev = roles.get(data.id)
+        if (prev == undefined || prev.editable) {
+            roles.set(data.id, new Role(data.id, true, data.name, []))
         }
     }, setup: async function () {
         await this.setupRoles();

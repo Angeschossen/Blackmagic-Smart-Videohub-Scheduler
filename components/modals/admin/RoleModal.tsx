@@ -9,7 +9,8 @@ interface Props {
     role?: Role,
     roles: Role[],
     trigger: JSX.Element,
-    onRoleUpdate: (role: Role)=>void,
+    onRoleCreate?: (role: Role) => void,
+    onRoleUpdate?: (role: Role) => void,
 }
 
 export const RoleModal = (props: Props) => {
@@ -40,17 +41,31 @@ export const RoleModal = (props: Props) => {
                 }
 
                 let role: Role;
+                let create: boolean;
                 if (props.role == undefined) {
-                    role = { id: -1, name: name, outputs: [], permissions: [] };
+                    role = { id: -1, name: name, outputs: [], permissions: [], editable: true };
+                    create = true
                 } else {
                     role = props.role;
                     role.name = name;
+                    create = false
                 }
 
                 return fetch('/api/roles/upsert', getPostHeader({ role: role })).then(async res => {
                     const json = await res.json();
-                    console.log(json);
-                    props.onRoleUpdate({id: json.id, name: json.name, outputs: role.outputs, permissions: role.permissions})
+
+                    const resRole: Role = { id: json.id, name: json.name, outputs: role.outputs, permissions: role.permissions, editable: json.editable }
+                    console.log(create)
+                    if (create) {
+                        if (props.onRoleCreate != undefined) {
+                            props.onRoleCreate(resRole)
+                        }
+                    } else {
+                        if (props.onRoleUpdate != undefined) {
+                            props.onRoleUpdate(resRole)
+                        }
+                    }
+
                     return undefined;
                 })
             }}>
@@ -58,6 +73,6 @@ export const RoleModal = (props: Props) => {
                 <Label htmlFor={inputIdIP}>Name</Label>
                 <Input value={name} onChange={onChangeName} id={inputIdIP} />
             </div>
-        </InputModal>
+        </InputModal >
     )
 }

@@ -121,7 +121,7 @@ model Role {
 
 model RolePermission {
   permission String
-  role       Role   @relation(fields: [role_id], references: [id])
+  role       Role   @relation(fields: [role_id], references: [id], onDelete: Cascade)
   role_id    Int
 
   @@id([role_id, permission], name: "role_permissions")
@@ -133,14 +133,14 @@ model User {
   username     String  @unique /// @encrypted
   usernameHash String? @unique @map("username_hash") /// @encryption:hash(username)
   password     String /// @encrypted
-  role         Role?   @relation(fields: [role_id], references: [id])
+  role         Role?   @relation(fields: [role_id], references: [id], onDelete: SetNull)
   role_id      Int?
 
   @@map("users")
 }
 
 model RoleOutput {
-  role        Role     @relation(fields: [role_id], references: [id])
+  role        Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
   role_id     Int
   videohub    Videohub @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id Int

@@ -5,6 +5,7 @@ import { PushButton, PushbuttonAction } from '../../../components/interfaces/Pus
 import prismadb from '../../../database/prisma';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import { sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 
 export async function retrievePushButtonsServerSide(videohubId: number) {
     return await prismadb.pushButton.findMany({
@@ -21,70 +22,67 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    if (!await checkServerPermission(req, res)) {
-        return;
+    if (req.method !== 'POST') {
+        sendResponseInvalid(req, res, "POST required.")
+        return
     }
 
-    if (req.method !== 'POST') {
-        res.status(405).json({ message: 'POST required' });
+    if (!await checkServerPermission(req, res)) {
         return;
     }
 
     const body = req.body;
     const videohub_id = body.videohub_id;
     if (videohub_id === undefined) {
-        res.status(405).json({ message: 'Videohub id required.' });
-        return;
+        sendResponseInvalid(req, res, "Parameters missing.")
+        return
     }
 
-    const { pid } = req.query;
-    let e;
+    const { pid } = req.query
+    let e
     switch (pid) {
         case "get": {
-            const buttons: PushButton[] = await retrievePushButtonsServerSide(videohub_id);
-            res.status(200).json(buttons);
-            return;
+            sendResponseValid(req, res, await retrievePushButtonsServerSide(videohub_id))
+            return
         }
 
         case "update": {
             if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
-                return;
+                return
             }
 
             let pushButton: PushButton = body;
             if (pushButton.id == -1) { // creare
-                await prismadb.pushButton.create({
+                const result: PushButton = await prismadb.pushButton.create({
                     data: {
                         videohub_id: videohub_id,
                         label: pushButton.label,
                         color: pushButton.color,
                     }
-                }).then(async (r: PushButton) => {
-                    const result: PushButton = r as PushButton;
-
-                    // adjust ids
-                    const arr: PushbuttonAction[] = [];
-                    for (const action of pushButton.actions) {
-                        const create = {
-                            pushbutton_id: result.id,
-                            videohub_id: videohub_id,
-                            input_id: action.input_id,
-                            output_id: action.output_id,
-                        } as PushButtonAction
-
-                        await prismadb.pushButtonAction.create({
-                            data: create
-                        }).then((res: PushbuttonAction) => {
-                            arr.push(res as PushbuttonAction);
-                        });
-                    }
-
-                    result.actions = arr;
-                    res.status(200).json(result);
                 });
 
+                // adjust ids
+                const arr: PushbuttonAction[] = [];
+                for (const action of pushButton.actions) {
+                    const create = {
+                        pushbutton_id: result.id,
+                        videohub_id: videohub_id,
+                        input_id: action.input_id,
+                        output_id: action.output_id,
+                    } as PushButtonAction
+
+                    const res: PushbuttonAction = await prismadb.pushButtonAction.create({
+                        data: create
+                    })
+
+                    arr.push(res)
+                }
+
+                result.actions = arr;
+                sendResponseValid(req, res, result)
+
             } else {
-                await prismadb.pushButton.update({
+                const result: PushButton = await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
@@ -92,32 +90,30 @@ export default async function handler(
                         label: pushButton.label,
                         color: pushButton.color,
                     }
-                }).then(async (r: PushButton) => {
-                    const result: PushButton = r as PushButton;
-                    result.actions = [];
+                })
 
-                    for (const action of pushButton.actions) {
-                        await prismadb.pushButtonAction.upsert({
-                            where: {
-                                id: action.id,
-                            },
-                            update: {
-                                input_id: action.input_id,
-                                output_id: action.output_id,
-                            },
-                            create: {
-                                pushbutton_id: pushButton.id,
-                                videohub_id: videohub_id,
-                                input_id: action.input_id,
-                                output_id: action.output_id,
-                            }
-                        }).then((res: PushbuttonAction) => {
-                            result.actions.push(res as PushbuttonAction);
-                        })
-                    }
+                result.actions = [];
+                for (const action of pushButton.actions) {
+                    const res: PushbuttonAction = await prismadb.pushButtonAction.upsert({
+                        where: {
+                            id: action.id,
+                        },
+                        update: {
+                            input_id: action.input_id,
+                            output_id: action.output_id,
+                        },
+                        create: {
+                            pushbutton_id: pushButton.id,
+                            videohub_id: videohub_id,
+                            input_id: action.input_id,
+                            output_id: action.output_id,
+                        }
+                    })
 
-                    res.status(200).json(result);
-                });
+                    result.actions.push(res)
+                }
+
+                sendResponseValid(req, res, result)
             }
 
             return;
@@ -130,34 +126,24 @@ export default async function handler(
 
             const id: number | undefined = body.id;
             if (id == undefined) {
-                res.status(405).json({ message: 'Button id required.' });
-                return;
+                sendResponseInvalid(req, res, "Missing parameters.")
+                return
             }
 
-            await prismadb.pushButtonAction.deleteMany({
+            await prismadb.pushButton.delete({
                 where: {
-                    pushbutton_id: id,
-                    videohub_id: videohub_id,
+                    id: id,
                 }
-            }).then(async () => {
-                await prismadb.pushButton.delete({
-                    where: {
-                        id: id,
-                    }
-                });
-            });
+            })
 
-            res.status(200).json({ result: true });
-            return;
+
+            sendResponseValid(req, res)
+            return
         }
 
         default: {
-            res.status(405).json({ message: 'Invalid PID' });
+            sendResponseInvalid(req, res, "Invalid PID.")
             return;
         }
     }
-
-    await e.then((r: any) => {
-        res.status(200).json(r);
-    });
 }

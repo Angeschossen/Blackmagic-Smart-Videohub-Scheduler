@@ -5,6 +5,7 @@ import { Videohub } from "../../interfaces/Videohub";
 import { UserOutput } from "../../modals/admin/UserOutputModal";
 import { Dropdown, Option, DropdownProps } from "@fluentui/react-components/unstable";
 import { getPostHeader } from "../../utils/fetchutils";
+import { getRoleById, getRoleByName } from "./RolesView";
 
 interface Props {
     roles: Role[],
@@ -17,17 +18,16 @@ export const UsersView = (props: Props) => {
         const items: DataTableItem[] = [];
 
         for (const user of props.users) {
+            const role: Role | undefined = getRoleById(props.roles, user.roleId)
             const cells: JSX.Element[] = [
                 <TableCellLayout key={user.username}>{user.username}</TableCellLayout>,
                 <TableCellLayout key={`${user.username}_role`}>
-                    <Dropdown defaultSelectedOptions={user.roleName == undefined ? [] : [user.roleName]} placeholder={user.roleName || "Select a role"}
+                    <Dropdown disabled={role != null && !role.editable} defaultSelectedOptions={role == undefined ? [] : [role.name]} placeholder={"Select a role"}
                         onOptionSelect={async (_event: any, data: any) => {
                             const name: string = data.optionValue;
-                            for (const role of props.roles) {
-                                if (role.name === name) {
-                                    await fetch('/api/users/setrole', getPostHeader({ user_id: user.id, role_id: role.id }));
-                                    break;
-                                }
+                            const found: Role | undefined = getRoleByName(props.roles, name)
+                            if (found != undefined) {
+                                await fetch('/api/users/setrole', getPostHeader({ user_id: user.id, role_id: found.id }));
                             }
                         }}
                         {...props}>
@@ -47,9 +47,7 @@ export const UsersView = (props: Props) => {
 
     return (
         <DataTable
-            getItems={async function (): Promise<DataTableItem[] | undefined> {
-                return Promise.resolve(buildItems());
-            }}
+            items={buildItems()}
             tableUpdate={0}
             columns={[
                 {
