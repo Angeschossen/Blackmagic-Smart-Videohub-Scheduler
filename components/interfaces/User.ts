@@ -9,6 +9,7 @@ export interface User {
 
 export interface Role {
     id: number,
+    editable: boolean,
     name: string,
     outputs: RoleOutput[],
     permissions: string[],

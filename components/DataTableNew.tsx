@@ -2,7 +2,7 @@ import { Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderC
 import React from 'react';
 
 export interface TableInput {
-    getItems: () => Promise<DataTableItem[] | undefined>,
+    items: DataTableItem[] | undefined,
     tableUpdate: number,
     columns: DataTableColumn[],
 }
@@ -49,32 +49,6 @@ export function buildDataTableItems(items: DataItem[]): DataTableItem[] {
 
 
 export const DataTable = (props: TableInput) => {
-    const tableData = React.useRef<TableData>({ items: undefined });
-    const [data, setData] = React.useState<TableData>(tableData.current);
-    const getItems: any = React.useRef(props.getItems);
-
-    React.useEffect(() => {
-        async function loadData() {
-            //console.log("Retrieving table items...");
-            const items: DataTableItem[] | undefined = await getItems.current();
-            if (items == undefined) {
-                //console.log("No update.");
-                return; // no change
-            }
-
-            if (items.length == 0) {
-                //console.log("No items.");
-                return
-            }
-
-            tableData.current = { items: items };
-            setData(tableData.current);
-            //console.log("Items loaded: " + (items == undefined ? "undefined" : items.length));
-        }
-
-        loadData();
-    }, [props.tableUpdate]);
-
     return (
         <Table>
             <TableHeader>
@@ -83,7 +57,7 @@ export const DataTable = (props: TableInput) => {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {tableData.current.items?.map(item =>
+                {props.items?.map(item =>
                     <TableRow key={item.key}>
                         {item.cells.map(cell =>
                             <TableCell key={cell.key}>

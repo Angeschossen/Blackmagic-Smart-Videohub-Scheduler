@@ -1,10 +1,10 @@
 import { prisma, RoleOutput } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions, { toggleablePermissions } from "../../../backend/authentication/Permissions";
-import { addRole, getRoleById, getRoles } from "../../../backend/backend";
+import { addRole, getRoleById, getRoles, removeRole } from "../../../backend/backend";
 import { checkServerPermission } from "../../../components/auth/ServerAuthentication";
 import { Role } from "../../../components/interfaces/User";
-import { sendResponseInvalid } from "../../../components/utils/requestutils";
+import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
 import prismadb from '../../../database/prismadb';
 
 
@@ -12,10 +12,17 @@ export function retrieveRolesServerSide(): Role[] {
     const roles: any[] = getRoles()
     const arr: Role[] = [];
     roles.forEach(role => {
-        arr.push({ id: role.id, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
+        if (!role.isDefault || true) {
+            arr.push({ id: role.id, editable: role.editable, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
+        }
     })
 
     return arr;
+}
+
+
+export function getRoleByIdBackendUsage(id: number): Role | undefined {
+    return getRoleById(id) as Role
 }
 
 export function retrievePermissionsServerSide(): string[] {
@@ -26,6 +33,11 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
+    if (req.method !== 'POST') {
+        sendResponseInvalid(req, res, "POST required.")
+        return
+    }
+    
     if (!await checkServerPermission(req, res)) {
         return;
     }
@@ -35,7 +47,7 @@ export default async function handler(
 
     switch (pid) {
         case "get": {
-            res.status(200).json(retrieveRolesServerSide())
+            sendResponseValid(req, res, retrieveRolesServerSide())
             return
         }
 
@@ -44,7 +56,29 @@ export default async function handler(
                 return;
             }
 
-            res.status(200).json(retrievePermissionsServerSide());
+            sendResponseValid(req, res, retrievePermissionsServerSide())
+            return
+        }
+
+        case "delete": {
+            if (!await checkServerPermission(req, res, Permissions.PERMISSION_ROLE_EDIT)) {
+                return;
+            }
+
+            const role: Role | undefined = getRoleByIdBackendUsage(body.role_id);
+            if (role == undefined || !role.editable) {
+                sendResponseInvalid(req, res, "Role doesn't exist or isn't editable.")
+                return
+            }
+
+            await prismadb.role.delete({
+                where: {
+                    id: role.id,
+                }
+            })
+
+            removeRole(role.id)
+            sendResponseValid(req, res)
             return
         }
 
@@ -55,13 +89,13 @@ export default async function handler(
 
             const role: Role = body.role;
             if (role == undefined) {
-                sendResponseInvalid(res)
+                sendResponseInvalid(req, res, "Role doesn't exist.")
                 return
             }
 
             // name len
             if (role.name.length > 32) {
-                sendResponseInvalid(res);
+                sendResponseInvalid(req, res, "Role name is too long.");
                 return
             }
 
@@ -72,8 +106,6 @@ export default async function handler(
                         name: role.name,
                     }
                 });
-
-                addRole(p);
             } else {
                 p = await prismadb.role.update({
                     where: {
@@ -85,7 +117,8 @@ export default async function handler(
                 })
             }
 
-            res.status(200).json(p);
+            addRole(p) // insert or update
+            sendResponseValid(req, res)
             return
         }
 
@@ -97,13 +130,13 @@ export default async function handler(
             const role_id = body.role_id
             let permissions: string[] = body.permissions
             if (role_id == undefined || permissions == undefined) {
-                res.status(405).json({ message: 'Invalid request.' });
+                sendResponseInvalid(req, res, "Parameters missing.")
                 return
             }
 
-            const role = getRoleById(role_id)
+            const role = getRoleByIdBackendUsage(role_id)
             if (role == undefined) {
-                res.status(405).json({ message: 'Invalid request.' });
+                sendResponseInvalid(req, res, "Role doesn't exist.")
                 return
             }
 
@@ -114,6 +147,14 @@ export default async function handler(
                 }
             });
 
+            for (const perm of permissions) {
+                if (toggleablePermissions.indexOf(perm) == -1) {
+                    sendResponseInvalid(req, res, "Permission isn't toggleable.")
+                    return
+                }
+            }
+
+            // make sure only toggleable are set
             permissions = permissions.filter(perm => toggleablePermissions.indexOf(perm) != -1);
 
             // create
@@ -121,12 +162,10 @@ export default async function handler(
                 data: permissions.map(perm => {
                     return { permission: perm, role_id: role_id }
                 }),
-            }).then((_res: any) => {
-                console.log(_res)
-                role.permissions = permissions
-            });
+            })
 
-            res.status(200).json({ message: 'Updated' })
+            role.permissions = permissions
+            sendResponseValid(req, res)
             return
         }
 
@@ -140,13 +179,13 @@ export default async function handler(
             const outputs: number[] = body.outputs
 
             if (videohub_id == undefined || role_id == undefined || outputs == undefined) {
-                res.status(405).json({ message: 'Invalid request.' });
+                sendResponseInvalid(req, res, "Parameters missing.")
                 return
             }
 
-            const role = getRoleById(role_id)
+            const role = getRoleByIdBackendUsage(role_id)
             if (role == undefined) {
-                res.status(405).json({ message: 'Invalid request.' });
+                sendResponseInvalid(req, res, "Role doesn't exist.")
                 return
             }
 
@@ -159,17 +198,16 @@ export default async function handler(
             });
 
             // create
-            const data = outputs.map(output => {
-                return { videohub_id: videohub_id, role_id: role_id, output_id: output } as RoleOutput
+            const data: RoleOutput[] = outputs.map(output => {
+                return { videohub_id: videohub_id, role_id: role_id, output_id: output }
             });
 
             await prismadb.roleOutput.createMany({
                 data: data,
-            }).then((res: any) => {
-                role.outputs = data
-            });
+            })
 
-            res.status(200).json({ message: 'Updated' })
+            role.outputs = data
+            sendResponseValid(req, res)
             return
         }
 
@@ -178,17 +216,17 @@ export default async function handler(
             const role_id: number | undefined = req.body.role_id;
 
             if (role_id == undefined) {
-                res.status(405).json({ message: 'Invalid request.' });
-                return;
+                sendResponseInvalid(req, res, "Parameters missing.")
+                return
             }
 
-            const role: any = getRoleById(role_id);
-            res.status(200).json({ result: role != undefined && (permission == undefined || role.hasPermission(permission)) });
-            break;
+            const role: any = getRoleById(role_id)
+            sendResponseValid(req, res, { result: role != undefined && (permission == undefined || role.hasPermission(permission)) })
+            return;
         }
 
         default: {
-            res.status(405).json({ message: 'Invalid request.' });
+            sendResponseInvalid(req, res, "Invalid PID.")
             return;
         }
     }
