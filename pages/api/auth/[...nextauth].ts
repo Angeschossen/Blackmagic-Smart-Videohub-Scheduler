@@ -24,12 +24,12 @@ export async function authenticateJWTAndGet(username: string, password: string) 
     include: {
       role: true,
     }
-  });
+  })
 
   if (credential != undefined && credential.password == password) {
-    return { id: credential.id, username: credential.username, role: credential.role };
+    return { id: credential.id, username: credential.username, role: credential.role }
   } else {
-    return undefined;
+    return undefined
   }
 }
 

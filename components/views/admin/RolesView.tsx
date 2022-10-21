@@ -46,13 +46,14 @@ export const RolesView = (props: Props) => {
         const videohub = props.videohub;
         if (videohub != undefined) {
             for (const role of roles) {
+                const key: string = role.name
                 const cells: JSX.Element[] = [
-                    <TableCellLayout key={role.name}>{role.name}</TableCellLayout>,
-                    <TableCellLayout key={`${role.name}_permissions`}>
+                    <TableCellLayout key={`${key}_name`}>{role.name}</TableCellLayout>,
+                    <TableCellLayout key={`${key}_permissions`}>
                         <CheckBoxModal
                             title={"Permissions"}
                             description="Permissions are global."
-                            trigger={<Button>
+                            trigger={<Button disabled={!role.editable}>
                                 Permissions
                             </Button>}
                             handleSubmit={async function (checked: string[]): Promise<string | undefined> {
@@ -65,11 +66,11 @@ export const RolesView = (props: Props) => {
                             defaultChecked={role.permissions.map(p => p)}
                             choices={props.permissions} />
                     </TableCellLayout>,
-                    <TableCellLayout key={`${role.name}_outputs`}>
+                    <TableCellLayout key={`${key}_outputs`}>
                         <CheckBoxModal
                             title={"Outputs"}
                             description="Outputs are per videohub."
-                            trigger={<Button>
+                            trigger={<Button disabled={!role.editable}>
                                 Outputs
                             </Button>}
                             handleSubmit={async function (checked: string[]): Promise<string | undefined> {
@@ -83,7 +84,7 @@ export const RolesView = (props: Props) => {
                                 return { value: output.id.toString(), label: output.label };
                             })} />
                     </TableCellLayout>,
-                    <TableCellLayout>
+                    <TableCellLayout key={`${key}_delete`}>
                         <Button
                             color="#bc2f32"
                             icon={<Delete16Regular />}
@@ -111,7 +112,6 @@ export const RolesView = (props: Props) => {
     return (
         <Stack.Item>
             <DataTable
-                tableUpdate={props.videohub?.id || 0}
                 columns={[
                     {
                         key: 'role',
@@ -129,7 +129,8 @@ export const RolesView = (props: Props) => {
                         key: 'delete',
                         label: 'Delete'
                     }
-                ]} items={buildItems(props.roles)} />
+                ]} 
+                items={buildItems(props.roles)} />
         </Stack.Item>
     );
 }
