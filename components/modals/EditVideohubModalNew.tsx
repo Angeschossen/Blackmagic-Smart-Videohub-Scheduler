@@ -22,8 +22,8 @@ export const EditVideohubModal = (props: Props) => {
     const inputIdIP = useId('ip');
     const inputIdName = useId('name');
 
-    const [ip, setIP] = React.useState(props.edit?.ip);
-    const [name, setName] = React.useState(props.edit?.name);
+    const [ip, setIP] = React.useState(props.edit?.ip || "");
+    const [name, setName] = React.useState(props.edit?.name || "");
     const styles = useInputStyles();
 
     const onChangeIP: InputProps['onChange'] = (_ev, data) => {
@@ -40,10 +40,18 @@ export const EditVideohubModal = (props: Props) => {
             onOpenChange={props.onOpenChange}
             trigger={props.trigger}
             handleSubmit={() => {
-                const inputName = name?.toLocaleLowerCase();
-                for (const b of props.videohubs) {
-                    if (b.name.toLowerCase() === inputName && b != props.edit) {
-                        return Promise.resolve("A videohub with this name already exists.");
+                let inputName: string | undefined = name?.toLocaleLowerCase();
+                if (inputName != undefined) {
+                    inputName = inputName.trim()
+                    
+                    if(inputName.length == 0 || inputIdName.length > 32){
+                        return Promise.resolve("The name must be between 1 and 32 characters long.")
+                    }
+
+                    for (const b of props.videohubs) {
+                        if (b.name.toLowerCase() === inputName && b != props.edit) {
+                            return Promise.resolve("A videohub with this name already exists.");
+                        }
                     }
                 }
 

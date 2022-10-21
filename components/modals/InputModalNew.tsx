@@ -1,6 +1,7 @@
 import React from "react";
 import { Dialog, DialogTrigger, DialogSurface, DialogTitle, DialogBody, DialogActions, DialogContent, Button, DialogTriggerProps, Label, Input, makeStyles, DialogProps, DialogOpenChangeEvent, DialogOpenChangeData } from "@fluentui/react-components";
 import { setDefaultTarget } from "@fluentui/react/lib/components/Layer/Layer.notification";
+import { AlertMessage } from "../common/AlertMessage";
 
 
 interface InputProps extends InputModalProps {
@@ -65,6 +66,10 @@ export const InputModal = (props: InputProps) => {
                         <DialogContent className={styles.content}>
                             {props.description}
                             {props.children}
+                            {error != undefined && 
+                            <AlertMessage 
+                            intent="error"
+                             message={error}/>}
                         </DialogContent>
                         <DialogActions>
                             <DialogTrigger>

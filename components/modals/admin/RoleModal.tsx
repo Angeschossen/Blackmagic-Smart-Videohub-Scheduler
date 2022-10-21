@@ -31,12 +31,16 @@ export const RoleModal = (props: Props) => {
             title={props.role == undefined ? "Create Role" : "Edit Role"}
             handleSubmit={function (): Promise<string | undefined> {
                 if (name == undefined) {
-                    return Promise.resolve("You must provide a name.");
+                    return Promise.resolve("You must provide a name.")
+                }
+
+                if (name.length == 0 || name.length > 32) {
+                    return Promise.resolve("The name must be between 1 and 32 characters long.")
                 }
 
                 for (const role of props.roles) {
                     if (role.name === name) {
-                        return Promise.resolve("A role with this name already exists.");
+                        return Promise.resolve("A role with this name already exists.")
                     }
                 }
 

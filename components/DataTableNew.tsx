@@ -3,7 +3,6 @@ import React from 'react';
 
 export interface TableInput {
     items: DataTableItem[] | undefined,
-    tableUpdate: number,
     columns: DataTableColumn[],
 }
 

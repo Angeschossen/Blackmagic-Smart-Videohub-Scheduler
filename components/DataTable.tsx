@@ -4,7 +4,7 @@ import { ShimmeredDetailsList } from '@fluentui/react/lib/ShimmeredDetailsList';
 import { areArrayIdentical, getRandomKey } from './utils/commonutils';
 import { Key } from 'react';
 
-export interface TableInput {
+export interface DataTableProps {
     controlcolumns: ControlColumns[],
     getData: () => Promise<any[] | undefined>,
     tableUpdate: number,
@@ -32,7 +32,7 @@ interface TableData {
 }
 
 // <TableInput, { visibleCount: number, lastIntervalId: NodeJS.Timer | undefined, items?: TableItem[] }>
-export const DataTable = (props: TableInput) => {
+export const DataTable = (props: DataTableProps) => {
     let tableData = React.useRef<TableData>({ columns: [], items: undefined, last: undefined });
     const [data, setData] = React.useState<TableData>(tableData.current);
 

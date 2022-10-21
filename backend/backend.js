@@ -105,7 +105,7 @@ module.exports = {
     },
     removeRole(id) {
         const role = roles.get(id)
-        if (role == undefined || role.isRequired()) {
+        if (role == undefined || !role.editable) {
             return
         }
 

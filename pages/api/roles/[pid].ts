@@ -12,9 +12,7 @@ export function retrieveRolesServerSide(): Role[] {
     const roles: any[] = getRoles()
     const arr: Role[] = [];
     roles.forEach(role => {
-        if (!role.isDefault || true) {
-            arr.push({ id: role.id, editable: role.editable, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
-        }
+        arr.push({ id: role.id, editable: role.editable, outputs: role.outputs, name: role.name, permissions: Array.from(role.permissions) })
     })
 
     return arr;
@@ -37,7 +35,7 @@ export default async function handler(
         sendResponseInvalid(req, res, "POST required.")
         return
     }
-    
+
     if (!await checkServerPermission(req, res)) {
         return;
     }
@@ -89,17 +87,19 @@ export default async function handler(
 
             const role: Role = body.role;
             if (role == undefined) {
-                sendResponseInvalid(req, res, "Role doesn't exist.")
+                sendResponseInvalid(req, res, "Parameters missing.")
                 return
             }
+
+            role.name = role.name.trim()
 
             // name len
-            if (role.name.length > 32) {
-                sendResponseInvalid(req, res, "Role name is too long.");
+            if (role.name.length == 0 || role.name.length > 32) {
+                sendResponseInvalid(req, res, "The name must be between 1 and 32 characters long.");
                 return
             }
 
-            let p: any;
+            let p: any
             if (role.id == -1) {
                 p = await prismadb.role.create({
                     data: {
@@ -117,8 +117,10 @@ export default async function handler(
                 })
             }
 
+
             addRole(p) // insert or update
-            sendResponseValid(req, res)
+            p.editable = true
+            sendResponseValid(req, res, p)
             return
         }
 
@@ -134,9 +136,9 @@ export default async function handler(
                 return
             }
 
-            const role = getRoleByIdBackendUsage(role_id)
-            if (role == undefined) {
-                sendResponseInvalid(req, res, "Role doesn't exist.")
+            const role: Role | undefined = getRoleByIdBackendUsage(role_id)
+            if (role == undefined || !role.editable) {
+                sendResponseInvalid(req, res, "Role doesn't exist or isn't editable.")
                 return
             }
 
@@ -183,9 +185,9 @@ export default async function handler(
                 return
             }
 
-            const role = getRoleByIdBackendUsage(role_id)
-            if (role == undefined) {
-                sendResponseInvalid(req, res, "Role doesn't exist.")
+            const role: Role | undefined = getRoleByIdBackendUsage(role_id)
+            if (role == undefined || !role.editable) {
+                sendResponseInvalid(req, res, "Role doesn't exist or isn't editable.")
                 return
             }
 

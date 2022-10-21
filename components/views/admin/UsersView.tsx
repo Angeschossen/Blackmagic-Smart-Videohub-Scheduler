@@ -6,18 +6,22 @@ import { UserOutput } from "../../modals/admin/UserOutputModal";
 import { Dropdown, Option, DropdownProps } from "@fluentui/react-components/unstable";
 import { getPostHeader } from "../../utils/fetchutils";
 import { getRoleById, getRoleByName } from "./RolesView";
+import { Button } from "@fluentui/react-components";
+import { Delete16Regular } from "@fluentui/react-icons";
+import { DataTableProps } from "../../DataTable";
 
 interface Props {
     roles: Role[],
     users: User[],
+    onUserDeleted: (user: User) => void
 }
 
 export const UsersView = (props: Props) => {
 
-    function buildItems(): DataTableItem[] {
+    function buildItems(users: User[]): DataTableItem[] {
         const items: DataTableItem[] = [];
 
-        for (const user of props.users) {
+        for (const user of users) {
             const role: Role | undefined = getRoleById(props.roles, user.roleId)
             const cells: JSX.Element[] = [
                 <TableCellLayout key={user.username}>{user.username}</TableCellLayout>,
@@ -31,10 +35,26 @@ export const UsersView = (props: Props) => {
                             }
                         }}
                         {...props}>
-                        {props.roles.map(role => <Option key={role.id.toString()} value={role.name} disabled={role.id === 0}>
-                            {role.name}
-                        </Option>)}
+                        {props.roles.filter(role => role.editable).map(role =>
+                            <Option key={role.id.toString()} value={role.name} disabled={role.id === 0}>
+                                {role.name}
+                            </Option>)}
                     </Dropdown>
+                </TableCellLayout>,
+                <TableCellLayout>
+                    <Button
+                        color="#bc2f32"
+                        icon={<Delete16Regular />}
+                        disabled={role != undefined && !role.editable}
+                        onClick={async () => {
+                            await fetch('/api/users/delete', getPostHeader({ id: user.id })).then(res => {
+                                if (res.status === 200) {
+                                    props.onUserDeleted(user)
+                                }
+                            });
+                        }}>
+                        Delete
+                    </Button>
                 </TableCellLayout>,
             ]
 
@@ -47,17 +67,20 @@ export const UsersView = (props: Props) => {
 
     return (
         <DataTable
-            items={buildItems()}
-            tableUpdate={0}
-            columns={[
-                {
-                    key: 'name',
-                    label: 'Name',
-                },
-                {
-                    key: 'role',
-                    label: 'Role',
-                }
-            ]} />
+        items={buildItems(props.users)}
+        columns={[
+            {
+                key: 'name',
+                label: 'Name',
+            },
+            {
+                key: 'role',
+                label: 'Role',
+            },
+            {
+                key: 'delete',
+                label: 'Delete',
+            }
+        ]} />
     );
 }

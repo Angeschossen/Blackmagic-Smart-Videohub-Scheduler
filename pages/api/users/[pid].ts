@@ -35,7 +35,7 @@ export default async function handler(
         sendResponseInvalid(req, res, "POST required.")
         return
     }
-    
+
     if (!await checkServerPermission(req, res, Permissions.PERMISSION_USER_EDIT)) {
         return
     }
@@ -45,6 +45,43 @@ export default async function handler(
     switch (pid) {
         case "get": {
             sendResponseValid(req, res, await retrieveUsersServerSide())
+            return
+        }
+
+        case "delete": {
+            const userId = body.id
+            if (userId == undefined) {
+                sendResponseInvalid(req, res, "Params missing.")
+                return
+            }
+
+            const user = await prismadb.user.findUnique({
+                where: {
+                    id: userId,
+                }
+            })
+
+            if (user == undefined) {
+                sendResponseInvalid(req, res, "User doesn't exist.")
+                return
+            }
+
+            const roleId = user.role_id
+            if (roleId != undefined) {
+                const role: Role | undefined = getRoleByIdBackendUsage(roleId)
+                if (role != undefined && !role.editable) {
+                    sendResponseInvalid(req, res, "User's role is not editable.")
+                    return
+                }
+            }
+
+            await prismadb.user.delete({
+                where: {
+                    id: userId,
+                }
+            })
+
+            sendResponseValid(req, res)
             return
         }
 

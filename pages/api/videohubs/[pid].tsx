@@ -8,17 +8,17 @@ import { checkServerPermission } from '../../../components/auth/ServerAuthentica
 import { isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 
 export function retrieveVideohubsServerSide() {
-    return videohubs.getVideohubs() as Videohub[];
+    return videohubs.getVideohubs() as Videohub[]
 }
 
 export function retrieveVideohubServerSide(id: number) {
-    return videohubs.getVideohub(id) as unknown as Videohub;
+    return videohubs.getVideohub(id) as unknown as Videohub
 }
 
 export function getVideohubFromQuery(query: any): Videohub {
-    const id: number = Number(query.videohub);
-    const hub: Videohub | undefined = retrieveVideohubServerSide(id);
-    return hub;
+    const id: number = Number(query.videohub)
+    const hub: Videohub | undefined = retrieveVideohubServerSide(id)
+    return hub
 }
 
 export async function getVideohubActivityServerSide() {
@@ -30,8 +30,8 @@ export async function getVideohubActivityServerSide() {
         ],
         take: 15,
     }).then((res: VideohubActivity[]) => {
-        return res as VideohubActivity[];
-    });
+        return res as VideohubActivity[]
+    })
 }
 
 export default async function handler(
@@ -39,10 +39,10 @@ export default async function handler(
     res: NextApiResponse
 ) {
     if (!await checkServerPermission(req, res)) {
-        return;
+        return
     }
 
-    const { pid } = req.query;
+    const { pid } = req.query
     switch (pid) {
         case "get": {
             sendResponseValid(req, res, retrieveVideohubsServerSide())
@@ -51,11 +51,11 @@ export default async function handler(
 
         case "getactivity": {
             sendResponseValid(req, res, getVideohubActivityServerSide())
-            return;
+            return
         }
 
         case "routing": {
-            if (!isPost(req, res)){
+            if (!isPost(req, res)) {
                 return
             }
 
@@ -68,11 +68,13 @@ export default async function handler(
                 return
             }
 
-            if (!isPost(req, res)){
+            if (!isPost(req, res)) {
                 return
             }
 
             const videohub: Videohub = req.body as Videohub;
+            videohub.name = videohub.name.trim()
+            
             if (videohub.id == -1) {
                 await prismadb.videohub.create({
                     data: {
@@ -80,14 +82,14 @@ export default async function handler(
                         ip: videohub.ip,
                         version: videohub.version,
                     }
-                });
+                })
             } else {
                 await prismadb.videohub.update({
                     where: {
                         id: videohub.id,
                     },
                     data: videohub,
-                });
+                })
             }
 
             sendResponseValid(req, res)

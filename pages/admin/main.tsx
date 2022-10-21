@@ -55,6 +55,7 @@ export async function getServerSideProps(context: any) {
 export const Default = (props: InputProps) => {
   const [videohub, setVideohub] = React.useState<Videohub | undefined>(props.videohubs?.length == 0 ? undefined : props.videohubs[0])
   const [roles, setRoles] = React.useState(props.roles)
+  const [users, setUsers] = React.useState(props.users)
 
   return (
     <Stack style={videohubPageStyle}>
@@ -64,15 +65,14 @@ export const Default = (props: InputProps) => {
           onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
         <RoleModal
           roles={roles}
-          role={undefined}
           trigger={<Button>
             Add Role
           </Button>}
           onRoleCreate={(role: Role) => {
+            console.log(role)
             const arr = [...roles]
             arr.push(role)
             setRoles(arr)
-            console.log("SETT")
           }}
           onRoleUpdate={(role: Role) => {
             const arr = [...roles]
@@ -101,7 +101,15 @@ export const Default = (props: InputProps) => {
           <h1>Users</h1>
           <UsersView
             roles={roles}
-            users={props.users} />
+            users={users}
+            onUserDeleted={(user: User) => {
+              const arr = [...users]
+              console.log(user)
+              console.log(arr.indexOf(user))
+              arr.splice(arr.indexOf(user), 1)
+              setUsers(users)
+              console.log(users)
+            }} />
         </Stack.Item>
       </Stack>
     </Stack>
