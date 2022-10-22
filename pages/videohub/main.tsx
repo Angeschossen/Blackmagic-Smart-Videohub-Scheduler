@@ -23,6 +23,8 @@ import { User } from '../../components/interfaces/User';
 import { retrieveUserServerSide } from '../api/users/[pid]';
 import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
 import { PushButtonsList } from '../../components/views/pushbuttons/PushButtonsView';
+import { Socket } from 'socket.io';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 
 
 export function getPostHeader(e: any): RequestInit {
@@ -90,10 +92,14 @@ export function getVideohub(videohubs: Videohub[], id: number) {
 }
 
 const VideohubView = (props: VideohubViewProps) => {
-  const socketio: any = React.useRef();
   const isDekstop = useViewType();
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
+  const socketData = React.useRef<{ socket?: any, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[] }>({
+    socket: undefined,
+    onVideohubUpdate: onVideohubUpdate,
+    videohubs: props.videohubs,
+  })
 
   function onVideohubUpdate(hub: Videohub) {
     setVideohub({ videohub: hub, buttons: videohub.buttons })
@@ -102,33 +108,33 @@ const VideohubView = (props: VideohubViewProps) => {
 
   useEffect(() => {
     fetch("/api/socket").then(() => {
-      if (socketio.current != undefined) {
-        return;
+      if (socketData.current.socket != undefined) {
+        return
       }
 
-      socketio.current = io();
+      socketData.current.socket = io()
 
       const channel: string = "videohubUpdate";
       console.log(`Subscribing to channel: ${channel}`);
-      socketio.current.on(channel, (data: Videohub) => {
-        console.log("Received update.");
+      socketData.current.socket.on(channel, (data: Videohub) => {
+        console.log("Received update.")
 
-        for (let i = 0; i < props.videohubs.length; i++) {
-          const videohub: Videohub = props.videohubs[i];
+        for (let i = 0; i < socketData.current.videohubs.length; i++) {
+          const videohub: Videohub = socketData.current.videohubs[i]
           if (videohub.id === data.id) {
-            props.videohubs[i] = data;
+            socketData.current.videohubs[i] = data
             if (data.id === videohub?.id) {
-              onVideohubUpdate(data);
+              socketData.current.onVideohubUpdate(data)
             }
 
-            break;
+            break
           }
         }
-      });
+      })
 
       console.log("Socket setup.")
-    });
-  }, []);
+    })
+  }, [])
 
   function onSelectVideohub(hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
@@ -136,11 +142,13 @@ const VideohubView = (props: VideohubViewProps) => {
     });
   }
 
+  const canEditPushButtons: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
+
   return (
     <VideohubPage videohub={videohub.videohub}>
       <Stack horizontal>
         <SelectVideohub
-          videohubs={props.videohubs || []}
+          videohubs={socketData.current.videohubs || []}
           onSelectVideohub={(hub: Videohub) => onSelectVideohub(hub)} />
       </Stack>
       {isDekstop &&
@@ -156,7 +164,7 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <h1>Push Buttons</h1>
         <Button
-          disabled={videohub == undefined || !useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)}
+          disabled={videohub == undefined || !canEditPushButtons}
           onClick={() => {
             if (videohub.videohub == undefined) {
               return

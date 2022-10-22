@@ -70,12 +70,13 @@ const baseLinks: INavLink[] = [
 export const Navigation = () => {
     const isDekstop = useViewType();
     const [selectedKey, setSelectedKey] = useState<string | undefined>();
-    const canAdmin = useClientSession(Permissions.PERMISSION_ROLE_EDIT) || useClientSession(Permissions.PERMISSION_USER_EDIT)
-    const [links, setLinks]=React.useState(baseLinks)
+    const canEditRoles = React.useRef(useClientSession(Permissions.PERMISSION_ROLE_EDIT))
+    const canEditUsers = React.useRef(useClientSession(Permissions.PERMISSION_USER_EDIT))
+    const [links, setLinks] = React.useState(baseLinks)
 
     React.useEffect(() => {
-        const arr = [...links]
-        if (canAdmin) {
+        const arr = [...baseLinks]
+        if (canEditRoles.current && canEditUsers.current) {
             arr.push(
 
                 {

@@ -1,14 +1,11 @@
-import { TableBody, TableCell, TableRow, Table, TableHeader, TableHeaderCell, TableCellLayout } from "@fluentui/react-components/unstable";
+import { TableCellLayout } from "@fluentui/react-components/unstable";
 import { DataTable, DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { Role, User } from "../../interfaces/User";
-import { Videohub } from "../../interfaces/Videohub";
-import { UserOutput } from "../../modals/admin/UserOutputModal";
-import { Dropdown, Option, DropdownProps } from "@fluentui/react-components/unstable";
+import { Dropdown, Option } from "@fluentui/react-components/unstable";
 import { getPostHeader } from "../../utils/fetchutils";
 import { getRoleById, getRoleByName } from "./RolesView";
 import { Button } from "@fluentui/react-components";
 import { Delete16Regular } from "@fluentui/react-icons";
-import { DataTableProps } from "../../DataTable";
 
 interface Props {
     roles: Role[],

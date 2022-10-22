@@ -1,6 +1,5 @@
-import { TableItem } from "../DataTable";
 
-export interface Videohub extends TableItem {
+export interface Videohub {
     id: number,
     ip: string,
     name: string,
@@ -28,12 +27,12 @@ export interface RoutingRequest {
     success: boolean,
 }
 
-export interface Input extends TableItem {
+export interface Input {
     id: number,
     label: string,
 }
 
-export interface Output extends TableItem {
+export interface Output {
     id: number,
     input_id: number | null,
     label: string,
