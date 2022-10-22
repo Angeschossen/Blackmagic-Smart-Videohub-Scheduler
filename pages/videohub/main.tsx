@@ -163,7 +163,7 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <h1>Push Buttons</h1>
         <Button
-          disabled={videohub == undefined||canEditPushButtons}
+          disabled={videohub == undefined || !canEditPushButtons}
           onClick={() => {
             if (videohub.videohub == undefined) {
               return
