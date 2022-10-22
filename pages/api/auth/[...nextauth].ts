@@ -5,7 +5,6 @@ import GoogleProvider from "next-auth/providers/google"
 import { OPTIMIZED_FONT_PROVIDERS } from "next/dist/shared/lib/constants";
 import { getRoleById } from "../../../backend/backend";
 import prismadb from '../../../database/prisma';
-import { sanitizeRole } from "../roles/[pid]";
 import { sanitizeUser } from "../users/[pid]";
 
 // import EmailProvider from "next-auth/providers/email"

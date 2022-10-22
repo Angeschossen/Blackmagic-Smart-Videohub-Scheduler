@@ -7,12 +7,18 @@ class Role {
     constructor(id, editable, name, permissions) {
         this.id = id
         this.name = name
+        this.outputs = []
+        this.editable = editable
+
+        this.setPermissions(permissions)
+    }
+
+    setPermissions(permissions) {
         this.permissions = permissions.map(perm => {
             return { permission: perm }
         })
+
         this.perms = new Set(permissions)
-        this.outputs = []
-        this.editable = editable
     }
 
     hasPermission(permission) {
@@ -112,6 +118,19 @@ module.exports = {
         }
 
         roles.delete(id)
+    },
+    setRolePermissions(id, permissions) {
+        const prev = roles.get(id)
+        if (prev != undefined && prev.editable) {
+            for (const perm of permissions) {
+                if (permissions.toggleablePermissions.indexOf(perm) == -1) {
+                    console.log("Non toggleable permission supplied at set perms.")
+                    return
+                }
+            }
+            
+            prev.setPermissions(permissions.filter(perm => permissions.toggleablePermissions.indexOf(perm) != -1))
+        }
     },
     addRole(data) {
         const prev = roles.get(data.id)

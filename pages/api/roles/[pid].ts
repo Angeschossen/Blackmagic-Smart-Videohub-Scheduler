@@ -18,8 +18,8 @@ export function retrieveRolesServerSide(): Role[] {
     return arr;
 }
 
-export function sanitizeRole(role: {id: number, editable: boolean, name: string, outputs?: RoleOutput[], permissions?: RolePermission[]}): Role | undefined {
-    return role == undefined ? undefined : { id: role.id, editable: role.editable, name: role.name, outputs: role.outputs || [], permissions: role.permissions == undefined ? [] : Array.from(role.permissions).map((entry:RolePermission) => entry.permission) }
+export function sanitizeRole(role: { id: number, editable: boolean, name: string, outputs?: RoleOutput[], permissions?: RolePermission[] }): Role | undefined {
+    return role == undefined ? undefined : { id: role.id, editable: role.editable, name: role.name, outputs: role.outputs || [], permissions: role.permissions == undefined ? [] : Array.from(role.permissions).map((entry: RolePermission) => entry.permission) }
 }
 
 export function getRoleByIdBackendUsage(id: number): Role | undefined {
@@ -153,8 +153,6 @@ export default async function handler(
                 }
             })
 
-            console.log(permissions)
-            console.log(toggleablePermissions)
             for (const perm of permissions) {
                 if (toggleablePermissions.indexOf(perm) == -1) {
                     sendResponseInvalid(req, res, "Permission isn't toggleable.")
@@ -172,7 +170,8 @@ export default async function handler(
                 }),
             })
 
-            role.permissions = permissions
+            const r: any = role
+            r.setPermissions(permissions)
             sendResponseValid(req, res)
             return
         }
