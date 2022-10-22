@@ -21,7 +21,7 @@ export async function getServerSideProps(context: any) {
             notFound: true,
         }
     } else {
-        const buttons: PushButton[] = await retrievePushButtonsServerSide(videohub.id);
+        const buttons: PushButton[] = await retrievePushButtonsServerSide(context.req, videohub.id);
         return {
             props: {
                 videohub: JSON.parse(JSON.stringify(videohub)),

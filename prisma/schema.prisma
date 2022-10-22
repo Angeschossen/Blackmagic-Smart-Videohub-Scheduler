@@ -94,6 +94,8 @@ model PushButton {
   description String
   actions     PushButtonAction[]
   color       String?
+  user        User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id     String
 
   @@map("pushbuttons")
 }
@@ -131,12 +133,13 @@ model RolePermission {
 }
 
 model User {
-  id           String  @id @default(cuid())
-  username     String  @unique /// @encrypted
-  usernameHash String? @unique @map("username_hash") /// @encryption:hash(username)
+  id           String       @id @default(cuid())
+  username     String       @unique /// @encrypted
+  usernameHash String?      @unique @map("username_hash") /// @encryption:hash(username)
   password     String /// @encrypted
-  role         Role?   @relation(fields: [role_id], references: [id], onDelete: SetNull)
+  role         Role?        @relation(fields: [role_id], references: [id], onDelete: SetNull)
   role_id      Int?
+  PushButton   PushButton[]
 
   @@map("users")
 }

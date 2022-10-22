@@ -5,6 +5,7 @@ export interface PushButton {
     description: string,
     actions: PushbuttonAction[],
     color?: string
+    user_id: string,
 }
 
 export interface PushbuttonAction {

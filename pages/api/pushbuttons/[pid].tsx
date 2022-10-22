@@ -4,13 +4,14 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
 import * as permissions from "../../../backend/authentication/Permissions";
-import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 
-export async function retrievePushButtonsServerSide(videohubId: number) {
+export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {
     return await prismadb.pushButton.findMany({
         where: {
             videohub_id: videohubId,
+            user_id: await getUserIdFromToken(req),
         },
         include: {
             actions: true,
@@ -39,10 +40,9 @@ export default async function handler(
     }
 
     const { pid } = req.query
-    let e
     switch (pid) {
         case "get": {
-            sendResponseValid(req, res, await retrievePushButtonsServerSide(videohub_id))
+            sendResponseValid(req, res, await retrievePushButtonsServerSide(req, videohub_id))
             return
         }
 
@@ -59,6 +59,7 @@ export default async function handler(
                         label: pushButton.label,
                         color: pushButton.color,
                         description: pushButton.description,
+                        user_id: await getUserIdFromToken(req),
                     }
                 })
 
@@ -83,6 +84,19 @@ export default async function handler(
                 sendResponseValid(req, res, result)
 
             } else {
+                const currUser: { user_id: string; }|null = await prismadb.pushButton.findUnique({
+                    where: {
+                        id: pushButton.id,
+                    },
+                    select: {
+                        user_id: true
+                    }
+                })
+
+                if (!isUser(req, res, currUser?.user_id)) {
+                    return
+                }
+
                 const result: any = await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
