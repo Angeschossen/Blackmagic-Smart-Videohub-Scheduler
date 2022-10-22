@@ -44,8 +44,8 @@ export const EditVideohubModal = (props: Props) => {
                 if (inputName != undefined) {
                     inputName = inputName.trim()
 
-                    if (inputName.length == 0 || inputIdName.length > 32) {
-                        return Promise.resolve("The name must be between 1 and 32 characters long.")
+                    if (inputIdName.length > 32) {
+                        return Promise.resolve("The name can't be longer than 32 characters.")
                     }
 
                     for (const b of props.videohubs) {
@@ -67,7 +67,7 @@ export const EditVideohubModal = (props: Props) => {
                 }
 
                 let videohub: Videohub;
-                const nameFinal: string = inputName || inputIP;
+                const nameFinal: string = inputName.length == 0 ? inputIP : inputName
                 if (props.edit == undefined) {
                     videohub = { id: -1, connected: false, inputs: [], outputs: [], version: 'unkown', ip: inputIP, name: nameFinal }
                 } else {
