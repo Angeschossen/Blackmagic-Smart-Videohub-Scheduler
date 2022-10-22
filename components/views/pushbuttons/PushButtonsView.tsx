@@ -9,6 +9,7 @@ import { getRandomKey } from "../../utils/commonutils";
 import { useViewType } from "../DesktopView";
 import { CompoundButton } from "@fluentui/react-components";
 import { AlertMessage } from "../../common/AlertMessage";
+import { ProgressField } from "@fluentui/react-field";
 
 interface InputProps {
   videohub?: Videohub,
@@ -16,30 +17,50 @@ interface InputProps {
   pushbuttons: PushButton[],
 }
 
+interface RequestState {
+  state?: "success" | "error",
+  message?: string,
+  value?: number,
+  hint?: string,
+}
+
 export interface RoutingData {
   request?: RoutingRequest,
   statusKey: number,
 }
 
-export const PushButtonsList = (props: InputProps) => {
-  const isDekstop = useViewType();
-  const [requestData, setRequestData] = useState<RoutingData>();
-
-  const getRequestStatus = () => {
-    if (requestData?.request == undefined || props.videohub == undefined) {
-      return <></>
-    }
-
-    if (requestData.request.success) {
-      return <AlertMessage key={requestData.statusKey} intent="success" message="Routing update was successful." />;
-    } else {
-      if (requestData.request.error == undefined) {
-        return <ProgressIndicator key={requestData.statusKey} label={`Waiting for Response.`} description="Please wait until the videohub acknowledged the change." />;
-      } else {
-        return <AlertMessage key={requestData.statusKey} intent="error" message={requestData.request.error} />;
-      }
+const getRequestState = (props: { request?: RoutingRequest }): RequestState => { 
+  if (props.request != undefined) {
+    if (props.request.success) {
+      return { state: "success", message: "Routing update was successful.", value: 1, hint: undefined }
+    } else if (props.request.error != undefined) {
+      return { state: "error", message: props.request.error, value: 0, hint: undefined }
     }
   }
+
+  return { state: undefined, message: undefined, value: undefined,hint: "Please wait until the videohub acknowledged the change." }
+}
+
+const RequestStatus = (props: { request?: RoutingRequest, id: number }) => {
+  if (props.request == undefined) {
+    return <></>
+  }
+
+  const state = getRequestState(props)
+  return <ProgressField
+    key={props.id}
+    label="Waiting for Response."
+    hint={state.hint}
+    validationMessage={state.message}
+    validationState={state.state}
+    value={state.value}
+  />
+}
+
+export const PushButtonsList = (props: InputProps) => {
+  const isDekstop = useViewType();
+  const [request, setRequest] = useState<RoutingRequest>()
+  const [statusKey, setStatusKey] = useState(getRandomKey())
 
   return (
     <>
@@ -47,15 +68,18 @@ export const PushButtonsList = (props: InputProps) => {
         <p>No buttons setup yet.</p> :
         <>
           <Stack.Item style={{ paddingTop: 10, paddingBottom: 10 }}>
-            {getRequestStatus()}
+            <RequestStatus
+              id={statusKey}
+              request={request}
+            />
           </Stack.Item>
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={stackTokens}>
             {props.pushbuttons.map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>
-                  <CompoundButton key={key} secondaryContent={`Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color, borderColor: button.color }}
+                  <CompoundButton key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color, borderColor: button.color }}
                     onClick={async () => {
-                      if (props.videohub == undefined || (requestData?.request != undefined /*&& !currentRequest.success*/)) {
+                      if (props.videohub == undefined || (request != undefined /*&& !currentRequest.success*/)) {
                         return
                       }
 
@@ -67,7 +91,7 @@ export const PushButtonsList = (props: InputProps) => {
                         inputs.push(action.input_id)
                       }
 
-                      const request: RoutingRequest = {
+                      const req: RoutingRequest = {
                         videohub_id: props.videohub.id,
                         outputs: outputs,
                         inputs: inputs,
@@ -75,28 +99,26 @@ export const PushButtonsList = (props: InputProps) => {
                         success: false,
                       }
 
-                      setRequestData({ request: request, statusKey: getRandomKey() });
+                      setRequest(req)
 
-                      const json = await (await fetch('/api/videohubs/routing', getPostHeader(request))).json()
-                      console.log(json)
+                      const json = await (await fetch('/api/videohubs/routing', getPostHeader(req))).json()
                       const err: string = json.result;
 
-                      console.log("Routing update result: " + (err == undefined ? "success" : err))
-
                       if (err != undefined) {
-                        request.error = `Error: ${err}`
+                        req.error = `Error: ${err}`
                       } else {
-                        request.success = true
+                        req.success = true
                         if (props.onRoutingUpdated != undefined) {
-                          props.onRoutingUpdated(request)
+                          props.onRoutingUpdated(req)
                         }
                       }
 
-                      setRequestData({ request: request, statusKey: getRandomKey() })
+                      setRequest(req)
+                      setStatusKey(getRandomKey())
 
                       setTimeout(() => {
-                        setRequestData({ request: undefined, statusKey: getRandomKey() })
-                      }, 2500);
+                        setRequest(undefined)
+                      }, 5000);
                     }}>
                     {button.label}
                   </CompoundButton>

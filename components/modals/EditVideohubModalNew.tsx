@@ -39,12 +39,12 @@ export const EditVideohubModal = (props: Props) => {
             open={props.open}
             onOpenChange={props.onOpenChange}
             trigger={props.trigger}
-            handleSubmit={() => {
+            handleSubmit={async () => {
                 let inputName: string | undefined = name?.toLocaleLowerCase();
                 if (inputName != undefined) {
                     inputName = inputName.trim()
-                    
-                    if(inputName.length == 0 || inputIdName.length > 32){
+
+                    if (inputName.length == 0 || inputIdName.length > 32) {
                         return Promise.resolve("The name must be between 1 and 32 characters long.")
                     }
 
@@ -76,9 +76,11 @@ export const EditVideohubModal = (props: Props) => {
                     videohub.name = nameFinal
                 }
 
-                return fetch('/api/videohubs/update', getPostHeader(videohub)).then(async res => {
-                    props.onVideohubUpdate(await res.json());
-                }).then(res => undefined);
+                await fetch('/api/videohubs/update', getPostHeader(videohub)).then(async res => {
+                    if (res.status === 200) {
+                        props.onVideohubUpdate(await res.json())
+                    }
+                })
             }}
             title={props.title}>
             <div className={styles.root}>

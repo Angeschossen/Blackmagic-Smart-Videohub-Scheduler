@@ -24,7 +24,6 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushB
 
         for (const button of props.buttons) {
             const key: number = button.id
-            console.log(button)
 
             const cells: JSX.Element[] = [
                 <TableCellLayout key={`${key}_name`}>

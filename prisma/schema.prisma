@@ -91,6 +91,7 @@ model PushButton {
   videohub    Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id Int
   label       String             @unique
+  description String
   actions     PushButtonAction[]
   color       String?
 

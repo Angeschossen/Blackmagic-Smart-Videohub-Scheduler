@@ -23,10 +23,6 @@ const columns: DataTableColumn[] = [
 
 export const OutputsView = (props: { videohub?: Videohub,outputs: Output[], user: User }) => {
 
-    React.useEffect(() => {
-        console.log("UPD")
-    }, [props.videohub])
-
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
 

@@ -41,7 +41,7 @@ const Home = (p: InputProps) => {
     <>
       <Stack.Item style={{ justifyContent: 'flex-end', padding: 15 }}>
         <AlertMessage
-          message={`You&apos;re logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
+          message={`You're logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
           action={
             {
               icon: <DoorArrowRightFilled aria-label="dismiss message" />,

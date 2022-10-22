@@ -29,7 +29,6 @@ export async function authenticateJWTAndGet(username: string, password: string) 
         role: {
           include: {
             permissions: true,
-            outputs: true,
           }
         }
       }
@@ -81,8 +80,6 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user, account, profile, isNewUser }: any) {
       // Persist the OAuth access_token and or the user id to the token right after signin
-      console.log("JWT")
-      console.log(user)
       if (user) {
         //token.accessToken = account.access_token;
         token.user = user
@@ -95,9 +92,6 @@ export default NextAuth({
       // Send properties to the client, like an access_token and user id from a provider.
       //session.accessToken = token.accessToken;
       session.user = token.user
-      console.log("SESSION")
-      console.log(session)
-      console.log(session.user.role.permissions)
       return session;
     },
   },

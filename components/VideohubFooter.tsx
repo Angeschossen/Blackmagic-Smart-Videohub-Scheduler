@@ -14,7 +14,7 @@ function getStatusComponent(videohub?: Videohub) {
         return <AlertMessage intent="info" message="No videohub setup yet." />
     } else {
         if (videohub.connected) {
-            return <AlertMessage intent="success" message="The videohub is reachable and can be controlled." />;
+            return <AlertMessage intent="success" message="The videohub is reachable and can be controlled." />
         } else {
             return <AlertMessage intent="warning" message="The videohub is currently not reachable. Therefore, it can't be controlled and shown data might be outdated." />
         }
@@ -22,5 +22,5 @@ function getStatusComponent(videohub?: Videohub) {
 }
 
 export const VideohubFooter = (p: InputProps) => {
-    return getStatusComponent(p.videohub)
+    return <Stack.Item style={{position: 'sticky', top: 0}}>{getStatusComponent(p.videohub)}</Stack.Item>
 }

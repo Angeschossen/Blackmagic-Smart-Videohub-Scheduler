@@ -6,12 +6,13 @@ import { getPostHeader } from "../utils/fetchutils";
 import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
 import { Videohub } from "../interfaces/Videohub";
 import { PickColor } from "../input/ColorPicker";
-import { dropdownStyles, stackTokens, useInputStyles } from "../utils/styles";
+import { dropdownStyles, stackTokens, useInputStyles, useTextAreaStyes } from "../utils/styles";
 import { useForceUpdate } from "../utils/hooks";
-import { Dropdown, InputField, Option } from "@fluentui/react-components/unstable";
+import { Dropdown, InputField, Option, TextareaField } from "@fluentui/react-components/unstable";
 import { InputModal } from "./InputModalNew";
-import { Button, Input, InputProps, useId } from "@fluentui/react-components";
+import { Button, Input, InputProps, TextareaProps, useId } from "@fluentui/react-components";
 import { InputState } from "../input/HandledInputField";
+import { DeleteRegular } from "@fluentui/react-icons";
 
 
 
@@ -85,16 +86,21 @@ const RoutingComponent = (props: {
 
 export const EditPushButtonModal = (props: Props) => {
     const inputNameId = useId('input_name')
+    const inputDescriptionId = useId('input_description')
     const styles = useInputStyles()
+    const textAreaStyles = useTextAreaStyes()
 
-    console.log(props)
     const [name, setName] = React.useState<InputState>({ value: props.button?.label || "" })
     const [routings, setRoutings] = React.useState<Routing[]>(props.button?.actions.map(action => createRouting(action)) || [createRouting(undefined)])
+    const [description, setDescription] = React.useState<InputState>({ value: props.button?.description || "" })
     const [color, setColor] = React.useState(props.button?.color)
 
     const onChangeName: InputProps['onChange'] = (_ev, data) => {
-        setName(validateButtonLabel(data.value))
-        console.log(name)
+        setName(validateLabel(data.value))
+    }
+
+    const onChangeDescription: TextareaProps['onChange'] = (_ev, data) => {
+        setDescription(validateDescription(data.value))
     }
 
     function createRouting(action?: PushButtonAction) {
@@ -111,7 +117,15 @@ export const EditPushButtonModal = (props: Props) => {
         setRoutings(arr)
     }
 
-    function validateButtonLabel(name: string): InputState {
+    function validateDescription(value: string): InputState {
+        if (value.length > 75) {
+            return { value: value, validation: { state: "error", message: "Description must be between 0 and 75 characters long." } }
+        }
+
+        return { value: value, validation: { state: "success", message: "Input is valid." } }
+    }
+
+    function validateLabel(name: string): InputState {
         const input = name.trim().toLocaleLowerCase()
         if (input.length == 0 || input.length > 32) {
             return { value: name, validation: { state: "error", message: "Name must be between 1 and 32 characters." } }
@@ -123,13 +137,27 @@ export const EditPushButtonModal = (props: Props) => {
             }
         }
 
-        return { value: name, validation: { state: "success", message: "Name is valid." } }
+        return { value: name, validation: { state: "success", message: "Input is valid." } }
     }
 
     return (
         <InputModal
             title={props.button == undefined ? "Create Button" : "Edit Button"}
             trigger={props.trigger}
+            additionalTrigger={props.button != undefined ?
+                <Button icon={<DeleteRegular />} style={{ backgroundColor: '#ed2b2b' }} onClick={async () => {
+                    const button = props.button
+                    if (button != undefined) {
+                        await fetch('/api/pushbuttons/delete', getPostHeader(button)).then(async (res) => {
+                            if (res.status === 200) {
+                                props.onButtonUpdate(button, "delete")
+                            }
+                        })
+                    }
+                }}>
+                    Delete
+                </Button>
+                : undefined}
             handleSubmit={async () => {
                 const actions: PushbuttonAction[] = []
                 for (const action of routings) {
@@ -151,9 +179,11 @@ export const EditPushButtonModal = (props: Props) => {
                         videohub_id: props.videohub.id,
                         label: name.value,
                         actions: actions,
+                        color: color,
+                        description: description.value,
                     }
 
-                    const result = await (await fetch('/api/pushbuttons/update', getPostHeader(button)))
+                    const result = await fetch('/api/pushbuttons/update', getPostHeader(button))
                     if (result.status === 200) {
                         props.onButtonUpdate(await result.json(), button.id == -1 ? "create" : "update")
                     }
@@ -174,6 +204,15 @@ export const EditPushButtonModal = (props: Props) => {
                             validationState={name.validation?.state}
                             validationMessage={name.validation?.message}
                         />
+                            <Label htmlFor={inputDescriptionId}>Description</Label>
+                            <TextareaField
+                                size="small"
+                                value={description.value}
+                                onChange={onChangeDescription}
+                                id={inputDescriptionId}
+                                validationState={description.validation?.state}
+                                validationMessage={description.validation?.message}
+                            />
                         <Label>Color</Label>
                         <PickColor
                             color={color == undefined ? undefined : getColorFromString(color)}
@@ -196,32 +235,17 @@ export const EditPushButtonModal = (props: Props) => {
                                     updateRouting(routing, routing.output, index)
                                 }} />
                         )}
+                        <Button
+                            onClick={() => {
+                                const arr = [...routings]
+                                arr.push(createRouting(undefined))
+                                setRoutings(arr)
+                            }}>
+                            Add routing
+                        </Button>
                     </Stack>
                 </Stack.Item>
             </Stack>
-            <Button
-                onClick={() => {
-                    const arr = [...routings]
-                    arr.push(createRouting(undefined))
-                    setRoutings(arr)
-                }}>
-                Add routing
-            </Button>
-            {props.button != undefined &&
-                <Button style={{ backgroundColor: '#ff6666' }} onClick={() => {
-                    const button = props.button
-                    if (button != undefined) {
-                        fetch('/api/pushbuttons/delete', getPostHeader(button)).then(async (res) => {
-                            const json = await res.json();
-                            if (json.result) {
-                                props.onButtonUpdate(button, "delete")
-                            }
-                        })
-                    }
-                }}>
-                    Delete
-                </Button>
-            }
         </InputModal>
     );
 }

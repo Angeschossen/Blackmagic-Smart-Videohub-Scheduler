@@ -2,11 +2,12 @@ export interface PushButton {
     id: number,
     videohub_id: number,
     label: string,
+    description: string,
     actions: PushbuttonAction[],
     color?: string
 }
 
-export interface PushbuttonAction{
+export interface PushbuttonAction {
     id: number,
     pushbutton_id: number,
     videohub_id: number,

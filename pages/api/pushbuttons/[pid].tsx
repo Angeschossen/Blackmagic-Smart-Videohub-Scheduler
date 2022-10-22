@@ -2,7 +2,7 @@ import { ColumnActionsMode } from '@fluentui/react';
 import { PrismaPromise, PushButtonAction } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
-import prismadb from '../../../database/prisma';
+import prismadb from '../../../database/prismadb';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 import { sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
@@ -53,13 +53,14 @@ export default async function handler(
 
             let pushButton: PushButton = body;
             if (pushButton.id == -1) { // creare
-                const result: PushButton = await prismadb.pushButton.create({
+                const result: any = await prismadb.pushButton.create({
                     data: {
                         videohub_id: videohub_id,
                         label: pushButton.label,
                         color: pushButton.color,
+                        description: pushButton.description,
                     }
-                });
+                })
 
                 // adjust ids
                 const arr: PushbuttonAction[] = [];
@@ -82,17 +83,18 @@ export default async function handler(
                 sendResponseValid(req, res, result)
 
             } else {
-                const result: PushButton = await prismadb.pushButton.update({
+                const result: any = await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
                     data: {
                         label: pushButton.label,
                         color: pushButton.color,
+                        description: pushButton.description,
                     }
                 })
 
-                result.actions = [];
+                result.actions = []
                 for (const action of pushButton.actions) {
                     const res: PushbuttonAction = await prismadb.pushButtonAction.upsert({
                         where: {
