@@ -2,6 +2,7 @@ import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import Router from "next/router";
 import React from "react";
+import Permissions from "../../backend/authentication/Permissions";
 import { useClientSession } from "../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../DataTableNew";
 import { hasRoleOutput, Role, User } from "../interfaces/User";
@@ -21,7 +22,8 @@ const columns: DataTableColumn[] = [
     }
 ]
 
-export const OutputsView = (props: { videohub?: Videohub,outputs: Output[], user: User }) => {
+export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], user: User }) => {
+    const canSchedule: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
@@ -38,7 +40,7 @@ export const OutputsView = (props: { videohub?: Videohub,outputs: Output[], user
                         {output.input_id == undefined ? "Unkown" : props.videohub.inputs[output.input_id].label}
                     </TableCellLayout>,
                     <TableCellLayout key={`${key}_schedule`}>
-                        <Button disabled={!hasRoleOutput(props.user.role, props.videohub, output.id)}
+                        <Button disabled={!canSchedule || !hasRoleOutput(props.user.role, props.videohub, output.id)}
                             onClick={() => {
                                 Router.push({
                                     pathname: './events',
