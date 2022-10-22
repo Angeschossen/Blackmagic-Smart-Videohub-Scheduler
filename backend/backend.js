@@ -55,9 +55,16 @@ module.exports = {
         roles = new Map();
 
         // load custom roles
-        const customRoles = await prismadb.role.findMany()
+        const customRoles = await prismadb.role.findMany({
+            include: {
+                permissions: true,
+            }
+        })
+
         for (const role of customRoles) {
-            this.addRole(role);
+            this.addRole(role)
+            const permissions = role.permissions.map(entry => entry.permission)
+            this.setRolePermissions(role.id, permissions)
         }
 
         const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT])
@@ -119,17 +126,17 @@ module.exports = {
 
         roles.delete(id)
     },
-    setRolePermissions(id, permissions) {
+    setRolePermissions(id, perms) {
         const prev = roles.get(id)
         if (prev != undefined && prev.editable) {
-            for (const perm of permissions) {
+            for (const perm of perms) {
                 if (permissions.toggleablePermissions.indexOf(perm) == -1) {
                     console.log("Non toggleable permission supplied at set perms.")
                     return
                 }
             }
-            
-            prev.setPermissions(permissions.filter(perm => permissions.toggleablePermissions.indexOf(perm) != -1))
+
+            prev.setPermissions(perms.filter(perm => permissions.toggleablePermissions.indexOf(perm) != -1))
         }
     },
     addRole(data) {
