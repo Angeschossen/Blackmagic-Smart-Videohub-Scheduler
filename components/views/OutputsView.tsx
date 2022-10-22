@@ -1,10 +1,11 @@
 import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import Router from "next/router";
+import React from "react";
 import { useClientSession } from "../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../DataTableNew";
 import { hasRoleOutput, Role, User } from "../interfaces/User";
-import { Videohub } from "../interfaces/Videohub";
+import { Output, Videohub } from "../interfaces/Videohub";
 import { getRoleById } from "./admin/RolesView";
 
 
@@ -20,13 +21,17 @@ const columns: DataTableColumn[] = [
     }
 ]
 
-export const OutputsView = (props: { videohub?: Videohub, user: User }) => {
+export const OutputsView = (props: { videohub?: Videohub,outputs: Output[], user: User }) => {
+
+    React.useEffect(() => {
+        console.log("UPD")
+    }, [props.videohub])
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
-console.log(props)
-        if (props.videohub != undefined) {            
-            for (const output of props.videohub.outputs) {
+
+        if (props.videohub != undefined) {
+            for (const output of props.outputs) {
                 const key: number = output.id
 
                 const cells: JSX.Element[] = [

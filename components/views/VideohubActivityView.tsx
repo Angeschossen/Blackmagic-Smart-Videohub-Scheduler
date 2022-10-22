@@ -26,7 +26,7 @@ export const VideohubActivityView = (p: { activityItems: VideohubActivity[] }) =
               comments={[
                 <Link
                   key={item.id + "_videohub"}
-                  onClick={(event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>) => {
+                  onClick={(_event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement | HTMLElement>) => {
                     Router.push({
                       pathname: '../videohub/main',
                       query: { videohub: item.videohub_id },

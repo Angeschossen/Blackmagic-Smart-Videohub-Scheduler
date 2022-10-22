@@ -71,29 +71,7 @@ export const SelectVideohub = (props: InputProps) => {
                 onVideohubUpdate={(videohub: Videohub) => setOpen(false)}
                 title={"Add Videohub"} />
         </>
-    );
-    /*
-    return (
-        <>
-            <EditVideohubModal
-                isOpen={modalData.isOpen}
-                videohubs={props.videohubs}
-                onConfirm={function (videohub: Videohub): void {
-                    props.videohubs.push(videohub);
-                }}
-                modalKey={modalData.modalKey}
-                close={function (): void {
-                    setModalData({ modalKey: getRandomKey(), isOpen: false });
-                }} />
-            <CommandBarButton
-                iconProps={videohubIcon}
-                text={"Select Videohub"}
-                menuProps={{
-                    items: generateMenuItems(),
-                }}
-            />
-        </>
-    ); */
+    )
 }
 
 export default SelectVideohub;
