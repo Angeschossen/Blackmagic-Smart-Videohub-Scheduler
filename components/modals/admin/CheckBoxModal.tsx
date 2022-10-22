@@ -29,14 +29,13 @@ export const CheckBoxModal = (props: Props) => {
 
     const handleSelected = (id: string) => {
         setCheckedValues(prev => [...prev, id]);
-    };
+    }
 
     const handleUnSelected = (index: number) => {
         if (index != -1) {
-            setCheckedValues([
-                ...checkedValues.slice(0, index),
-                ...checkedValues.slice(index + 1, checkedValues.length)
-            ]);
+            const arr = [...checkedValues]
+            arr.splice(index, 1)
+            setCheckedValues(arr)
         }
     }
 

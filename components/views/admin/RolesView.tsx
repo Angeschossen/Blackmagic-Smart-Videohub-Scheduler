@@ -56,13 +56,12 @@ export function getRoleById(roles: Role[], id?: number): Role | undefined {
 }
 
 export const RolesView = (props: Props) => {
-
-    function buildItems(roles: Role[]): DataTableItem[] {
+    function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = [];
 
         const videohub = props.videohub;
         if (videohub != undefined) {
-            for (const role of roles) {
+            for (const role of props.roles) {
                 const key: string = role.name
                 const cells: JSX.Element[] = [
                     <TableCellLayout key={`${key}_name`}>{role.name}</TableCellLayout>,
@@ -80,7 +79,7 @@ export const RolesView = (props: Props) => {
                                     });
                                 }
                             }}
-                            defaultChecked={role.permissions.map(p => p)}
+                            defaultChecked={role.permissions}
                             choices={props.permissions} />
                     </TableCellLayout>,
                     <TableCellLayout key={`${key}_outputs`}>
@@ -129,7 +128,7 @@ export const RolesView = (props: Props) => {
         <Stack.Item>
             <DataTable
                 columns={columns}
-                items={buildItems(props.roles)} />
+                items={buildItems()} />
         </Stack.Item>
     );
 }
