@@ -2,6 +2,8 @@ import { INavLink, INavLinkGroup, INavStyles, Nav } from "@fluentui/react";
 import { signIn } from "next-auth/react";
 import React, { useState } from 'react';
 import MediaQuery, { useMediaQuery } from "react-responsive";
+import Permissions from "../backend/authentication/Permissions";
+import { useClientSession } from "./auth/ClientAuthentication";
 import { desktopMinWidth } from "./utils/styles";
 import { useViewType } from "./views/DesktopView";
 
@@ -31,59 +33,70 @@ const style: Partial<INavStyles> = {
     }
 }
 
-const links: INavLinkGroup[] = [
+const baseLinks: INavLink[] = [
+
     {
-        links: [
-            {
-                name: 'Home',
-                url: '/',
-                key: 'home',
-                iconProps: {
-                    iconName: 'Home',
-                    styles: {
-                        root: {
-                            fontSzize: 40,
-                            color: '#106ebe',
-                        }
-                    }
-                }
-            },
-            {
-                name: 'Videohubs',
-                url: '/videohub/main',
-                key: 'videohub',
-                iconProps: {
-                    iconName: 'TVMonitorSelected',
-                    styles: {
-                        root: {
-                            fontSzize: 40,
-                            color: '#106ebe',
-                        }
-                    }
-                }
-            },
-            {
-                name: 'Admin',
-                url: '/admin/main',
-                key: 'admin',
-                iconProps: {
-                    iconName: 'TVMonitorSelected',
-                    styles: {
-                        root: {
-                            fontSzize: 40,
-                            color: '#106ebe',
-                        }
-                    }
+        name: 'Home',
+        url: '/',
+        key: 'home',
+        iconProps: {
+            iconName: 'Home',
+            styles: {
+                root: {
+                    fontSzize: 40,
+                    color: '#106ebe',
                 }
             }
-        ],
+        }
+    },
+    {
+        name: 'Videohubs',
+        url: '/videohub/main',
+        key: 'videohub',
+        iconProps: {
+            iconName: 'TVMonitorSelected',
+            styles: {
+                root: {
+                    fontSzize: 40,
+                    color: '#106ebe',
+                }
+            }
+        }
     }
-];
+]
+
 
 
 export const Navigation = () => {
     const isDekstop = useViewType();
     const [selectedKey, setSelectedKey] = useState<string | undefined>();
+    const canAdmin = useClientSession(Permissions.PERMISSION_ROLE_EDIT) || useClientSession(Permissions.PERMISSION_USER_EDIT)
+    const [links, setLinks]=React.useState(baseLinks)
+
+    React.useEffect(() => {
+        const arr = [...links]
+        if (canAdmin) {
+            arr.push(
+
+                {
+                    name: 'Admin',
+                    url: '/admin/main',
+                    key: 'admin',
+                    iconProps: {
+                        iconName: 'Settings',
+                        styles: {
+                            root: {
+                                fontSzize: 40,
+                                color: '#106ebe',
+                            }
+                        }
+                    }
+                }
+            )
+        }
+
+        setLinks(arr)
+    }, [])
 
     return (
         < Nav
@@ -92,7 +105,11 @@ export const Navigation = () => {
                     setSelectedKey(item.key);
                 }
             }}
-            groups={links}
+            groups={[
+                {
+                    links: links
+                }
+            ]}
             selectedKey={selectedKey}
             styles={isDekstop ? style : styleMobile}
         />

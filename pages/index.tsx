@@ -1,9 +1,11 @@
 import { DefaultButton, DetailsHeader, Link, MessageBar, MessageBarButton, MessageBarType, Stack } from '@fluentui/react'
+import { DismissCircleRegular, DoorArrowRight16Filled, DoorArrowRight16Regular, DoorArrowRightFilled } from '@fluentui/react-icons'
 import type { NextPage } from 'next'
 import { signOut, useSession } from 'next-auth/react'
 import Head from 'next/head'
 import Image from 'next/image'
 import Login from '../components/auth/Login'
+import { AlertMessage } from '../components/common/AlertMessage'
 import { VideohubActivity } from '../components/interfaces/Videohub'
 import { VideohubActivityView } from '../components/views/VideohubActivityView'
 import styles from '../styles/Home.module.css'
@@ -34,23 +36,24 @@ const Home = (p: InputProps) => {
     item.time = new Date(item.time);
   });
 
+  const user:any = session?.user
   return (
     <>
-      <Stack>
-        <MessageBar
-          actions={
-            <div>
-              <MessageBarButton
-                onClick={() => { signOut() }}
-              >Logout</MessageBarButton>
-            </div>
+      <Stack.Item style={{ justifyContent: 'flex-end', padding: 15 }}>
+        <AlertMessage
+          message={`You&apos;re logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
+          action={
+            {
+              icon: <DoorArrowRightFilled aria-label="dismiss message" />,
+              onClick: () => {
+                signOut()
+              }
+            }
           }
-          messageBarType={MessageBarType.info}
-          isMultiline={false}
-        >
-          You&apos;re logged in as {session?.user?.name}{session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.
-        </MessageBar>
-      </Stack>
+          intent="info"
+        />
+
+      </Stack.Item>
       <VideohubActivityView activityItems={p.videohubActivities} />
     </>
   )

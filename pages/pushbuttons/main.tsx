@@ -1,31 +1,27 @@
 import { CommandBarButton, IDropdownOption, IIconProps, IsFocusVisibleClassName, IStackStyles, Stack } from "@fluentui/react";
-import React, { Key } from "react";
+import React from "react";
 import DataTable from "../../components/DataTable";
-import { PushButton, PushbuttonAction } from "../../components/interfaces/PushButton";
-import { EditPushButtonModal } from "../../components/modals/EditPushButtonModal";
+import { PushButton } from "../../components/interfaces/PushButton";
 import { Videohub } from "../../components/interfaces/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
-import { VideohubFooter } from "../../components/VideohubFooter";
 import { getRandomKey } from "../../components/utils/commonutils";
 import { getPostHeader } from "../../components/utils/fetchutils";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
-import { vi } from "date-fns/locale";
+import { Button } from "@fluentui/react-components";
+import { EditPushButtonModal } from "../../components/modals/EditPushButtonModalNew";
+import { PushButtonsTableView } from "../../components/views/pushbuttons/PushButtonsTableView";
+import { arrayBuffer } from "node:stream/consumers";
 
-const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 const addIcon: IIconProps = { iconName: 'Add' };
 
-interface InputProps {
-    videohub: Videohub,
-    pushbuttons: PushButton[],
-}
+
 
 export async function getServerSideProps(context: any) {
-    /*
     context.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=60, stale-while-revalidate=120'
-    )*/
+        'Cache-Control',
+        'public, s-maxage=60, stale-while-revalidate=120'
+    )
 
     const videohub: Videohub = getVideohubFromQuery(context.query);
     if (videohub == undefined) {
@@ -58,141 +54,72 @@ function getItems(pushButtons: PushButton[]): Promise<any[] | undefined> {
     });
 }
 
-class PushButtonsList extends React.Component<InputProps, { key: number, currentEdit?: PushButton, pushButtons: PushButton[], modalKey: number, isOpen?: boolean }>{
-    private optionsOutput: IDropdownOption[];
-    private optionsInput: IDropdownOption[];
-    private mounted: boolean = false;
 
-    constructor(props: InputProps) {
-        super(props);
+const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[] }) => {
 
-        this.state = {
-            modalKey: getRandomKey(),
-            key: getRandomKey(),
-            isOpen: false,
-            pushButtons: props.pushbuttons,
+    const [videohub, setVideohub] = React.useState(props.videohub)
+    const [buttons, setButtons] = React.useState<PushButton[]>(props.pushbuttons)
+
+    React.useEffect(() => {
+
+    }, [videohub])
+
+    const onButtonUpdate = (button: PushButton, action: "create" | "update" | "delete") => {
+        const arr: PushButton[] = [...buttons]
+
+        switch (action) {
+            case "create": {
+                arr.push(button)
+                break
+            }
+
+            case "update": {
+                let found: boolean = false
+                for (let i = 0; i < arr.length; i++) {
+                    if (arr[i].id === button.id) {
+                        arr[i] = button // update
+                        found = true
+                        break
+                    }
+                }
+
+                if (!found) {
+                    throw Error("Couldn't find matching button.")
+                }
+
+                break
+            }
+
+            case "delete": {
+                arr.splice(arr.indexOf(button), 1)
+                break
+            }
+
+            default: {
+                throw Error(`Unhandled action: ${action}`)
+            }
         }
 
-        this.optionsOutput = [];
-        this.optionsInput = [];
-
-        for (const input of props.videohub.outputs) {
-            this.optionsOutput.push({
-                key: input.id,
-                text: input.label,
-            });
-        }
-
-        for (const input of props.videohub.inputs) {
-            this.optionsInput.push({
-                key: input.id,
-                text: input.label,
-            });
-        }
+        setButtons(arr)
     }
-
-
-    componentDidMount() {
-        if (this.mounted) {
-            return;
-        }
-
-        this.mounted = true;
-        //this.retrieveData();
-    }
-
-    retrieveData() {
-        /*
-        console.log("Retrieving pushbuttons.");
-        retrievePushButtonsServerSide(this.props.videohub.id).then(res => {
-            this.setState({ pushButtons: res }, () => {
-                console.log("Loaded pushbuttons");
-                setTimeout(this.retrieveData, 30000);
-            });
-        });*/
-    }
-
-    render() {
-        const inst: PushButtonsList = this;
-        return (
-            <VideohubPage videohub={this.props.videohub}>
-                <Stack horizontal styles={stackStyles}>
-                    <CommandBarButton
-                        iconProps={addIcon}
-                        text={"Add"}
-                        onClick={() => this.setState({ isOpen: true, modalKey: getRandomKey() })} />
-
-                </Stack>
-                <Stack.Item>
-                    <DataTable
-                        tableUpdate={this.state.key}
-                        key={this.state.key}
-                        controlcolumns={[
-                            {
-                                key: 'edit',
-                                onClick(_event, item) {
-                                    for (const button of inst.state.pushButtons) {
-                                        if (button.id === item.id) {
-                                            inst.setState({ isOpen: true, modalKey: getRandomKey(), currentEdit: button });
-                                            break;
-                                        }
-                                    }
-                                },
-                                text: "Edit",
-                            },
-                        ]}
-                        getData={(last?: Date) => {
-                            return getItems(this.state.pushButtons);
-                        }} />
-                </Stack.Item>
-                {this.state.isOpen &&
-                    <EditPushButtonModal
-                        close={() => {
-                            this.setState({ modalKey: getRandomKey(), isOpen: false, currentEdit:undefined });
-                        }}
-                        modalKey={this.state.modalKey}
-                        isOpen={this.state.isOpen}
-                        optionsInput={this.optionsInput}
-                        optionsOutput={this.optionsOutput}
-                        videohub={this.props.videohub}
-                        buttons={this.state.pushButtons}
-                        button={this.state.currentEdit}
-                        onConfirm={(button?: any): string | undefined => {
-                            fetch('/api/pushbuttons/update', getPostHeader(button)).then(async (res) => {
-                                const json = await res.json();
-                                const arr: PushButton[] = this.state.pushButtons.slice();
-
-                                if (button.id == -1) {
-                                    arr.push(json);
-                                } else {
-                                    let found: boolean = false;
-                                    for (let i = 0; i < arr.length; i++) {
-                                        if (arr[i].id === button.id) {
-                                            arr[i] = button; // update
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!found) {
-                                        throw Error("Couldn't find matching button.");
-                                    }
-                                }
-
-                                this.setState({ pushButtons: arr, key: getRandomKey(), });
-                            });
-
-                            return undefined;
-                        }}
-                        onDelete={(id: number) => {
-                            let arr: PushButton[] = this.state.pushButtons.slice();
-                            arr = arr.filter(e => e.id != id);
-
-                            this.setState({ pushButtons: arr, key: getRandomKey() });
-                        }} />}
-            </VideohubPage>
-        )
-    }
+    return (
+        <VideohubPage videohub={props.videohub}>
+            <Stack horizontal>
+                <EditPushButtonModal
+                    videohub={videohub}
+                    buttons={buttons}
+                    trigger={
+                        <Button>
+                            Add
+                        </Button>}
+                    onButtonUpdate={onButtonUpdate} />
+            </Stack>
+            <PushButtonsTableView
+                videohub={videohub}
+                buttons={buttons}
+                onButtonUpdate={onButtonUpdate} />
+        </VideohubPage>
+    )
 }
 
-export default PushButtonsList;
+export default PushButtonListNew

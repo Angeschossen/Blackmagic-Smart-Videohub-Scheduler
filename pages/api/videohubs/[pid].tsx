@@ -59,7 +59,7 @@ export default async function handler(
                 return
             }
 
-            sendResponseValid(req, res, await sendRoutingUpdate(req.body as RoutingRequest))
+            sendResponseValid(req, res, { result: await sendRoutingUpdate(req.body as RoutingRequest) })
             return
         }
 
@@ -74,7 +74,7 @@ export default async function handler(
 
             const videohub: Videohub = req.body as Videohub;
             videohub.name = videohub.name.trim()
-            
+
             if (videohub.id == -1) {
                 await prismadb.videohub.create({
                     data: {

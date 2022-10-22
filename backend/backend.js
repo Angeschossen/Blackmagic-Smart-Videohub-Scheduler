@@ -7,13 +7,16 @@ class Role {
     constructor(id, editable, name, permissions) {
         this.id = id
         this.name = name
-        this.permissions = new Set(permissions)
+        this.permissions = permissions.map(perm => {
+            return { permission: perm }
+        })
+        this.perms = new Set(permissions)
         this.outputs = []
         this.editable = editable
     }
 
     hasPermission(permission) {
-        return this.permissions.has(permission);
+        return this.perms.has(permission);
     }
 }
 
@@ -51,7 +54,7 @@ module.exports = {
             this.addRole(role);
         }
 
-        const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [{permission: permissions.PERMISSION_VIDEOHUB_EDIT}, {permission:permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE}, {permission: permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT}, {permission: permissions.PERMISSION_ROLE_EDIT}, {permission: permissions.PERMISSION_USER_EDIT}])
+        const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT])
         roles.set(adminRole.id, adminRole)
 
         // create necesarry roles
@@ -85,7 +88,7 @@ module.exports = {
                         return { permission: entry.permission, role_id: role.id };
                     }),
                 })
-            } 
+            }
         }
 
         await createUser({ username: "Admin", password: process.env.ADMIN_PASSWORD }, roles.get(1));
@@ -121,7 +124,7 @@ module.exports = {
 
         // make sure admin role has all outputs
         await prismadb.roleOutput.deleteMany({
-            where:{
+            where: {
                 role_id: this.ROLE_ADMIN_ID,
             }
         })
@@ -129,7 +132,7 @@ module.exports = {
         // set
         const setOutputsAdmin = []
         videohubs.getVideohubs().forEach(hub => {
-            hub.outputs.forEach(output=>{
+            hub.outputs.forEach(output => {
                 setOutputsAdmin.push({
                     videohub_id: hub.id,
                     output_id: output.id,

@@ -47,8 +47,7 @@ export const UsersView = (props: Props) => {
                             if (found != undefined) {
                                 await fetch('/api/users/setrole', getPostHeader({ user_id: user.id, role_id: found.id }));
                             }
-                        }}
-                        {...props}>
+                        }}>
                         {props.roles.filter(role => role.editable).map(role =>
                             <Option key={role.id.toString()} value={role.name} disabled={role.id === 0}>
                                 {role.name}
