@@ -8,6 +8,8 @@ import { getVideohubFromQuery } from "../api/videohubs/[pid]";
 import { Button } from "@fluentui/react-components";
 import { EditPushButtonModal } from "../../components/modals/EditPushButtonModalNew";
 import { PushButtonsTableView } from "../../components/views/pushbuttons/PushButtonsTableView";
+import { User } from "../../components/interfaces/User";
+import { retrieveUserServerSide, retrieveUserServerSideByReq } from "../api/users/[pid]";
 
 export async function getServerSideProps(context: any) {
     context.res.setHeader(
@@ -25,29 +27,14 @@ export async function getServerSideProps(context: any) {
         return {
             props: {
                 videohub: JSON.parse(JSON.stringify(videohub)),
-                pushbuttons: JSON.parse(JSON.stringify(buttons))
+                pushbuttons: JSON.parse(JSON.stringify(buttons)),
+                user: JSON.parse(JSON.stringify(await retrieveUserServerSideByReq(context.req)))
             },
         }
     }
 }
 
-function getItems(pushButtons: PushButton[]): Promise<any[] | undefined> {
-    return new Promise((resolve) => {
-        const cloned: any[] = [];
-        for (const button of pushButtons) {
-            cloned.push({
-                id: button.id,
-                Name: button.label,
-                Actions: button.actions.length
-            });
-        }
-
-        resolve(cloned);
-    });
-}
-
-
-const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[] }) => {
+const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[], user: User }) => {
 
     const [videohub, setVideohub] = React.useState(props.videohub)
     const [buttons, setButtons] = React.useState<PushButton[]>(props.pushbuttons)
@@ -98,6 +85,7 @@ const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[
         <VideohubPage videohub={props.videohub}>
             <Stack horizontal>
                 <EditPushButtonModal
+                    user={props.user}
                     videohub={videohub}
                     buttons={buttons}
                     trigger={
@@ -107,6 +95,7 @@ const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[
                     onButtonUpdate={onButtonUpdate} />
             </Stack>
             <PushButtonsTableView
+                user={props.user}
                 videohub={videohub}
                 buttons={buttons}
                 onButtonUpdate={onButtonUpdate} />

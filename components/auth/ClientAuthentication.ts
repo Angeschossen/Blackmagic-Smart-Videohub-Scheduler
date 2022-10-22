@@ -2,6 +2,11 @@ import { useSession } from "next-auth/react";
 import { getPostHeader } from "../utils/fetchutils";
 import { handleCheckPermission } from "./ServerAuthentication";
 
+export function useGetClientId() {
+    const { data: session }: any = useSession();
+    return session?.user?.id
+}
+
 export function useClientSession(permission?: string) {
     const { data: session } = useSession();
 

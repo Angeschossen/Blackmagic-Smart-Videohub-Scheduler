@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions from "../../../backend/authentication/Permissions";
 import { addRole, getRoleById } from "../../../backend/backend";
-import { checkServerPermission } from "../../../components/auth/ServerAuthentication";
+import { checkServerPermission, getUserIdFromToken } from "../../../components/auth/ServerAuthentication";
 import { Role, User } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
 import prismadb from '../../../database/prismadb';
@@ -33,6 +33,10 @@ export async function retrieveUsersServerSide() {
 
     return arr;
 
+}
+export async function retrieveUserServerSideByReq(req: any) {
+    const id = await getUserIdFromToken(req)
+    return id == undefined ? {} : await retrieveUserServerSide(id)
 }
 
 export async function retrieveUserServerSide(userId: string) {

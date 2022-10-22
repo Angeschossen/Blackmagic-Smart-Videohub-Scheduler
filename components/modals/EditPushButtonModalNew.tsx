@@ -13,6 +13,8 @@ import { InputModal } from "./InputModalNew";
 import { Button, Input, InputProps, TextareaProps, useId } from "@fluentui/react-components";
 import { InputState } from "../input/HandledInputField";
 import { DeleteRegular } from "@fluentui/react-icons";
+import { useGetClientId } from "../auth/ClientAuthentication";
+import { hasRoleOutput, User } from "../interfaces/User";
 
 
 
@@ -23,6 +25,7 @@ interface Props {
     button?: PushButton,
     buttons: PushButton[],
     trigger: JSX.Element,
+    user: User,
 }
 
 interface Routing {
@@ -46,6 +49,7 @@ const RoutingComponent = (props: {
     routing: Routing,
     onSelectOutput: (index?: number) => void,
     onSelectInput: (index?: number) => void,
+    user: User,
 }) => {
     const key: string | number = props.routing.actionId?.toString() || getRandomKey()
     const inputKey = `${key}_input`
@@ -62,7 +66,7 @@ const RoutingComponent = (props: {
                 onOptionSelect={(_event: any, data: any) => {
                     props.onSelectOutput(getIdFromValue(props.videohub.outputs, data.optionValue))
                 }}>
-                {props.videohub.outputs.map(output =>
+                {props.videohub.outputs.filter(output => hasRoleOutput(props.user.role, props.videohub, output.id)).map(output =>
                     <Option key={`output_${output.id}`} value={output.label}>
                         {output.label}
                     </Option>)}
@@ -88,7 +92,7 @@ export const EditPushButtonModal = (props: Props) => {
     const inputNameId = useId('input_name')
     const inputDescriptionId = useId('input_description')
     const styles = useInputStyles()
-    const textAreaStyles = useTextAreaStyes()
+    const userId = useGetClientId()
 
     const [name, setName] = React.useState<InputState>({ value: props.button?.label || "" })
     const [routings, setRoutings] = React.useState<Routing[]>(props.button?.actions.map(action => createRouting(action)) || [createRouting(undefined)])
@@ -181,6 +185,7 @@ export const EditPushButtonModal = (props: Props) => {
                         actions: actions,
                         color: color,
                         description: description.value,
+                        user_id: userId,
                     }
 
                     const result = await fetch('/api/pushbuttons/update', getPostHeader(button))
@@ -204,15 +209,15 @@ export const EditPushButtonModal = (props: Props) => {
                             validationState={name.validation?.state}
                             validationMessage={name.validation?.message}
                         />
-                            <Label htmlFor={inputDescriptionId}>Description</Label>
-                            <TextareaField
-                                size="small"
-                                value={description.value}
-                                onChange={onChangeDescription}
-                                id={inputDescriptionId}
-                                validationState={description.validation?.state}
-                                validationMessage={description.validation?.message}
-                            />
+                        <Label htmlFor={inputDescriptionId}>Description</Label>
+                        <TextareaField
+                            size="small"
+                            value={description.value}
+                            onChange={onChangeDescription}
+                            id={inputDescriptionId}
+                            validationState={description.validation?.state}
+                            validationMessage={description.validation?.message}
+                        />
                         <Label>Color</Label>
                         <PickColor
                             color={color == undefined ? undefined : getColorFromString(color)}
@@ -226,6 +231,7 @@ export const EditPushButtonModal = (props: Props) => {
                     <Stack tokens={stackTokens}>
                         {routings.map((routing, index) =>
                             <RoutingComponent
+                                user={props.user}
                                 key={`routing_${index}`}
                                 videohub={props.videohub}
                                 routing={routing}

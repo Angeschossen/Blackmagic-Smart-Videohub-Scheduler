@@ -2,6 +2,7 @@ import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import DataTable, { DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { PushButton } from "../../interfaces/PushButton";
+import { User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { EditPushButtonModal } from "../../modals/EditPushButtonModalNew";
 
@@ -17,7 +18,7 @@ const columns: DataTableColumn[] = [
     }
 ]
 
-export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushButton[], onButtonUpdate: (button: PushButton, action: "create" | "update" | "delete") => void }) => {
+export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushButton[], onButtonUpdate: (button: PushButton, action: "create" | "update" | "delete") => void, user: User }) => {
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
@@ -34,6 +35,7 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushB
                 </TableCellLayout>,
                 <TableCellLayout key={`${key}_edit`}>
                     <EditPushButtonModal
+                        user={props.user}
                         onButtonUpdate={props.onButtonUpdate}
                         videohub={props.videohub}
                         buttons={props.buttons}
