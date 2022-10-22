@@ -151,8 +151,10 @@ export default async function handler(
                 where: {
                     role_id: role_id,
                 }
-            });
+            })
 
+            console.log(permissions)
+            console.log(toggleablePermissions)
             for (const perm of permissions) {
                 if (toggleablePermissions.indexOf(perm) == -1) {
                     sendResponseInvalid(req, res, "Permission isn't toggleable.")

@@ -142,6 +142,7 @@ const VideohubView = (props: VideohubViewProps) => {
     });
   }
 
+  const canEditPushButtons: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
   return (
     <VideohubPage videohub={videohub.videohub}>
       <Stack horizontal>
@@ -162,7 +163,7 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <h1>Push Buttons</h1>
         <Button
-          disabled={videohub == undefined}
+          disabled={videohub == undefined||canEditPushButtons}
           onClick={() => {
             if (videohub.videohub == undefined) {
               return
