@@ -60,6 +60,10 @@ export const PushButtonsList = (props: InputProps) => {
   const isDekstop = useViewType();
   const [request, setRequest] = useState<RoutingRequest>()
 
+  const isRequestComplete = () => {
+    return request == undefined || request.success || request.error != undefined
+  }
+
   return (
     <>
       {props.pushbuttons.length == 0 ?
@@ -72,12 +76,11 @@ export const PushButtonsList = (props: InputProps) => {
           </Stack.Item>
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={stackTokens}>
             {props.pushbuttons.map((button, key) => {
-              console.log(button.color)
               return (
                 <Stack.Item key={"pushbutton_" + key}>
-                  <CompoundButton key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
+                  <CompoundButton disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
                     onClick={async () => {
-                      if (props.videohub == undefined || (request != undefined && !request.success && request.error == undefined)) {
+                      if (props.videohub == undefined || !isRequestComplete()) {
                         return
                       }
 
