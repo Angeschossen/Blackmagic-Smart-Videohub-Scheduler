@@ -1,7 +1,7 @@
 import { prisma, RoleOutput, RolePermission } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions, { toggleablePermissions } from "../../../backend/authentication/Permissions";
-import { addRole, getRoleById, getRoles, removeRole } from "../../../backend/backend";
+import { addRole, getRoleById, getRoles, removeRole, setRoleOutputs, setRolePermissions } from "../../../backend/backend";
 import { checkServerPermission } from "../../../components/auth/ServerAuthentication";
 import { Role } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
@@ -146,32 +146,13 @@ export default async function handler(
                 return
             }
 
-            // delete
-            await prismadb.rolePermission.deleteMany({
-                where: {
-                    role_id: role_id,
-                }
-            })
-
-            for (const perm of permissions) {
-                if (toggleablePermissions.indexOf(perm) == -1) {
-                    sendResponseInvalid(req, res, "Permission isn't toggleable.")
-                    return
-                }
+            if (!await setRolePermissions(role.id, permissions.map(perm => {
+                return { permission: perm, role_id: role_id }
+            }), false)) {
+                sendResponseInvalid(req, res, "Contains non toggleable permissions.")
+                return
             }
 
-            // make sure only toggleable are set
-            permissions = permissions.filter(perm => toggleablePermissions.indexOf(perm) != -1);
-
-            // create
-            await prismadb.rolePermission.createMany({
-                data: permissions.map(perm => {
-                    return { permission: perm, role_id: role_id }
-                }),
-            })
-
-            const r: any = role
-            r.setPermissions(permissions)
             sendResponseValid(req, res)
             return
         }
@@ -190,30 +171,13 @@ export default async function handler(
                 return
             }
 
-            const role: Role | undefined = getRoleByIdBackendUsage(role_id)
-            if (role == undefined || !role.editable) {
+            if (!await setRoleOutputs(role_id, videohub_id, outputs.map(output => {
+                return { videohub_id: videohub_id, role_id: role_id, output_id: output }
+            }), false)) {
                 sendResponseInvalid(req, res, "Role doesn't exist or isn't editable.")
                 return
             }
 
-            // delete
-            await prismadb.roleOutput.deleteMany({
-                where: {
-                    videohub_id: videohub_id,
-                    role_id: role_id,
-                }
-            });
-
-            // create
-            const data: RoleOutput[] = outputs.map(output => {
-                return { videohub_id: videohub_id, role_id: role_id, output_id: output }
-            });
-
-            await prismadb.roleOutput.createMany({
-                data: data,
-            })
-
-            role.outputs = data
             sendResponseValid(req, res)
             return
         }

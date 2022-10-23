@@ -4,21 +4,23 @@ const videohubs = require('./videohubs');
 const socketio = require('./socketio');
 
 class Role {
-    constructor(id, editable, name, permissions) {
+    constructor(id, editable, name, permissions, outputs) {
         this.id = id
         this.name = name
-        this.outputs = []
+        this.outputs = outputs
         this.editable = editable
 
-        this.setPermissions(permissions)
+        this.setPermissions(permissions.map(perm => {
+            return {
+                permission: perm,
+                role_id: id,
+            }
+        }))
     }
 
     setPermissions(permissions) {
-        this.permissions = permissions.map(perm => {
-            return { permission: perm }
-        })
-
-        this.perms = new Set(permissions)
+        this.permissions = permissions
+        this.perms = new Set(permissions.map(perm => perm.permission))
     }
 
     hasPermission(permission) {
@@ -51,24 +53,23 @@ module.exports = {
     roles: undefined,
     ROLE_ADMIN_ID: 1,
     setupRoles: async function () {
-        console.log("Setting up roles...");
-        roles = new Map();
+        console.log("Setting up roles...")
+        roles = new Map()
 
-        // load custom roles
+        // load created roles
         const customRoles = await prismadb.role.findMany({
             include: {
                 permissions: true,
+                outputs: true,
             }
         })
 
         for (const role of customRoles) {
             this.addRole(role)
-            const permissions = role.permissions.map(entry => entry.permission)
-            this.setRolePermissions(role.id, permissions)
         }
 
         const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT])
-        roles.set(adminRole.id, adminRole)
+        roles.set(adminRole.id, adminRole) // override
 
         // create necesarry roles
         for (const role of [adminRole]) {
@@ -87,20 +88,11 @@ module.exports = {
                     },
                     update: {
                         name: role.name,
+                        editable: role.editable, // disallow manual manipulation
                     },
-                });
-
-                await prismadb.rolePermission.deleteMany({
-                    where: {
-                        role_id: role.id,
-                    }
                 })
 
-                await prismadb.rolePermission.createMany({
-                    data: Array.from(role.permissions).map(entry => {
-                        return { permission: entry.permission, role_id: role.id };
-                    }),
-                })
+                await this.setRolePermissions(role.id, role.permissions, true)
             }
         }
 
@@ -126,49 +118,83 @@ module.exports = {
 
         roles.delete(id)
     },
-    setRolePermissions(id, perms) {
-        const prev = roles.get(id)
-        if (prev != undefined && prev.editable) {
+    async setRolePermissions(roleId, perms, allowNonEditable) {
+        console.log("Setting role perms for role: " + roleId)
+
+        const role = roles.get(roleId)
+        if (role == undefined || (!role.editable && !allowNonEditable)) {
+            return false
+        }
+
+        // check toggleable
+        if (!allowNonEditable) {
             for (const perm of perms) {
-                if (permissions.toggleablePermissions.indexOf(perm) == -1) {
+                if (permissions.toggleablePermissions.indexOf(perm.permission) == -1) {
                     console.log("Non toggleable permission supplied at set perms.")
-                    return
+                    return false
                 }
             }
 
-            prev.setPermissions(perms.filter(perm => permissions.toggleablePermissions.indexOf(perm) != -1))
+            // filter toggleable
+            perms = perms.filter(perm => permissions.toggleablePermissions.indexOf(perm.permission) != -1)
         }
+
+        // delete
+        await prismadb.rolePermission.deleteMany({
+            where: {
+                role_id: role.id,
+            }
+        })
+
+        // create
+        await prismadb.rolePermission.createMany({
+            data: perms
+        })
+
+        role.setPermissions(perms)
+        return true
+    }, setRoleOutputs: async function (roleId, videohubId, outputs, allowNonEditable) {
+        console.log("Setting role perms for role: " + roleId)
+
+        const role = roles.get(roleId)
+        if (role == undefined || (!role.editable && !allowNonEditable)) {
+            return false
+        }
+
+        // delete
+        await prismadb.roleOutput.deleteMany({
+            where: {
+                role_id: role.id,
+                videohub_id: videohubId,
+            }
+        })
+
+        // create
+        await prismadb.roleOutput.createMany({
+            data: outputs.filter(output => output.videohub_id === videohubId && output.role_id === roleId)
+        })
+
+        role.outputs = outputs
+        return true
     },
     addRole(data) {
         const prev = roles.get(data.id)
         if (prev == undefined || prev.editable) {
-            roles.set(data.id, new Role(data.id, true, data.name, []))
+            roles.set(data.id, new Role(data.id, true, data.name, data.permissions.map(perm => perm.permission) || [], data.outputs || []))
         }
     }, setup: async function () {
         await this.setupRoles()
         await videohubs.loadData()
 
-        // make sure admin role has all outputs
-        await prismadb.roleOutput.deleteMany({
-            where: {
-                role_id: this.ROLE_ADMIN_ID,
-            }
-        })
-
         // set
-        const setOutputsAdmin = []
-        videohubs.getVideohubs().forEach(hub => {
-            hub.outputs.forEach(output => {
-                setOutputsAdmin.push({
+        videohubs.getVideohubs().forEach(async hub => {
+            await this.setRoleOutputs(this.ROLE_ADMIN_ID, hub.id, hub.outputs.map(output => {
+                return {
                     videohub_id: hub.id,
                     output_id: output.id,
                     role_id: this.ROLE_ADMIN_ID,
-                })
-            })
-        })
-
-        await prismadb.roleOutput.createMany({
-            data: setOutputsAdmin
+                }
+            }), true)
         })
 
         videohubs.connect()
