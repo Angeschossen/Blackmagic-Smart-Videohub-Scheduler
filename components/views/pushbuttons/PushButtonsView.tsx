@@ -57,7 +57,7 @@ const RequestStatus = (props: { request?: RoutingRequest }) => {
 }
 
 export const PushButtonsList = (props: InputProps) => {
-  const isDekstop = useViewType();
+  const isDekstop = useViewType()
   const [request, setRequest] = useState<RoutingRequest>()
 
   const isRequestComplete = () => {
@@ -74,11 +74,11 @@ export const PushButtonsList = (props: InputProps) => {
               request={request}
             />
           </Stack.Item>
-          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={stackTokens}>
+          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{childrenGap: 20}}>
             {props.pushbuttons.map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>
-                  <CompoundButton disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
+                  <CompoundButton disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ width:200, height: 80, backgroundColor: button.color }}
                     onClick={async () => {
                       if (props.videohub == undefined || !isRequestComplete()) {
                         return

@@ -16,7 +16,7 @@ function getStatusComponent(videohub?: Videohub) {
         if (videohub.connected) {
             return <AlertMessage intent="success" message="The videohub is reachable and can be controlled." />
         } else {
-            return <AlertMessage intent="warning" message="The videohub is currently not reachable. Therefore, it can't be controlled and shown data might be outdated. Please make sure it's turned on and is accessible within the network." />
+            return <AlertMessage intent="warning" message="The videohub is currently not reachable. Therefore, it can't be controlled and shown data might be outdated." />
         }
     }
 }
