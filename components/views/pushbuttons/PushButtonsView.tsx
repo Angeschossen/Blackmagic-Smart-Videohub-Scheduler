@@ -72,9 +72,10 @@ export const PushButtonsList = (props: InputProps) => {
           </Stack.Item>
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={stackTokens}>
             {props.pushbuttons.map((button, key) => {
+              console.log(button.color)
               return (
                 <Stack.Item key={"pushbutton_" + key}>
-                  <CompoundButton key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color, borderColor: button.color }}
+                  <CompoundButton key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
                     onClick={async () => {
                       if (props.videohub == undefined || (request != undefined && !request.success && request.error == undefined)) {
                         return
@@ -113,16 +114,15 @@ export const PushButtonsList = (props: InputProps) => {
                       }
 
                       setRequest({ ...req })
-                      //setStatusKey(getRandomKey())
 
-
+                      /*
                       setTimeout(() => {
                         console.log(req.id + " " + request?.id)
                         if (req.id === request?.id) {
                           console.log("REM")
                           setRequest(undefined)
                         }
-                      }, 5000);
+                      }, 5000); */
                     }}>
                     {button.label}
                   </CompoundButton>
