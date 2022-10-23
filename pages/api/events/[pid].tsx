@@ -94,10 +94,11 @@ export default async function handler(
                 return;
             }
 
-            const id: number = body.id;
+            const id: number = body.id
+            let eventRes
             const repeat: boolean = event.repeat_every_week === true;
             if (id === -1) {
-               await prisma.event.create({
+            eventRes=   await prisma.event.create({
                     data: {
                         output_id: event.output_id,
                         input_id: event.input_id,
@@ -110,7 +111,7 @@ export default async function handler(
                     }
                 });
             } else {
-                await prisma.event.update({
+               eventRes= await prisma.event.update({
                     where: {
                         id: id,
                     },
@@ -124,7 +125,7 @@ export default async function handler(
                 });
             }
 
-            sendResponseValid(req, res)
+            sendResponseValid(req, res, eventRes)
             return
         }
 

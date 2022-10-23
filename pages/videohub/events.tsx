@@ -75,9 +75,10 @@ const handleConfirm = async (event: ProcessedEvent, _action: EventActions, video
 
 const handleDelete = async (deletedId: string | number, videohub: number): Promise<string | number | void> => {
     return fetch('/api/events/delete', getPostHeader({ id: deletedId, videohub_id: videohub })).then(async res => {
-        const json = await res.json();
-        return json.id;
-    });
+        if(res.status === 200){
+            return deletedId
+        }
+    })
 }
 
 interface OutputProps {
