@@ -120,9 +120,7 @@ export const PushButtonsList = (props: InputProps) => {
 
                       /*
                       setTimeout(() => {
-                        console.log(req.id + " " + request?.id)
                         if (req.id === request?.id) {
-                          console.log("REM")
                           setRequest(undefined)
                         }
                       }, 5000); */
