@@ -1,3 +1,4 @@
+import { PushButton } from "./PushButton";
 
 export interface Videohub {
     id: number,
@@ -20,8 +21,10 @@ export interface VideohubActivity {
 }
 
 export interface RoutingRequest {
+    id: number,
     videohub_id: number,
     outputs: number[],
+    button: PushButton,
     inputs: number[],
     error: string | null | undefined,
     success: boolean,
