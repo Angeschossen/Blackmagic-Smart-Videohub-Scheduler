@@ -43,7 +43,7 @@ export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], use
                         <Button disabled={!canSchedule || !hasRoleOutput(props.user.role, props.videohub, output.id)}
                             onClick={() => {
                                 Router.push({
-                                    pathname: './events',
+                                    pathname: './videohub/events',
                                     query: { videohub: props.videohub?.id, output: output.id },
                                 });
                             }}>

@@ -170,7 +170,7 @@ const VideohubView = (props: VideohubViewProps) => {
             }
 
             Router.push({
-              pathname: '../pushbuttons/main',
+              pathname: '../pushbuttons',
               query: { videohub: videohub.videohub.id },
             });
           }}>

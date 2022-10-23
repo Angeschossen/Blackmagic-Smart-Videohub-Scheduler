@@ -51,7 +51,7 @@ const baseLinks: INavLink[] = [
     },
     {
         name: 'Videohubs',
-        url: '/videohub/main',
+        url: '/videohub',
         key: 'videohub',
         iconProps: {
             iconName: 'TVMonitorSelected',
@@ -81,7 +81,7 @@ export const Navigation = () => {
 
                 {
                     name: 'Admin',
-                    url: '/admin/main',
+                    url: '/admin',
                     key: 'admin',
                     iconProps: {
                         iconName: 'Settings',
