@@ -93,13 +93,13 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
         {
             videohub_id: videohub_id,
             output_id: output_id,
-        };
+        }
 
 
-    const differenceDays = dateutils.dateDiffInDays(date_start, date_end);
+    const differenceDays = dateutils.dateDiffInDays(date_start, date_end)
 
-    const start_DayOfWeek = date_start.getDay();
-    const end_DayOfWeek = date_end.getDay();
+    const start_DayOfWeek = date_start.getDay()
+    const end_DayOfWeek = date_end.getDay()
 
     const filter_repeat = differenceDays >= 6 ? {
         repeat_every_week: true
@@ -138,14 +138,14 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
                 ]
             }
         ]
-    };
+    }
 
     const e = await prismadb.event.findMany({
         where: condition,
     });
 
-    const arr = [];
-    const weeks = Math.max(1, Math.round(differenceDays / 7));
+    const arr = []
+    const weeks = Math.max(1, Math.round(differenceDays / 7))
     for (const event of e) {
         event.event_id = event.id;
 
@@ -173,13 +173,13 @@ async function retrieveEvents(videohub_id, output_id, date_start, date_end, incl
 
                 // re check time span
                 if (event_start <= date_start && event_end >= date_end || ((event_start >= date_start && event_start <= date_end) && (event_end <= date_end && event_end >= date_start))) {
-                    arr.push(eventFinal);
+                    arr.push(eventFinal)
                 }
 
                 event_start = new Date(eventFinal.start);
                 event_end = new Date(eventFinal.end);
-                event_start.setDate(event_start.getDate() + 7);
-                event_end.setDate(event_end.getDate() + 7);
+                event_start.setDate(event_start.getDate() + 7)
+                event_end.setDate(event_end.getDate() + 7)
 
                 /*
                 if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
@@ -582,7 +582,7 @@ class Videohub {
             }
 
             const input = this.data.inputs[shortest_id];
-            sendRoutingUpdateRequest([output.id], [shortest_id]).then(async result => {
+            this.sendRoutingUpdateRequest([output.id], [shortest_id]).then(async result => {
                 const routing = `Input ${input.label} to output ${output.label}.`;
 
                 if (result != undefined) {
