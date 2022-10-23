@@ -345,7 +345,7 @@ class Videohub {
                 if (this.data.connected) {
                     request.send(this);
                 } else {
-                    _resolve("Videohub not reachable.");
+                    _resolve("Videohub isn't reachable. Is it running?");
                 }
             }, REQUEST_RECONNECT_GRACE_TIME);
         } else {
