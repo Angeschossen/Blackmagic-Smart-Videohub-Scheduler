@@ -1,5 +1,5 @@
 import { ColumnActionsMode } from '@fluentui/react';
-import { PrismaPromise, PushButtonAction } from '@prisma/client';
+import { PrismaPromise, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
@@ -7,7 +7,7 @@ import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 
-export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {
+export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {    
     return await prismadb.pushButton.findMany({
         where: {
             videohub_id: videohubId,
@@ -15,8 +15,13 @@ export async function retrievePushButtonsServerSide(req: NextApiRequest, videohu
         },
         include: {
             actions: true,
+            triggers: {
+                include: {
+                    days: true,
+                }
+            }
         }
-    }) as PushButton[];
+    })
 }
 
 export default async function handler(
@@ -84,7 +89,7 @@ export default async function handler(
                 sendResponseValid(req, res, result)
 
             } else {
-                const currUser: { user_id: string; }|null = await prismadb.pushButton.findUnique({
+                const currUser: { user_id: string; } | null = await prismadb.pushButton.findUnique({
                     where: {
                         id: pushButton.id,
                     },
@@ -127,6 +132,33 @@ export default async function handler(
                     })
 
                     result.actions.push(res)
+                }
+
+                // triggers
+                await prismadb.pushButtonTrigger.deleteMany({
+                    where: {
+                        pushbutton_id: result.id,
+                    }
+                })
+
+                // save triggers and days
+                for (const trigger of pushButton.triggers) {
+                    await prismadb.pushButtonTrigger.create({
+                        data: {
+                            pushbutton_id: result.id,
+                            time: new Date(trigger.time),
+                            days: {
+                                create: trigger.days.map(day => {
+                                    const d: any = day
+                                    d.pushbuttontrigger_id = undefined
+                                    return d
+                                })
+                            }
+                        },
+                        include: {
+                            days: true,
+                        }
+                    })
                 }
 
                 sendResponseValid(req, res, result)

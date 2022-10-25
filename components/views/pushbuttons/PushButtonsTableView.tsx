@@ -1,10 +1,13 @@
 import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
+import Permissions from "../../../backend/authentication/Permissions";
+import { useClientSession } from "../../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { PushButton } from "../../interfaces/PushButton";
 import { User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
-import { EditPushButtonModal } from "../../modals/EditPushButtonModalNew";
+import { EditPushButtonModal } from "../../modals/pushbuttons/EditPushButtonModalNew";
+import { PushButtonScheduleModal } from "../../modals/pushbuttons/PushButtonScheduleModal";
 
 const columns: DataTableColumn[] = [
     {
@@ -15,10 +18,14 @@ const columns: DataTableColumn[] = [
     },
     {
         label: 'Edit'
+    },
+    {
+        label: 'Schedule'
     }
 ]
 
 export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushButton[], onButtonUpdate: (button: PushButton, action: "create" | "update" | "delete") => void, user: User }) => {
+    const canSchedule: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
@@ -47,6 +54,16 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushB
                         }
                     />
                 </TableCellLayout>,
+                <TableCellLayout>
+                    <PushButtonScheduleModal
+                        button={button} 
+                        trigger={
+                            <Button disabled={!canSchedule}>
+                                Schedule
+                            </Button>
+
+                        } />
+                </TableCellLayout>
             ]
 
             items.push({ key: key, cells: cells })

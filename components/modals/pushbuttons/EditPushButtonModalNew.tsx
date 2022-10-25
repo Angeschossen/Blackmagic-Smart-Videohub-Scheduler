@@ -1,20 +1,20 @@
 import { DefaultButton, getColorFromString, IColor, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
 import { PushButtonAction } from "@prisma/client";
 import React, { Key, RefObject, useEffect } from "react";
-import { deepCopy, getRandomKey } from "../utils/commonutils";
-import { getPostHeader } from "../utils/fetchutils";
-import { PushButton, PushbuttonAction } from "../interfaces/PushButton";
-import { Videohub } from "../interfaces/Videohub";
-import { PickColor } from "../input/ColorPicker";
-import { dropdownStyles, stackTokens, useInputStyles, useTextAreaStyes } from "../utils/styles";
-import { useForceUpdate } from "../utils/hooks";
+import { deepCopy, getRandomKey } from "../../utils/commonutils";
+import { getPostHeader } from "../../utils/fetchutils";
+import { PushButton, PushbuttonAction } from "../../interfaces/PushButton";
+import { Videohub } from "../../interfaces/Videohub";
+import { PickColor } from "../../input/ColorPicker";
+import { dropdownStyles, stackTokens, useInputStyles, useTextAreaStyes } from "../../utils/styles";
+import { useForceUpdate } from "../../utils/hooks";
 import { Dropdown, InputField, Option, TextareaField } from "@fluentui/react-components/unstable";
-import { InputModal } from "./InputModalNew";
+import { InputModal } from "../InputModalNew";
 import { Button, Input, InputProps, TextareaProps, useId } from "@fluentui/react-components";
-import { InputState } from "../input/HandledInputField";
+import { InputState } from "../../input/HandledInputField";
 import { DeleteRegular } from "@fluentui/react-icons";
-import { useGetClientId } from "../auth/ClientAuthentication";
-import { hasRoleOutput, User } from "../interfaces/User";
+import { useGetClientId } from "../../auth/ClientAuthentication";
+import { hasRoleOutput, User } from "../../interfaces/User";
 
 
 
@@ -186,6 +186,7 @@ export const EditPushButtonModal = (props: Props) => {
                         color: color,
                         description: description.value,
                         user_id: userId,
+                        triggers: props.button?.triggers || [],
                     }
 
                     const result = await fetch('/api/pushbuttons/update', getPostHeader(button))

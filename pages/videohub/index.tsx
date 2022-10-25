@@ -57,7 +57,7 @@ export async function getServerSideProps(context: any) {
     }
   }
 
-  let buttons: PushButton[];
+  let buttons: any[]
   if (selected != undefined) {
     buttons = await retrievePushButtonsServerSide(context.req, selected.id)
   } else {

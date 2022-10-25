@@ -24,6 +24,7 @@ export const useInputStyles = makeStyles({
     // Stack the label above the field
     display: 'flex',
     flexDirection: 'column',
+    maxWidth: '10px',
     // Use 2px gap below the label (per the design system)
     ...shorthands.gap('2px'),
   }

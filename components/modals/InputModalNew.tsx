@@ -67,14 +67,16 @@ export const InputModal = (props: InputProps) => {
                     <DialogBody>
                         <DialogTitle>{props.title}</DialogTitle>
                         <DialogContent className={styles.content}>
-                            {props.description}
-                            <Stack tokens={stackTokens} style={{paddingBottom: 25}}>
-                                {props.children}
+                            <Stack style={{margin: 8}}>
+                                {props.description}
+                                <Stack tokens={stackTokens} style={{ paddingBottom: 25 }}>
+                                    {props.children}
+                                </Stack>
+                                {error != undefined &&
+                                    <AlertMessage
+                                        intent="error"
+                                        message={error} />}
                             </Stack>
-                            {error != undefined &&
-                                <AlertMessage
-                                    intent="error"
-                                    message={error} />}
                         </DialogContent>
                         <DialogActions>
                             <DialogTrigger>
