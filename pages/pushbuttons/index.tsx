@@ -6,7 +6,7 @@ import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
 import { getVideohubFromQuery } from "../api/videohubs/[pid]";
 import { Button } from "@fluentui/react-components";
-import { EditPushButtonModal } from "../../components/modals/EditPushButtonModalNew";
+import { EditPushButtonModal } from "../../components/modals/pushbuttons/EditPushButtonModalNew";
 import { PushButtonsTableView } from "../../components/views/pushbuttons/PushButtonsTableView";
 import { User } from "../../components/interfaces/User";
 import { retrieveUserServerSide, retrieveUserServerSideByReq } from "../api/users/[pid]";
@@ -23,7 +23,7 @@ export async function getServerSideProps(context: any) {
             notFound: true,
         }
     } else {
-        const buttons: PushButton[] = await retrievePushButtonsServerSide(context.req, videohub.id);
+        const buttons = await retrievePushButtonsServerSide(context.req, videohub.id);
         return {
             props: {
                 videohub: JSON.parse(JSON.stringify(videohub)),
