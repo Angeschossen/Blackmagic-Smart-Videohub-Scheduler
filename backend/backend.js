@@ -197,5 +197,6 @@ module.exports = {
         })
 
         videohubs.connect()
+        videohubs.scheduleButtons()
     },
 }

@@ -275,12 +275,15 @@ class Videohub {
     }
 
     async scheduleButtons() {
+        this.info("Scheduling buttons...")
         this.stopScheduledButtons()
         this.scheduledButtons = await pushbuttons.retrieveScheduledButtonsToday(this)
 
         for (const button of this.scheduledButtons) {
             await button.handleScheduleNextTrigger(new Date())
         }
+        
+        this.info(`Buttons scheduled: ${this.scheduledButtons.length}`)
     }
 
     /*
@@ -819,6 +822,24 @@ module.exports = {
 
             hub.reconnect(true)
         }
+    },
+    scheduleButtons: function () {
+        const now = new Date()
+        const night = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate() + 1, // the next day, ...
+            0, 0, 0 // ...at 00:00:00 hours
+        )
+
+        const msToMidnight = night.getTime() - now.getTime()
+        setTimeout(async function () {
+            for (const hub of hubs) {
+                await hub.scheduleButtons()
+            }
+
+            scheduleButtons()
+        }, msToMidnight)
     },
     sendRoutingUpdate: function (request) {
         const videohubClient = module.exports.getClient(request.videohub_id);
