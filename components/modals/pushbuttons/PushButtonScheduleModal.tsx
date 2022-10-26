@@ -7,7 +7,7 @@ import { width } from "@mui/system";
 import { triggerAsyncId } from "async_hooks";
 import React from "react";
 import { InputState } from "../../input/HandledInputField";
-import { IPushButtonTrigger, PushButton } from "../../interfaces/PushButton";
+import { IPushButtonTrigger, IPushButton } from "../../interfaces/PushButton";
 import { getRandomKey } from "../../utils/commonutils";
 import { convert_date_to_utc } from "../../utils/dateutils";
 import { getPostHeader } from "../../utils/fetchutils";
@@ -121,14 +121,16 @@ const Trigger = (props: {
     )
 }
 
-function collectTriggers(button: PushButton): IPushButtonTrigger[] {
+function collectTriggers(button: IPushButton): IPushButtonTrigger[] {
     const triggers: Map<string, IPushButtonTrigger> = new Map()
     for (const trigger of button.triggers) {
         const tr: IPushButtonTrigger | undefined = triggers.get(trigger.id)
         if (tr == undefined) {
             triggers.set(trigger.id, { id: trigger.id, pushbutton_id: button.id, time: trigger.time, days: [trigger.day] })
         } else {
-            tr.days.push(trigger.day)
+            if (tr.days.indexOf(trigger.day) === -1) {
+                tr.days.push(trigger.day) // because of (x,y,z) key (action)
+            }
         }
     }
 
@@ -149,7 +151,7 @@ export function convertTriggerTime(date: string) {
     return d
 }
 
-export const PushButtonScheduleModal = (props: { button: PushButton, trigger: JSX.Element, }) => {
+export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: JSX.Element, }) => {
     const [triggers, setTriggers] = React.useState<IPushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: "null", pushbutton_id: props.button.id, time: new Date(), days: [] }] : collectTriggers(props.button))
 
     function createTriggerComponent(trigger: IPushButtonTrigger, id: string) {

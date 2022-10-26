@@ -1,9 +1,9 @@
 import { DefaultButton, getColorFromString, IColor, IDropdownOption, IDropdownStyles, IIconProps, IModalProps, IModalStyles, IStackTokens, Label, Modal, PrimaryButton, Stack, TextField } from "@fluentui/react";
-import { PushButtonAction } from "@prisma/client";
+import { PushButton, PushButtonAction } from "@prisma/client";
 import React, { Key, RefObject, useEffect } from "react";
 import { deepCopy, getRandomKey } from "../../utils/commonutils";
 import { getPostHeader } from "../../utils/fetchutils";
-import { PushButton, PushbuttonAction } from "../../interfaces/PushButton";
+import { IPushButton, PushbuttonAction } from "../../interfaces/PushButton";
 import { Videohub } from "../../interfaces/Videohub";
 import { PickColor } from "../../input/ColorPicker";
 import { dropdownStyles, stackTokens, useInputStyles, useTextAreaStyes } from "../../utils/styles";
@@ -16,14 +16,11 @@ import { DeleteRegular } from "@fluentui/react-icons";
 import { useGetClientId } from "../../auth/ClientAuthentication";
 import { hasRoleOutput, User } from "../../interfaces/User";
 
-
-
-
 interface Props {
-    onButtonUpdate: (button: PushButton, action: "create" | "update" | "delete") => void
+    onButtonUpdate: (button: IPushButton, action: "create" | "update" | "delete") => void
     videohub: Videohub,
-    button?: PushButton,
-    buttons: PushButton[],
+    button?: IPushButton,
+    buttons: IPushButton[],
     trigger: JSX.Element,
     user: User,
 }
@@ -178,7 +175,7 @@ export const EditPushButtonModal = (props: Props) => {
                 }
 
                 if (actions.length != 0) {
-                    const button: PushButton = {
+                    const button: IPushButton = {
                         id: props.button?.id || -1,
                         videohub_id: props.videohub.id,
                         label: name.value,
@@ -191,7 +188,15 @@ export const EditPushButtonModal = (props: Props) => {
 
                     const result = await fetch('/api/pushbuttons/update', getPostHeader(button))
                     if (result.status === 200) {
-                        props.onButtonUpdate(await result.json(), button.id == -1 ? "create" : "update")
+                        const r: PushButton = await result.json()
+                        const buttonNew = {
+                            ...r,
+                            triggers: props.button?.triggers || [],
+                            actions: actions,
+                            color: r.color || undefined,
+                        }
+
+                        props.onButtonUpdate(buttonNew, button.id == -1 ? "create" : "update")
                     }
 
                     return Promise.resolve(undefined)

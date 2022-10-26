@@ -1,7 +1,6 @@
 const prismadb = require('../database/prisma');
 const permissions = require('./authentication/Permissions');
 const videohubs = require('./videohubs');
-const socketio = require('./socketio');
 
 class Role {
     constructor(id, editable, name, permissions, outputs) {
