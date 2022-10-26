@@ -19,6 +19,17 @@ export function isPost(req: NextApiRequest, res: NextApiResponse) {
     return true
 }
 
+export function hasParams(req: NextApiRequest, res: NextApiResponse, ...value: any){
+    for(const val of value){
+        if(val == undefined){
+            sendResponseInvalid(req, res, "Parameters missing.")
+            return false
+        }
+    }
+
+    return true
+}
+
 export function sendResponseValid(req: NextApiRequest, res: NextApiResponse, send?: any) {
     const response: any = send || { message: 'Success' }
     res.status(200).json(response);

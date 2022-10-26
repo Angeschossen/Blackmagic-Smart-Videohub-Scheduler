@@ -29,9 +29,9 @@ model Event {
 }
 
 model Videohub {
-  id                Int                @id @default(autoincrement())
-  ip                String             @unique
-  name              String             @unique
+  id                Int                 @id @default(autoincrement())
+  ip                String              @unique
+  name              String              @unique
   version           String
   inputs            Input[]
   outputs           Output[]
@@ -40,6 +40,7 @@ model Videohub {
   pushbuttonactions PushButtonAction[]
   activity          VideohubActivity[]
   roleoutputs       RoleOutput[]
+  PushButtonTrigger PushButtonTrigger[]
 
   @@map("videohubs")
 }
@@ -59,66 +60,63 @@ model Input {
 
 model Output {
   id                Int
-  videohub          Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
+  videohub          Videohub            @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
   videohub_id       Int
-  input             Input?             @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
+  input             Input?              @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id          Int?
   label             String
   events            Event[]
   pushbuttonactions PushButtonAction[]
   roleoutputs       RoleOutput[]
+  PushButtonTrigger PushButtonTrigger[]
 
   @@id([videohub_id, id], name: "videohub_output")
   @@map("outputs")
 }
 
 model PushButtonAction {
-  id            Int        @id @default(autoincrement())
-  videohub      Videohub   @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
-  videohub_id   Int
-  output        Output     @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
-  output_id     Int
-  input         Input      @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
-  input_id      Int
-  pushbutton    PushButton @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
-  pushbutton_id Int
+  id                Int                 @id @default(autoincrement())
+  videohub          Videohub            @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
+  videohub_id       Int
+  output            Output              @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
+  output_id         Int
+  input             Input               @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
+  input_id          Int
+  pushbutton        PushButton          @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
+  pushbutton_id     Int
+  PushButtonTrigger PushButtonTrigger[]
 
   @@map("pushbuttons_actions")
 }
 
 model PushButtonTrigger {
-  id                   Int                    @id @default(autoincrement())
-  pushbutton_id        Int
-  pushbutton           PushButton             @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
-  time                 DateTime               @db.Time()
-  days PushButtonTriggerDay[]
+  videohub      Videohub         @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
+  id            String           @default(cuid())
+  pushbutton_id Int
+  pushbutton    PushButton       @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
+  time          DateTime         @db.Time()
+  day           Int
+  videohub_id   Int
+  output        Output           @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
+  output_id     Int
+  action        PushButtonAction @relation(fields: [action_id], references: [id], onDelete: Cascade)
+  action_id     Int
 
+  @@id([action_id, id, day], name: "action_trigger_day")
   @@map("pushbuttons_triggers")
 }
 
-model PushButtonTriggerDay {
-  pushbuttontrigger    PushButtonTrigger @relation(fields: [pushbuttontrigger_id], references: [id], onDelete: Cascade)
-  pushbuttontrigger_id Int
-  day                  Int
-  pushbutton           PushButton        @relation(fields: [pushbutton_id], references: [id], onDelete: Cascade)
-  pushbutton_id        Int
-
-  @@id([day, pushbuttontrigger_id])
-  @@map("pushbuttons_triggers_days")
-}
-
 model PushButton {
-  id                   Int                    @id @default(autoincrement())
-  videohub             Videohub               @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
-  videohub_id          Int
-  label                String                 @unique
-  description          String
-  actions              PushButtonAction[]
-  color                String?
-  user                 User                   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  user_id              String
-  triggers             PushButtonTrigger[]
-  PushButtonTriggerDay PushButtonTriggerDay[]
+  id          Int                 @id @default(autoincrement())
+  videohub    Videohub            @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
+  videohub_id Int
+  label       String              @unique
+  description String
+  actions     PushButtonAction[]
+  color       String?
+  user        User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id     String
+  triggers    PushButtonTrigger[]
 
   @@map("pushbuttons")
 }

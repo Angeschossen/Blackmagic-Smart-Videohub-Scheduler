@@ -1,13 +1,15 @@
-import { ColumnActionsMode } from '@fluentui/react';
+import { Button, ColumnActionsMode } from '@fluentui/react';
 import { PrismaPromise, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
+import { IPushButtonTrigger, PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
-import { sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
+import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
+import { retrieveUpcomingTriggers, scheduleNextTrigger } from '../../../backend/videohubs';
+import { convert_date_to_utc } from '../../../components/utils/dateutils';
 
-export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {    
+export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {
     return await prismadb.pushButton.findMany({
         where: {
             videohub_id: videohubId,
@@ -15,13 +17,21 @@ export async function retrievePushButtonsServerSide(req: NextApiRequest, videohu
         },
         include: {
             actions: true,
-            triggers: {
-                include: {
-                    days: true,
-                }
-            }
+            triggers: true,
         }
     })
+}
+
+
+export async function getUserFromButton(id: number): Promise<string | undefined> {
+    return await prismadb.pushButton.findUnique({
+        where: {
+            id: id,
+        },
+        select: {
+            user_id: true
+        }
+    }).then(res => res?.user_id)
 }
 
 export default async function handler(
@@ -34,7 +44,7 @@ export default async function handler(
     }
 
     if (!await checkServerPermission(req, res)) {
-        return;
+        return
     }
 
     const body = req.body;
@@ -48,6 +58,17 @@ export default async function handler(
     switch (pid) {
         case "get": {
             sendResponseValid(req, res, await retrievePushButtonsServerSide(req, videohub_id))
+            return
+        }
+
+        case "getUpcoming": {
+            const date = body.date
+            if (date == undefined) {
+                sendResponseInvalid(req, res, "Parameters missing.")
+                return
+            }
+
+            sendResponseValid(req, res, await retrieveUpcomingTriggers(date, videohub_id))
             return
         }
 
@@ -89,20 +110,12 @@ export default async function handler(
                 sendResponseValid(req, res, result)
 
             } else {
-                const currUser: { user_id: string; } | null = await prismadb.pushButton.findUnique({
-                    where: {
-                        id: pushButton.id,
-                    },
-                    select: {
-                        user_id: true
-                    }
-                })
-
-                if (!isUser(req, res, currUser?.user_id)) {
+                const owner: string | undefined = await getUserFromButton(pushButton.id)
+                if (!isUser(req, res, owner)) {
                     return
                 }
 
-                const result: any = await prismadb.pushButton.update({
+                const result: PushButton = await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
@@ -111,7 +124,7 @@ export default async function handler(
                         color: pushButton.color,
                         description: pushButton.description,
                     }
-                })
+                }) as PushButton
 
                 result.actions = []
                 for (const action of pushButton.actions) {
@@ -134,37 +147,82 @@ export default async function handler(
                     result.actions.push(res)
                 }
 
-                // triggers
-                await prismadb.pushButtonTrigger.deleteMany({
-                    where: {
-                        pushbutton_id: result.id,
-                    }
-                })
-
-                // save triggers and days
-                for (const trigger of pushButton.triggers) {
-                    await prismadb.pushButtonTrigger.create({
-                        data: {
-                            pushbutton_id: result.id,
-                            time: new Date(trigger.time),
-                            days: {
-                                create: trigger.days.map(day => {
-                                    const d: any = day
-                                    d.pushbuttontrigger_id = undefined
-                                    return d
-                                })
-                            }
-                        },
-                        include: {
-                            days: true,
-                        }
-                    })
-                }
-
                 sendResponseValid(req, res, result)
             }
 
-            return;
+            return
+        }
+
+        case "setTriggers": {
+            if (!await checkServerPermission(req, res, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)) {
+                return
+            }
+
+            const buttonId = body.pushbutton_id
+            const triggers: IPushButtonTrigger[] = body.triggers
+            const actions: PushbuttonAction[] = body.actions
+            if (!hasParams(req, res, buttonId, triggers, actions)) {
+                return
+            }
+
+            const owner: string | undefined = await getUserFromButton(buttonId)
+            if (!isUser(req, res, owner)) {
+                return
+            }
+
+            // triggers
+            await prismadb.pushButtonTrigger.deleteMany({
+                where: {
+                    pushbutton_id: buttonId,
+                }
+            })
+
+            for (const trigger of triggers) {
+                let r: PushButtonTrigger[] = []
+                // make sure day only once
+                const days: Set<number> = new Set(trigger.days)
+
+                for (const action of actions) {
+                    days.forEach(day => {
+                        const obj: PushButtonTrigger = {
+                            id: "",
+                            pushbutton_id: buttonId,
+                            time: new Date(trigger.time),
+                            day: day,
+                            videohub_id: action.videohub_id,
+                            output_id: action.output_id,
+                            action_id: action.id,
+                        };
+
+                        (obj as any).id = undefined
+                        r.push(obj)
+                    })
+                }
+
+                // save one to get id
+                const len: number = r.length
+                if (len != 0) {
+                    // save first to get id
+                    const id = await prismadb.pushButtonTrigger.create({
+                        data: r[0]
+                    }).then(res => res.id)
+
+                    r.splice(0, 1)
+                    await prismadb.pushButtonTrigger.createMany({
+                        data: r.map(trigger => {
+                            trigger.id = id
+                            return trigger
+                        })
+                    })
+                }
+            }
+
+            new Set(actions.map(action => action.output_id)).forEach(async output => {
+                await scheduleNextTrigger(videohub_id, output, new Date())
+            })
+
+            sendResponseValid(req, res)
+            return
         }
 
         case "delete": {

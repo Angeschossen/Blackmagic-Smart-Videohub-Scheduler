@@ -1,4 +1,4 @@
-import { PushButtonTriggerDay } from "@prisma/client";
+import { PushButtonTrigger } from "@prisma/client";
 
 export interface PushButton {
     id: number,
@@ -11,11 +11,11 @@ export interface PushButton {
     triggers: PushButtonTrigger[],
 }
 
-export interface PushButtonTrigger {
-    id: number,
+export interface IPushButtonTrigger {
+    id: string,
     pushbutton_id: number,
-    time: string,
-    days: PushButtonTriggerDay[],
+    time: Date,
+    days: number[]
 }
 
 export interface PushbuttonAction {

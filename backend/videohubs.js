@@ -1,6 +1,7 @@
 const net = require('net');
 const prismadb = require('../database/prisma');
 const dateutils = require('../components/utils/dateutils');
+const { convert_date_to_utc } = require('../components/utils/dateutils');
 const emit = require('./socketio').emit;
 
 const ICON_ERROR = "Error";
@@ -201,22 +202,23 @@ function adjustDate(fromDate, date, weekDay) {
 }
 
 class Input {
-    constructor(id, label) {
+    constructor(videohub, id, label) {
+        this.videohub = videohub
         this.id = id;
         this.label = label;
     }
 
-    async save(videohub) {
+    async save() {
         await prismadb.input.upsert({
             where: {
                 videohub_input: {
-                    videohub_id: videohub.data.id,
+                    videohub_id: this.videohub.data.id,
                     id: this.id, // prisma requires id to start at 1
                 }
             },
             create: {
                 id: this.id,
-                videohub_id: videohub.data.id,
+                videohub_id: this.videohub.data.id,
                 label: this.label,
             },
             update: {
@@ -272,19 +274,105 @@ class InputChangeRequest {
     }
 }
 class Output {
-    constructor(id, label) {
+    constructor(videohub, id) {
         this.id = id;
-        this.label = label;
-        this.input_id = undefined;
+        this.input_id = undefined
+        this.scheduledTrigger = undefined
+        this.videohub = videohub
     }
 
-    updateRouting(videohub, input_id) {
-        videohub.info(`Updating routing: ${this.id} ${input_id}`);
+    stopSchedule() {
+        clearTimeout(this.scheduledTrigger)
+    }
+
+    async scheduleNextTrigger(date) {
+        this.stopSchedule()
+
+        const next = await this.retrieveUpcomingTriggers(date)
+        if (next.length == 0) {
+            return
+        }
+
+        const trigger = next[0]
+        const hour = trigger.time.getUTCHours()
+        const minutes = trigger.time.getUTCMinutes()
+        const seconds = trigger.time.getUTCSeconds()
+
+        const now = new Date()
+        trigger.time.setTime(now.getTime())
+        trigger.time.setHours(hour)
+        trigger.time.setMinutes(minutes)
+        trigger.time.setSeconds(seconds)
+
+        // diff
+        const diff = trigger.time - convert_date_to_utc(now)
+        this.videohub.info(`Next trigger for output ${this.id} is in ${diff / 1000} second(s).`)
+
+        this.scheduledTrigger = setTimeout(async () => {
+            const actions = await prismadb.pushButtonAction.findMany({
+                where: {
+                    pushbutton_id: next.pushbutton_id
+                },
+                select: {
+                    output_id: true,
+                    input_id: true,
+                }
+            })
+
+            if (actions.length === 0) {
+                this.videohub.info("Scheduled button doesn't exist any longer.")
+                return
+            }
+
+            const outputs = []
+            const inputs = []
+            for (const action of actions) {
+                outputs.push(action.output_id)
+                inputs.push(action.input_id)
+            }
+
+            this.videohub.sendRoutingUpdateRequest(outputs, inputs).then(async result => {
+                if (result != undefined) {
+                    await this.videohub.logActivity(`Scheduled routing update failed.`, ICON_ERROR);
+                } else {
+                    await this.videohub.logActivity(`Scheduled routing update was successful.`, ICON_SUCCESS);
+                }
+
+                // go to next
+                this.scheduleNextTrigger(new Date())
+            })
+        }, diff)
+    }
+
+    async retrieveUpcomingTriggers(date) {
+        const time = new Date(date)
+        return await prismadb.pushButtonTrigger.findMany({
+            where: {
+                videohub_id: this.videohub.data.id,
+                output_id: this.id,
+                day: time.getDay(),
+                time: {
+                    gte: time
+                }
+            },
+            orderBy: {
+                time: 'asc'
+            }
+        }).then(res => {
+            return res.map(tr => {
+                //tr.time = new Date(tr.time.toString()+" UTC")
+                return tr
+            })
+        })
+    }
+
+    updateRouting(input_id) {
+        this.videohub.info(`Updating routing: ${this.id} ${input_id}`);
         this.input_id = input_id;
     }
 
-    async save(videohub) {
-        const vid = Number(videohub.data.id);
+    async save(label) {
+        const vid = Number(this.videohub.data.id);
         const input_id = this.input_id == undefined ? null : this.input_id;
         await prismadb.output.upsert({
             where: {
@@ -295,13 +383,13 @@ class Output {
             },
             update: {
                 input_id: input_id,
-                label: this.label,
+                label: label,
             },
             create: {
                 id: this.id,
                 videohub_id: vid,
                 input_id: input_id,
-                label: this.label,
+                label: label,
             }
         });
     }
@@ -313,13 +401,25 @@ class Videohub {
         this.connecting = false;
         this.data = data;
         this.requestQueque = [];
+        this.outputs = new Array(0)
+        this.inputs = []
         this.data.connected = false;
         this.connectionAttempt = 0;
         this.checkConnectionHealthId = undefined;
         this.data.lastRoutingUpdate = new Date();
     }
 
+    async retrieveUpcomingTriggers(date, output_id) {
+        const output = this.getOutput(output_id)
+        if (output == undefined) {
+            return []
+        }
+
+        return output.retrieveUpcomingTriggers(date)
+    }
+
     sendRoutingUpdateRequest(outputs, inputs) {
+        this.info(`Trying to send routing update: ${outputs} - ${inputs}`)
         // prepare
         let _resolve;
         let request;
@@ -451,7 +551,7 @@ class Videohub {
             this.connectionAttempt = 0;
             this.clearReconnect();
             this.scheduleCheckConnectionHealth();
-            this.startEventsCheck();
+            this.startSchedules();
             this.onUpdate();
 
             if (!isInitial) {
@@ -482,15 +582,6 @@ class Videohub {
         return this.client != undefined || this.connecting || this.data.connected;
     }
 
-    stopEventsCheck() {
-        this.info("Stopping check events.");
-
-        if (this.checkEventsId != undefined) {
-            clearTimeout(this.checkEventsId);
-            this.checkEventsId = undefined;
-        }
-    }
-
     async reconnect() {
         if (false != this.connecting) {
             return;
@@ -500,6 +591,10 @@ class Videohub {
             this.client.removeAllListeners();
             this.client.destroy();
             this.client = undefined;
+
+            // stop schedules
+            this.info("Stopping output schedules.")
+            this.outputs.forEach(output => output.stopSchedule())
         }
 
         const wasConnected = this.data.connected;
@@ -509,8 +604,6 @@ class Videohub {
             this.onUpdate();
             await this.logActivity("Connection lost.", ICON_ERROR)
         }
-
-        this.stopEventsCheck();
 
         this.connectionAttempt++;
         const delay = this.calculateReconnectTimeout();
@@ -544,68 +637,8 @@ class Videohub {
         console.warn(`[#${this.data.id}] ${msg}`)
     }
 
-    async checkEvents() {
-        this.info("Checking events...");
-
-        if (this.client == undefined) {
-            throw Error("Not connected");
-        }
-
-        if (this.checkEventsId != undefined) {
-            throw Error("Check events already running.");
-        }
-
-        const date_start = new Date();
-        const date_end = new Date(date_start.getTime() + (60 * 1000)); // plus 1 minute
-
-        const events = await retrieveEvents(this.data.id, undefined, date_start, date_end, true);
-        for (const event of events) {
-            const output_id = event.output_id;
-            let shortest_id = event.input_id;
-            let shortest_duration = event.end - event.start;
-
-            for (const e of events) {
-                if (output_id != e.output_id || e === event) {
-                    continue;
-                }
-
-                const duration = e.end - e.start;
-                if (duration < shortest_duration) {
-                    shortest_id = e.input_id;
-                    shortest_duration = duration;
-                }
-            }
-
-            const output = this.getOutput(output_id);
-            if (output.input_id === shortest_id) {
-                continue; // already up to date
-            }
-
-            const input = this.data.inputs[shortest_id];
-            this.sendRoutingUpdateRequest([output.id], [shortest_id]).then(async result => {
-                const routing = `Input ${input.label} to output ${output.label}.`;
-
-                if (result != undefined) {
-                    this.info(`Scheduled routing update failed. Input ${input.id} to output ${output.id}`);
-                    await this.logActivity(`Scheduled routing update failed. ${routing}`, ICON_ERROR);
-                } else {
-                    await this.logActivity(`Scheduled routing update was successful. ${routing}`, ICON_SUCCESS);
-                }
-            });
-        }
-
-        this.checkEventsId = setTimeout(async () => {
-            this.checkEventsId = undefined;
-            await this.checkEvents();
-        }, 60000);
-    }
-
     getOutput(id) {
-        if (id > this.data.outputs) {
-            throw Error("Output does not exist.: " + id);
-        }
-
-        return this.data.outputs[id];
+        return this.outputs[id];
     }
 
 
@@ -648,50 +681,92 @@ class Videohub {
             case PROTOCOL_PREAMPLE: {
                 lines = getCorrespondingLines(lines, index);
                 this.data.version = getConfigEntry(lines, 0);
-                await this.save();
+                await this.save()
                 return 1;
             }
 
             case PROTOCOL_INPUT_LABELS: {
                 // inputs and outputs
                 this.data.inputs = [];
-                getCorrespondingLines(lines, index).forEach(async line => {
+                for (const line of getCorrespondingLines(lines, index)) {
                     const index = line.indexOf(" ");
-                    const input = new Input(Number(line.substring(0, index)), line.substring(index + 1));
-                    this.data.inputs.push(input);
-                    await input.save(this)
-                });
+                    const id = Number(line.substring(0, index));
+                    const label = line.substring(index + 1);
+
+                    await prismadb.input.upsert({
+                        where: {
+                            videohub_input: {
+                                videohub_id: this.data.id,
+                                id: id, // prisma requires id to start at 1
+                            }
+                        },
+                        create: {
+                            id: id,
+                            videohub_id: this.data.id,
+                            label: label,
+                        },
+                        update: {
+                            label: label,
+                        }
+                    });
+
+                    this.data.inputs.push({ id: id, label: label });
+                }
 
                 return this.data.inputs.length;
             }
 
             case PROTOCOL_OUTPUT_LABELS: {
                 // inputs and outputs
-                this.data.outputs = [];
-                getCorrespondingLines(lines, index).forEach(async line => {
-                    const index = line.indexOf(" ");
-                    const output = new Output(Number(line.substring(0, index)), line.substring(index + 1));
-                    this.data.outputs.push(output);
-                    await output.save(this)
-                });
+                this.data.outputs = []
+                for (const line of getCorrespondingLines(lines, index)) {
+                    const index = line.indexOf(" ")
+                    const id = Number(line.substring(0, index))
+                    const label = line.substring(index + 1)
 
-                return this.data.outputs.length;
+                    const output = this.getOutput(id)
+                    if (output != undefined) {
+                        await output.save(label)
+                    }
+
+                    this.data.outputs.push({ id: id, label: label, input_id: undefined })
+                }
+
+                return this.data.outputs.length
             }
 
             case PROTOCOL_VIDEOHUB_DEVICE: {
+                const entries = getCorrespondingLines(lines, index);
+
                 if (this.data.name === this.data.ip) {
-                    const entries = getCorrespondingLines(lines, index);
                     this.data.name = getConfigEntry(entries, 2);
-                    await this.save();
+                    await this.save()
                 }
 
-                return 1;
+                const outputs = Number(getConfigEntry(entries, 6))
+                if (outputs === 12 || outputs === 20 || outputs === 40) {
+                    if (this.outputs.length === 0) {
+                        this.outputs = new Array(outputs)
+                        for (let i = 0; i < this.outputs.length; i++) {
+                            const output = new Output(this, i)
+                            this.outputs[i] = output
+                            output.save("Unknown")
+                            output.scheduleNextTrigger(new Date())
+                        }
+
+                        this.info(`Setup ${this.outputs.length} outputs.`)
+                    }
+                } else {
+                    throw Error(`Invalid amount of outputs: ${outputs}`)
+                }
+
+                return entries.length;
             }
 
             case PROTOCOL_VIDEO_OUTPUT_ROUTING: {
                 let i = 0;
                 for (const line of getCorrespondingLines(lines, index)) {
-                    const data = line.split(" ");
+                    const data = line.split(" ")
                     await this.updateRouting(Number(data[0]), Number(data[1]));
                     i++;
                 }
@@ -731,20 +806,21 @@ class Videohub {
     }
 
     async updateRouting(output_id, input_id) {
-        const output = this.getOutput(output_id);
-        output.updateRouting(this, input_id);
+        const output = this.getOutput(output_id)
+        if (output == undefined) {
+            return
+        }
+
+        const outputData = this.data.outputs[output_id]
+        outputData.input_id = input_id
+        output.updateRouting(input_id)
 
         this.requestQueque = this.requestQueque.filter(req => {
-            return !req.ack(output_id, input_id); // remove request and call success 
-        });
+            return !req.ack(output_id, input_id) // remove request and call success 
+        })
 
-        this.data.lastRoutingUpdate = new Date();
-        await output.save(this);
-    }
-
-    async startEventsCheck() {
-        this.stopEventsCheck();
-        await this.checkEvents();
+        this.data.lastRoutingUpdate = new Date()
+        output.save(outputData.label)
     }
 
     async save() {
@@ -756,15 +832,7 @@ class Videohub {
             data: {
                 name: this.data.name,
             }
-        });
-
-        this.data.inputs.forEach(async e => {
-            await e.save(this);
-        });
-
-        this.data.outputs.forEach(async e => {
-            await e.save(this);
-        });
+        })
 
         this.info("Saved.");
     }
@@ -790,6 +858,15 @@ module.exports = {
                 return client;
             }
         }
+    },
+    async retrieveUpcomingTriggers(date, videohub) {
+        for (const client of hubs) {
+            if (client.data.id === videohub) {
+                return await client.retrieveUpcomingTriggers(date)
+            }
+        }
+
+        return []
     },
     getVideohubs: function () {
         const arr = [];
@@ -823,14 +900,14 @@ module.exports = {
             // turn into objects
             for (let i = 0; i < e.outputs.length; i++) {
                 const output = e.outputs[i]
-                e.outputs[i] = new Output(output.id, output.label); // prisma requires id start at 1 so its off by one
-
+                e.outputs[i] = { id: output.id, label: output.label, input_id: undefined }
                 const input = e.inputs[i];
-                e.inputs[i] = new Input(input.id, input.label);
+                e.inputs[i] = { id: input.id, label: input.label }
             }
 
-            hubs.push(new Videohub(e));
-        });
+            const hub = new Videohub(e)
+            hubs.push(hub)
+        })
 
         console.log("Initial data loaded.");
     },
@@ -840,7 +917,7 @@ module.exports = {
                 throw Error("Already connected");
             }
 
-            hub.reconnect(true);
+            hub.reconnect(true)
         }
     },
     retrieveEvents: retrieveEvents,
@@ -851,6 +928,19 @@ module.exports = {
         }
 
         return videohubClient.sendRoutingUpdateRequest(request.outputs, request.inputs);
+    },
+    scheduleNextTrigger: async function (videohub_id, output_id, date) {
+        const videohubClient = module.exports.getClient(videohub_id);
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + videohub_id);
+        }
+
+        const output = videohubClient.getOutput(output_id)
+        if (output == undefined) {
+            return
+        }
+
+        await output.scheduleNextTrigger(date)
     }
 }
 

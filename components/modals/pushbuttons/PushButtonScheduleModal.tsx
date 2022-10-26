@@ -4,10 +4,12 @@ import { Dropdown, InputField, Option } from "@fluentui/react-components/unstabl
 import { DeleteFilled, DeleteRegular } from "@fluentui/react-icons";
 import { buttonBaseClasses } from "@mui/material";
 import { width } from "@mui/system";
+import { triggerAsyncId } from "async_hooks";
 import React from "react";
 import { InputState } from "../../input/HandledInputField";
-import { PushButton, PushButtonTrigger } from "../../interfaces/PushButton";
+import { IPushButtonTrigger, PushButton } from "../../interfaces/PushButton";
 import { getRandomKey } from "../../utils/commonutils";
+import { convert_date_to_utc } from "../../utils/dateutils";
 import { getPostHeader } from "../../utils/fetchutils";
 import { stackTokens, useInputStyles } from "../../utils/styles";
 import { InputModal } from "../InputModalNew";
@@ -49,25 +51,19 @@ const days: Day[] = [
 ]
 
 const Trigger = (props: {
-    id: string,
-    trigger: PushButtonTrigger,
+    trigger: IPushButtonTrigger,
     onSelectDay: (index: number) => void,
+    onChangeTime: (value: string) => void,
     onDelete: () => void,
 }) => {
-    const date = new Date(props.trigger.time)
-    const [time, setTime] = React.useState<InputState>({ value: date.toLocaleTimeString() || "" })
+    const [time, setTime] = React.useState<InputState>({ value: props.trigger.time.toLocaleTimeString() })
     const inputDaysId = useId('input_days')
     const inputTimeId = useId('input_time')
     const styles = useInputStyles()
 
     const onChangeTime: InputProps['onChange'] = (_ev, data) => {
         setTime({ value: data.value })
-
-        const date: Date = new Date()
-        const d: string[] = data.value.split(":")
-        date.setHours(Number(d[0]))
-        date.setMinutes(Number(d[1]))
-        props.trigger.time = date.toUTCString()
+        props.onChangeTime(data.value)
     }
 
     function getDayFromValue(value: string) {
@@ -79,7 +75,7 @@ const Trigger = (props: {
     }
 
     return (
-        <Stack key={props.id} tokens={{ childrenGap: 10 }}>
+        <Stack tokens={{ childrenGap: 10 }}>
             <Stack.Item>
                 <div className={styles.root}>
                     <Label htmlFor={inputTimeId}>Time</Label>
@@ -99,7 +95,7 @@ const Trigger = (props: {
                     <Dropdown
                         multiselect
                         id={inputDaysId}
-                        defaultSelectedOptions={props.trigger.days.map(day => days[day.day].label)}
+                        defaultSelectedOptions={props.trigger.days.map((day: number) => days[day].label)}
                         placeholder="Select days"
                         onOptionSelect={(_event: any, data: any) => {
                             const val = getDayFromValue(data.optionValue)?.value
@@ -108,7 +104,7 @@ const Trigger = (props: {
                             }
                         }}>
                         {days.map(day =>
-                            <Option key={`input_${day.value}`} value={day.label}>
+                            <Option key={`${inputDaysId}_day_${day.value}`} value={day.label}>
                                 {day.label}
                             </Option>)}
                     </Dropdown>
@@ -124,17 +120,59 @@ const Trigger = (props: {
         </Stack>
     )
 }
-export const PushButtonScheduleModal = (props: { button: PushButton, trigger: JSX.Element, }) => {
-    const [triggers, setTriggers] = React.useState<PushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: -1, pushbutton_id: props.button.id, time: "", days: [] }] : props.button.triggers)
 
-    function createTriggerComponent(trigger: PushButtonTrigger, id: string) {
+function collectTriggers(button: PushButton): IPushButtonTrigger[] {
+    const triggers: Map<string, IPushButtonTrigger> = new Map()
+    for (const trigger of button.triggers) {
+        const tr: IPushButtonTrigger | undefined = triggers.get(trigger.id)
+        if (tr == undefined) {
+            triggers.set(trigger.id, { id: trigger.id, pushbutton_id: button.id, time: trigger.time, days: [trigger.day] })
+        } else {
+            tr.days.push(trigger.day)
+        }
+    }
+
+    return Array.from(triggers.values())
+}
+
+export function convertTriggerTime(date: string) {
+    const index: number = date.indexOf('T')
+    if (index === -1) {
+        throw Error("Time part not found.")
+    }
+
+    const parts: string[] = date.substring(index + 1, index + 6).split(':')
+
+    const d: Date = new Date()
+    d.setUTCHours(Number(parts[0]))
+    d.setUTCMinutes(Number(parts[1]))
+    return d
+}
+
+export const PushButtonScheduleModal = (props: { button: PushButton, trigger: JSX.Element, }) => {
+    const [triggers, setTriggers] = React.useState<IPushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: "null", pushbutton_id: props.button.id, time: new Date(), days: [] }] : collectTriggers(props.button))
+
+    function createTriggerComponent(trigger: IPushButtonTrigger, id: string) {
+        if (!(trigger.time instanceof Date)) {
+            trigger.time = convertTriggerTime(trigger.time)
+        }
+
         return (
             <Trigger
-                id={id}
+                key={id}
                 trigger={trigger}
                 onSelectDay={function (value: number): void {
-                    trigger.days.push({ day: value, pushbutton_id: props.button.id, pushbuttontrigger_id: trigger.id });
+                    if (trigger.days.indexOf(value) === -1) {
+                        trigger.days.push(value)
+                    }
                 }}
+                onChangeTime={((value: string) => {
+                    const date: Date = new Date()
+                    const d: string[] = value.split(":")
+                    date.setHours(Number(d[0]))
+                    date.setMinutes(Number(d[1]))
+                    trigger.time = date
+                })}
                 onDelete={function (): void {
                     const index = triggers.indexOf(trigger)
                     if (index != -1) {
@@ -151,9 +189,7 @@ export const PushButtonScheduleModal = (props: { button: PushButton, trigger: JS
             title={"Triggers"}
             trigger={props.trigger}
             handleSubmit={async function (): Promise<string | undefined> {
-                const b: PushButton = props.button
-                b.triggers = triggers
-                const res = await fetch('/api/pushbuttons/update', getPostHeader(b))
+                const res = await fetch('/api/pushbuttons/setTriggers', getPostHeader({ pushbutton_id: props.button.id, videohub_id: props.button.videohub_id, actions: props.button.actions, triggers: triggers }))
                 if (res.status != 200) {
                     return Promise.resolve("Failed")
                 }
@@ -166,7 +202,7 @@ export const PushButtonScheduleModal = (props: { button: PushButton, trigger: JS
             <Button
                 onClick={() => {
                     const arr = [...triggers]
-                    arr.push({ id: -1, pushbutton_id: props.button.id, time: "", days: [] })
+                    arr.push({ id: "null", pushbutton_id: props.button.id, time: new Date(), days: [] })
                     setTriggers(arr)
                 }}>
                 Add Trigger
