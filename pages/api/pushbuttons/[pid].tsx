@@ -1,7 +1,7 @@
 import { Button, ColumnActionsMode } from '@fluentui/react';
-import { PrismaPromise, PushButtonAction, PushButtonTrigger } from '@prisma/client';
+import { PrismaPromise, PushButton, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { IPushButtonTrigger, PushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
+import { IPushButtonTrigger, IPushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import prismadb from '../../../database/prismadb';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
@@ -77,7 +77,7 @@ export default async function handler(
                 return
             }
 
-            let pushButton: PushButton = body;
+            let pushButton: IPushButton = body;
             if (pushButton.id == -1) { // creare
                 const result: any = await prismadb.pushButton.create({
                     data: {
@@ -115,7 +115,7 @@ export default async function handler(
                     return
                 }
 
-                const result: PushButton = await prismadb.pushButton.update({
+                const r: PushButton = await prismadb.pushButton.update({
                     where: {
                         id: pushButton.id,
                     },
@@ -124,9 +124,15 @@ export default async function handler(
                         color: pushButton.color,
                         description: pushButton.description,
                     }
-                }) as PushButton
+                })
 
-                result.actions = []
+                const result: IPushButton = {
+                    ...r,
+                    actions: [],
+                    triggers: [],
+                    color: r.color || undefined,
+                }
+
                 for (const action of pushButton.actions) {
                     const res: PushbuttonAction = await prismadb.pushButtonAction.upsert({
                         where: {

@@ -311,7 +311,7 @@ class Output {
         this.scheduledTrigger = setTimeout(async () => {
             const actions = await prismadb.pushButtonAction.findMany({
                 where: {
-                    pushbutton_id: next.pushbutton_id
+                    pushbutton_id: trigger.pushbutton_id
                 },
                 select: {
                     output_id: true,
@@ -326,6 +326,7 @@ class Output {
 
             const outputs = []
             const inputs = []
+            console.log(actions)
             for (const action of actions) {
                 outputs.push(action.output_id)
                 inputs.push(action.input_id)

@@ -3,7 +3,7 @@ import { TableCellLayout } from "@fluentui/react-components/unstable";
 import Permissions from "../../../backend/authentication/Permissions";
 import { useClientSession } from "../../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../../DataTableNew";
-import { PushButton } from "../../interfaces/PushButton";
+import { IPushButton } from "../../interfaces/PushButton";
 import { User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { EditPushButtonModal } from "../../modals/pushbuttons/EditPushButtonModalNew";
@@ -24,7 +24,7 @@ const columns: DataTableColumn[] = [
     }
 ]
 
-export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushButton[], onButtonUpdate: (button: PushButton, action: "create" | "update" | "delete") => void, user: User }) => {
+export const PushButtonsTableView = (props: { videohub: Videohub, buttons: IPushButton[], onButtonUpdate: (button: IPushButton, action: "create" | "update" | "delete") => void, user: User }) => {
     const canSchedule: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)
 
     function buildItems(): DataTableItem[] {

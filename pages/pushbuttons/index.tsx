@@ -1,6 +1,6 @@
 import { IIconProps, Stack } from "@fluentui/react";
 import React from "react";
-import { PushButton } from "../../components/interfaces/PushButton";
+import { IPushButton } from "../../components/interfaces/PushButton";
 import { Videohub } from "../../components/interfaces/Videohub";
 import { VideohubPage } from "../../components/videohub/VideohubPage";
 import { retrievePushButtonsServerSide } from "../api/pushbuttons/[pid]";
@@ -34,17 +34,17 @@ export async function getServerSideProps(context: any) {
     }
 }
 
-const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: PushButton[], user: User }) => {
+const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: IPushButton[], user: User }) => {
 
     const [videohub, setVideohub] = React.useState(props.videohub)
-    const [buttons, setButtons] = React.useState<PushButton[]>(props.pushbuttons)
+    const [buttons, setButtons] = React.useState<IPushButton[]>(props.pushbuttons)
 
     React.useEffect(() => {
 
     }, [videohub])
 
-    const onButtonUpdate = (button: PushButton, action: "create" | "update" | "delete") => {
-        const arr: PushButton[] = [...buttons]
+    const onButtonUpdate = (button: IPushButton, action: "create" | "update" | "delete") => {
+        const arr: IPushButton[] = [...buttons]
 
         switch (action) {
             case "create": {

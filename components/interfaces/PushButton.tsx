@@ -1,6 +1,6 @@
 import { PushButtonTrigger } from "@prisma/client";
 
-export interface PushButton {
+export interface IPushButton {
     id: number,
     videohub_id: number,
     label: string,
