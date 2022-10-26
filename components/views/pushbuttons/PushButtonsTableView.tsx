@@ -54,14 +54,13 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: PushB
                         }
                     />
                 </TableCellLayout>,
-                <TableCellLayout>
+                <TableCellLayout key={`${key}_schedule`}>
                     <PushButtonScheduleModal
                         button={button} 
                         trigger={
                             <Button disabled={!canSchedule}>
                                 Schedule
                             </Button>
-
                         } />
                 </TableCellLayout>
             ]
