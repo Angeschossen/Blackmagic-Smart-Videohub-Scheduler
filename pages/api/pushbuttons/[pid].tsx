@@ -6,7 +6,7 @@ import prismadb from '../../../database/prismadb';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
-import { retrieveUpcomingTriggers, scheduleNextTrigger } from '../../../backend/videohubs';
+import { handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { convert_date_to_utc } from '../../../components/utils/dateutils';
 
 export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {
@@ -223,10 +223,8 @@ export default async function handler(
                 }
             }
 
-            new Set(actions.map(action => action.output_id)).forEach(async output => {
-                await scheduleNextTrigger(videohub_id, output, new Date())
-            })
-
+            await handleButtonReSchedule(videohub_id, buttonId)
+      
             sendResponseValid(req, res)
             return
         }

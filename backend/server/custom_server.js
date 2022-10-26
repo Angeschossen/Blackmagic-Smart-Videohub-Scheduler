@@ -13,10 +13,10 @@ app.prepare().then(async _res => {
     
     backend.setup(server)
 
-    const port = config.parsed.PORT;
-    server.listen(port);
-    console.log(`Listening on port ${port}.`);
+    const port = config.parsed.PORT
+    server.listen(port)
+    console.log(`Listening on port ${port}.`)
 
 }).catch(error => {
-    console.log(error);
-});
+    console.log(error)
+})

@@ -1,12 +1,13 @@
 const net = require('net');
 const prismadb = require('../database/prisma');
-const dateutils = require('../components/utils/dateutils');
 const { convert_date_to_utc } = require('../components/utils/dateutils');
 const emit = require('./socketio').emit;
+const pushbuttons = require('./pushbuttons');
+const { retrievescheduledButton } = require('./pushbuttons');
 
 const ICON_ERROR = "Error";
-const ICON_CONNECTION_SUCCESS = "NetworkTower";
 const ICON_SUCCESS = "Accept";
+const ICON_CONNECTION_SUCCESS = "NetworkTower";
 
 const VIDEOHUB_PORT = 9990;
 const CONNECTION_HEALT_CHECK_INTERVAL = 60000;
@@ -85,149 +86,6 @@ function checkConnection(host, port, timeout) {
     });
 }
 
-
-async function retrieveEvents(videohub_id, output_id, date_start, date_end, inclusive) {
-    const filter_base = output_id == undefined ?
-        {
-            videohub_id: videohub_id,
-        } :
-        {
-            videohub_id: videohub_id,
-            output_id: output_id,
-        }
-
-
-    const differenceDays = dateutils.dateDiffInDays(date_start, date_end)
-
-    const start_DayOfWeek = date_start.getDay()
-    const end_DayOfWeek = date_end.getDay()
-
-    const filter_repeat = differenceDays >= 6 ? {
-        repeat_every_week: true
-    } : {
-        repeat_every_week: true,
-        day_of_week: {
-            gte: start_DayOfWeek,
-            lte: end_DayOfWeek,
-        }
-    };
-
-    const condition = {
-        AND: [
-            filter_base,
-            {
-                OR: [
-                    filter_repeat,
-                    {
-                        start: {
-                            lte: date_start,
-                        },
-                        end: {
-                            gte: date_end,
-                        }
-                    },
-                    {
-                        start: {
-                            gte: date_start,
-                            lte: date_end,
-                        },
-                        end: {
-                            lte: date_end,
-                            gte: date_start,
-                        }
-                    },
-                ]
-            }
-        ]
-    }
-
-    const e = await prismadb.event.findMany({
-        where: condition,
-    });
-
-    const arr = []
-    const weeks = Math.max(1, Math.round(differenceDays / 7))
-    for (const event of e) {
-        event.event_id = event.id;
-
-        if (event.repeat_every_week) { // is repeat
-            let event_start = new Date(event.start);
-            let event_end = new Date(event.end);
-
-            // initial
-            let startIndex;
-            if (!dateutils.isSameWeek(event_start, date_start)) { // adjust?
-                startIndex = 0;
-                const event_duration = event_end.getTime() - event_start.getTime();
-                event_start = adjustDate(date_start, event_start, event.day_of_week);
-                event_end = new Date(event_start.getTime() + event_duration);
-            } else {
-                startIndex = 0;
-
-            }
-
-            for (let i = startIndex; i < weeks; i++) {
-                const eventFinal = Object.assign({}, event);
-                eventFinal.event_id = event.id + "_" + (i + 1);
-                eventFinal.start = event_start;
-                eventFinal.end = event_end;
-
-                // re check time span
-                if (event_start <= date_start && event_end >= date_end || ((event_start >= date_start && event_start <= date_end) && (event_end <= date_end && event_end >= date_start))) {
-                    arr.push(eventFinal)
-                }
-
-                event_start = new Date(eventFinal.start);
-                event_end = new Date(eventFinal.end);
-                event_start.setDate(event_start.getDate() + 7)
-                event_end.setDate(event_end.getDate() + 7)
-
-                /*
-                if (!inclusive || (date_start >= event_start && date_end <= event_end)) {
-                    arr.push(eventFinal);
-                } */
-            }
-        } else {
-            arr.push(event); // always add
-        }
-    }
-
-    return arr;
-}
-
-function adjustDate(fromDate, date, weekDay) {
-    const newDate = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
-    dateutils.setDayOfWeek(newDate, weekDay);
-    return newDate;
-}
-
-class Input {
-    constructor(videohub, id, label) {
-        this.videohub = videohub
-        this.id = id;
-        this.label = label;
-    }
-
-    async save() {
-        await prismadb.input.upsert({
-            where: {
-                videohub_input: {
-                    videohub_id: this.videohub.data.id,
-                    id: this.id, // prisma requires id to start at 1
-                }
-            },
-            create: {
-                id: this.id,
-                videohub_id: this.videohub.data.id,
-                label: this.label,
-            },
-            update: {
-                label: this.label,
-            }
-        });
-    }
-}
-
 class InputChangeRequest {
     constructor(outputs, inputs, onSuccess) {
         this.outputs = outputs;
@@ -237,8 +95,10 @@ class InputChangeRequest {
         this.ackList = new Array(outputs.length);
     }
 
+    /*
     ack(output, input) {
         let count = 0;
+
         for (let i = 0; i < this.outputs.length; i++) {
             // it can happen that a push button has two identical routing updates, if we don't use found, the request will never complete.
             if (this.outputs[i] === output && this.inputs[i] === input) {
@@ -257,7 +117,7 @@ class InputChangeRequest {
         }
 
         return false;
-    }
+    } */
 
     send(videohub) {
         let send = `${PROTOCOL_VIDEO_OUTPUT_ROUTING}`
@@ -269,10 +129,11 @@ class InputChangeRequest {
 
         videohub.info(`Sending routing update: ${send}`);
         videohub.client.write(send);
-        videohub.requestQueque.push(this);
+        videohub.addRequest(this)
         videohub.info("Routing update sent.");
     }
 }
+
 class Output {
     constructor(videohub, id) {
         this.id = id;
@@ -281,9 +142,10 @@ class Output {
         this.videohub = videohub
     }
 
+    /*
     stopSchedule() {
         clearTimeout(this.scheduledTrigger)
-    }
+    } 
 
     async scheduleNextTrigger(date) {
         this.stopSchedule()
@@ -326,11 +188,12 @@ class Output {
 
             const outputs = []
             const inputs = []
-            console.log(actions)
             for (const action of actions) {
                 outputs.push(action.output_id)
                 inputs.push(action.input_id)
             }
+
+            console.log(outputs)
 
             this.videohub.sendRoutingUpdateRequest(outputs, inputs).then(async result => {
                 if (result != undefined) {
@@ -340,9 +203,9 @@ class Output {
                 }
 
                 // go to next
-                this.scheduleNextTrigger(new Date())
+                //this.scheduleNextTrigger(new Date())
             })
-        }, diff)
+        }, 2000)
     }
 
     async retrieveUpcomingTriggers(date) {
@@ -365,7 +228,7 @@ class Output {
                 return tr
             })
         })
-    }
+    } */
 
     updateRouting(input_id) {
         this.videohub.info(`Updating routing: ${this.id} ${input_id}`);
@@ -392,24 +255,35 @@ class Output {
                 input_id: input_id,
                 label: label,
             }
-        });
+        })
     }
 }
 
 class Videohub {
     constructor(data) {
-        this.client = undefined;
-        this.connecting = false;
-        this.data = data;
-        this.requestQueque = [];
+        this.client = undefined
+        this.connecting = false
+        this.data = data
+        this.requestQueque = []
         this.outputs = new Array(0)
         this.inputs = []
-        this.data.connected = false;
-        this.connectionAttempt = 0;
-        this.checkConnectionHealthId = undefined;
-        this.data.lastRoutingUpdate = new Date();
+        this.data.connected = false
+        this.connectionAttempt = 0
+        this.checkConnectionHealthId = undefined
+        this.data.lastRoutingUpdate = new Date()
+        this.scheduledButtons = []
     }
 
+    async scheduleButtons() {
+        this.stopScheduledButtons()
+        this.scheduledButtons = await pushbuttons.retrieveScheduledButtonsToday(this)
+
+        for (const button of this.scheduledButtons) {
+            await button.handleScheduleNextTrigger(new Date())
+        }
+    }
+
+    /*
     async retrieveUpcomingTriggers(date, output_id) {
         const output = this.getOutput(output_id)
         if (output == undefined) {
@@ -417,10 +291,26 @@ class Videohub {
         }
 
         return output.retrieveUpcomingTriggers(date)
+    } */
+
+    async handleButtonReSchedule(buttonId) {
+        for (const button of this.scheduledButtons) {
+            if (button.id === buttonId) {
+                await button.handleScheduleNextTrigger(new Date())
+                return
+            }
+        }
+
+        const button = await retrievescheduledButton(this, buttonId, new Date())
+        if (button != undefined) {
+            this.scheduledButtons.push(button)
+            button.handleScheduleNextTrigger(new Date())
+        }
     }
 
     sendRoutingUpdateRequest(outputs, inputs) {
         this.info(`Trying to send routing update: ${outputs} - ${inputs}`)
+
         // prepare
         let _resolve;
         let request;
@@ -435,7 +325,7 @@ class Videohub {
                 output.save(this);
             } */
 
-            request.result = true;
+            request.result = true
             this.removeRequest(request);
             _resolve(undefined);
         });
@@ -450,7 +340,7 @@ class Videohub {
                 }
             }, REQUEST_RECONNECT_GRACE_TIME);
         } else {
-            request.send(this);
+            request.send(this)
         }
 
         // handle res with timeout
@@ -489,7 +379,7 @@ class Videohub {
     }
 
     addRequest(request) {
-        this.requestQueque.push(request);
+        this.requestQueque.push(request)
     }
 
     checkConnectionHealth() {
@@ -552,8 +442,8 @@ class Videohub {
             this.connectionAttempt = 0;
             this.clearReconnect();
             this.scheduleCheckConnectionHealth();
-            this.startSchedules();
-            this.onUpdate();
+            await this.scheduleButtons();
+            this.onUpdate()
 
             if (!isInitial) {
                 await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS);
@@ -583,6 +473,16 @@ class Videohub {
         return this.client != undefined || this.connecting || this.data.connected;
     }
 
+    stopScheduledButtons() {
+        this.info("Stopping button schedules.")
+
+        this.scheduledButtons.forEach(button => {
+            button.stopSchedule()
+        })
+
+        this.scheduledButtons = []
+    }
+
     async reconnect() {
         if (false != this.connecting) {
             return;
@@ -594,8 +494,7 @@ class Videohub {
             this.client = undefined;
 
             // stop schedules
-            this.info("Stopping output schedules.")
-            this.outputs.forEach(output => output.stopSchedule())
+            this.stopScheduledButtons()
         }
 
         const wasConnected = this.data.connected;
@@ -752,7 +651,7 @@ class Videohub {
                             const output = new Output(this, i)
                             this.outputs[i] = output
                             output.save("Unknown")
-                            output.scheduleNextTrigger(new Date())
+                            //output.scheduleNextTrigger(new Date())
                         }
 
                         this.info(`Setup ${this.outputs.length} outputs.`)
@@ -777,14 +676,13 @@ class Videohub {
             }
 
             case PROTOCOL_ACKNOWLEDGED: {
-                /*
-                if (this.requestQueque.length == 0) {
-                    throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.");
+                const request = this.requestQueque.shift()
+                if (request == undefined) {
+                    throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.")
                 }
 
-                const request = this.requestQueque.shift();
-                request.onSuccess.call(); */
-                return 1;
+                request.onSuccess()
+                return 1
             }
 
             case PROTOCOL_CONFIGURATION: {
@@ -816,9 +714,10 @@ class Videohub {
         outputData.input_id = input_id
         output.updateRouting(input_id)
 
+        /*
         this.requestQueque = this.requestQueque.filter(req => {
             return !req.ack(output_id, input_id) // remove request and call success 
-        })
+        })*/
 
         this.data.lastRoutingUpdate = new Date()
         output.save(outputData.label)
@@ -921,7 +820,6 @@ module.exports = {
             hub.reconnect(true)
         }
     },
-    retrieveEvents: retrieveEvents,
     sendRoutingUpdate: function (request) {
         const videohubClient = module.exports.getClient(request.videohub_id);
         if (videohubClient == undefined) {
@@ -930,6 +828,16 @@ module.exports = {
 
         return videohubClient.sendRoutingUpdateRequest(request.outputs, request.inputs);
     },
+    handleButtonReSchedule: async function (videohubId, buttonId) {
+        const videohubClient = module.exports.getClient(videohubId);
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + videohubId);
+        }
+
+        await videohubClient.handleButtonReSchedule(buttonId)
+    }
+
+    /*
     scheduleNextTrigger: async function (videohub_id, output_id, date) {
         const videohubClient = module.exports.getClient(videohub_id);
         if (videohubClient == undefined) {
@@ -942,6 +850,6 @@ module.exports = {
         }
 
         await output.scheduleNextTrigger(date)
-    }
+    } */
 }
 
