@@ -68,11 +68,9 @@ export const RolesView = (props: Props) => {
                             Permissions
                         </Button>}
                         handleSubmit={async function (checked: string[]): Promise<string | undefined> {
-                            if (props.videohub != undefined) {
-                                return fetch('/api/roles/setpermissions', getPostHeader({ role_id: role.id, permissions: checked })).then(res => {
-                                    return undefined;
-                                });
-                            }
+                            return fetch('/api/roles/setpermissions', getPostHeader({ role_id: role.id, permissions: checked })).then(res => {
+                                return undefined;
+                            });
                         }}
                         defaultChecked={role.permissions}
                         choices={props.permissions} />
