@@ -1,5 +1,4 @@
 import { Table, TableBody, TableCell, TableCellLayout, TableHeader, TableHeaderCell, TableRow } from '@fluentui/react-components/unstable';
-import React from 'react';
 
 export interface TableInput {
     items: DataTableItem[] | undefined,

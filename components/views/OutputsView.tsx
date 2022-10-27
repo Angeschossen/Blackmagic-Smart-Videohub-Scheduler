@@ -1,13 +1,7 @@
-import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
-import Router from "next/router";
-import React from "react";
-import Permissions from "../../backend/authentication/Permissions";
-import { useClientSession } from "../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../DataTableNew";
-import { hasRoleOutput, Role, User } from "../interfaces/User";
+import { User } from "../interfaces/User";
 import { Output, Videohub } from "../interfaces/Videohub";
-import { getRoleById } from "./admin/RolesView";
 
 
 const columns: DataTableColumn[] = [

@@ -1,9 +1,9 @@
 import { Input, InputProps, Label, useId } from "@fluentui/react-components";
 import React from "react";
-import { Role } from "../../interfaces/User"
+import { Role } from "../../interfaces/User";
 import { getPostHeader } from "../../utils/fetchutils";
 import { useInputStyles } from "../../utils/styles";
-import { InputModal } from "../InputModalNew"
+import { InputModal } from "../InputModalNew";
 
 interface Props {
     role?: Role,

@@ -1,5 +1,4 @@
-import { DefaultPalette, IconButton, Stack } from '@fluentui/react';
-import React from 'react';
+import { IconButton, Stack } from '@fluentui/react';
 
 export interface ConfirmationProps {
     onCancel: () => void,

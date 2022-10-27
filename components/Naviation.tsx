@@ -1,10 +1,7 @@
-import { INavLink, INavLinkGroup, INavStyles, Nav } from "@fluentui/react";
-import { signIn } from "next-auth/react";
+import { INavLink, INavStyles, Nav } from "@fluentui/react";
 import React, { useState } from 'react';
-import MediaQuery, { useMediaQuery } from "react-responsive";
 import Permissions from "../backend/authentication/Permissions";
 import { useClientSession } from "./auth/ClientAuthentication";
-import { desktopMinWidth } from "./utils/styles";
 import { useViewType } from "./views/DesktopView";
 
 

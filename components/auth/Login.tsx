@@ -1,5 +1,5 @@
-import { DefaultButton, Stack } from "@fluentui/react"
-import { useSession, signIn, signOut } from "next-auth/react"
+import { DefaultButton, Stack } from "@fluentui/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export const LoginPage = () => {
   return (<Stack horizontalAlign="center" verticalAlign="center" style={{height: '50%'}}>

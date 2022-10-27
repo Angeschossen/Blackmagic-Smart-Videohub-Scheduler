@@ -22,7 +22,7 @@ model Videohub {
   pushbuttonactions PushButtonAction[]
   activity          VideohubActivity[]
   roleoutputs       RoleOutput[]
-  PushButtonTrigger PushButtonTrigger[]
+  pushbuttontriggers PushButtonTrigger[]
 
   @@map("videohubs")
 }

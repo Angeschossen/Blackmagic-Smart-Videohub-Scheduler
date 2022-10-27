@@ -1,7 +1,7 @@
-import * as React from 'react';
 import { ActivityItem, Icon, Link, mergeStyleSets, Stack, Text } from '@fluentui/react';
-import { VideohubActivity } from '../interfaces/Videohub';
 import Router from 'next/router';
+import * as React from 'react';
+import { VideohubActivity } from '../interfaces/Videohub';
 import { videohubPageStyle } from '../videohub/VideohubPage';
 
 const classNames = mergeStyleSets({

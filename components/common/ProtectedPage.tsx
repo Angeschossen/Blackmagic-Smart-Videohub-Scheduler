@@ -1,8 +1,6 @@
-import { DefaultButton, Label, Spinner, Stack } from "@fluentui/react";
+import { DefaultButton, Stack } from "@fluentui/react";
 import { signOut, useSession } from "next-auth/react";
-import Router from "next/router";
-import React, { useEffect } from "react";
-import { LoginPage } from "../auth/Login";
+import React from "react";
 
 interface InputProps {
     children: React.ReactNode,

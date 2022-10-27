@@ -1,11 +1,11 @@
-import * as React from 'react';
 import {
   ColorPicker,
   getColorFromString,
   IColor,
   IColorPickerStyles,
-  mergeStyleSets,
+  mergeStyleSets
 } from '@fluentui/react';
+import React from 'react';
 
 const white = getColorFromString('#ffffff')!;
 

@@ -1,11 +1,10 @@
-import { TableCellLayout } from "@fluentui/react-components/unstable";
+import { Button } from "@fluentui/react-components";
+import { Dropdown, Option, TableCellLayout } from "@fluentui/react-components/unstable";
+import { Delete16Regular } from "@fluentui/react-icons";
 import { DataTable, DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { Role, User } from "../../interfaces/User";
-import { Dropdown, Option } from "@fluentui/react-components/unstable";
 import { getPostHeader } from "../../utils/fetchutils";
 import { getRoleById, getRoleByName } from "./RolesView";
-import { Button } from "@fluentui/react-components";
-import { Delete16Regular } from "@fluentui/react-icons";
 
 interface Props {
     roles: Role[],
