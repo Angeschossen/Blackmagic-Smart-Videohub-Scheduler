@@ -139,16 +139,11 @@ export function convertTriggerTime(date: string) {
     }
 
     const parts: string[] = date.substring(index + 1, index + 6).split(':')
-    console.log(parts)
 
     const d: Date = new Date()
     d.setUTCHours(Number(parts[0]))
     d.setUTCMinutes(Number(parts[1]))
-
-    if (parts.length > 2) {
-        d.setUTCSeconds(Number(parts[2]))
-    }
-
+    d.setUTCSeconds(parts.length > 2 ? Number(parts[2]) : 0)
     return d
 }
 
@@ -181,10 +176,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
                     const d: string[] = value.split(":")
                     date.setHours(Number(d[0]))
                     date.setMinutes(Number(d[1]))
-
-                    if (d.length > 2) {
-                        date.setSeconds(Number(d[2]))
-                    }
+                    date.setSeconds(d.length > 2 ? Number(d[2]) : 0)
 
                     trigger.time = date
                 })}
