@@ -139,15 +139,28 @@ export function convertTriggerTime(date: string) {
     }
 
     const parts: string[] = date.substring(index + 1, index + 6).split(':')
+    console.log(parts)
 
     const d: Date = new Date()
     d.setUTCHours(Number(parts[0]))
     d.setUTCMinutes(Number(parts[1]))
+
+    if (parts.length > 2) {
+        d.setUTCSeconds(Number(parts[2]))
+    }
+
     return d
 }
 
+function getDefaultDate() {
+    const date: Date = new Date()
+    date.setSeconds(0)
+    date.setMinutes(0)
+    return date
+}
+
 export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: JSX.Element, }) => {
-    const [triggers, setTriggers] = React.useState<IPushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: "null", pushbutton_id: props.button.id, time: new Date(), days: [] }] : collectTriggers(props.button))
+    const [triggers, setTriggers] = React.useState<IPushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: "null", pushbutton_id: props.button.id, time: getDefaultDate(), days: [] }] : collectTriggers(props.button))
 
     function createTriggerComponent(trigger: IPushButtonTrigger, id: string) {
         if (!(trigger.time instanceof Date)) {
@@ -168,6 +181,11 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
                     const d: string[] = value.split(":")
                     date.setHours(Number(d[0]))
                     date.setMinutes(Number(d[1]))
+
+                    if (d.length > 2) {
+                        date.setSeconds(Number(d[2]))
+                    }
+
                     trigger.time = date
                 })}
                 onDelete={function (): void {
@@ -199,7 +217,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
             <Button
                 onClick={() => {
                     const arr = [...triggers]
-                    arr.push({ id: "null", pushbutton_id: props.button.id, time: new Date(), days: [] })
+                    arr.push({ id: "null", pushbutton_id: props.button.id, time: getDefaultDate(), days: [] })
                     setTriggers(arr)
                 }}>
                 Add Trigger
