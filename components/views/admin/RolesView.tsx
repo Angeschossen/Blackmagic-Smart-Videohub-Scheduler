@@ -2,6 +2,7 @@ import { Stack } from "@fluentui/react";
 import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import { Delete16Regular } from '@fluentui/react-icons';
+import Permissions from "../../../backend/authentication/Permissions";
 import { DataTable, DataTableColumn, DataTableItem } from "../../DataTableNew";
 import { Role } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
@@ -72,7 +73,7 @@ export const RolesView = (props: Props) => {
                                 return undefined;
                             });
                         }}
-                        defaultChecked={role.permissions}
+                        defaultChecked={role.permissions.filter(perm => Permissions.toggleablePermissions.indexOf(perm) != -1)}
                         choices={props.permissions} />
                 </TableCellLayout>,
                 <TableCellLayout key={`${key}_outputs`}>
