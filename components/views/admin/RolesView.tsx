@@ -56,66 +56,68 @@ export const RolesView = (props: Props) => {
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = [];
 
-        const videohub = props.videohub;
-        if (videohub != undefined) {
-            for (const role of props.roles) {
-                const key: string = role.name
-                const cells: JSX.Element[] = [
-                    <TableCellLayout key={`${key}_name`}>{role.name}</TableCellLayout>,
-                    <TableCellLayout key={`${key}_permissions`}>
-                        <CheckBoxModal
-                            title={"Permissions"}
-                            description="Permissions are global."
-                            trigger={<Button disabled={!role.editable}>
-                                Permissions
-                            </Button>}
-                            handleSubmit={async function (checked: string[]): Promise<string | undefined> {
-                                if (props.videohub != undefined) {
-                                    return fetch('/api/roles/setpermissions', getPostHeader({ role_id: role.id, permissions: checked })).then(res => {
-                                        return undefined;
-                                    });
-                                }
-                            }}
-                            defaultChecked={role.permissions}
-                            choices={props.permissions} />
-                    </TableCellLayout>,
-                    <TableCellLayout key={`${key}_outputs`}>
-                        <CheckBoxModal
-                            title={"Outputs"}
-                            description="Outputs are per videohub."
-                            trigger={<Button disabled={!role.editable}>
-                                Outputs
-                            </Button>}
-                            handleSubmit={async function (checked: string[]): Promise<string | undefined> {
-                                const arr: number[] = checked.map(value => Number(value));
-                                return fetch('/api/roles/setoutputs', getPostHeader({ videohub_id: videohub.id, role_id: role.id, outputs: arr })).then(res => {
+        for (const role of props.roles) {
+            const key: string = role.name
+            const cells: JSX.Element[] = [
+                <TableCellLayout key={`${key}_name`}>{role.name}</TableCellLayout>,
+                <TableCellLayout key={`${key}_permissions`}>
+                    <CheckBoxModal
+                        title={"Permissions"}
+                        description="Permissions are global."
+                        trigger={<Button disabled={!role.editable}>
+                            Permissions
+                        </Button>}
+                        handleSubmit={async function (checked: string[]): Promise<string | undefined> {
+                            if (props.videohub != undefined) {
+                                return fetch('/api/roles/setpermissions', getPostHeader({ role_id: role.id, permissions: checked })).then(res => {
                                     return undefined;
                                 });
-                            }}
-                            defaultChecked={role.outputs.filter(output => output.videohub_id === videohub.id).map(output => output.output_id.toString())}
-                            choices={videohub.outputs.map(output => {
-                                return { value: output.id.toString(), label: output.label };
-                            })} />
-                    </TableCellLayout>,
-                    <TableCellLayout key={`${key}_delete`}>
-                        <Button
-                            color="#bc2f32"
-                            icon={<Delete16Regular />}
-                            disabled={!role.editable}
-                            onClick={async () => {
-                                await fetch('/api/roles/delete', getPostHeader({ role_id: role.id })).then(res => {
-                                    if (res.status === 200) {
-                                        props.onRoleDeleted(role)
-                                    }
-                                });
-                            }}>
-                            Delete
-                        </Button>
-                    </TableCellLayout>
-                ]
+                            }
+                        }}
+                        defaultChecked={role.permissions}
+                        choices={props.permissions} />
+                </TableCellLayout>,
+                <TableCellLayout key={`${key}_outputs`}>
+                    <CheckBoxModal
+                        title={"Outputs"}
+                        description="Outputs are per videohub."
+                        trigger={<Button disabled={!role.editable}>
+                            Outputs
+                        </Button>}
+                        handleSubmit={async function (checked: string[]): Promise<string | undefined> {
+                            const videohub: Videohub | undefined = props.videohub
+                            if (videohub == undefined) {
+                                return "No videohub setup yet."
+                            }
 
-                items.push({ key: key, cells: cells })
-            }
+                            const arr: number[] = checked.map(value => Number(value))
+                            return fetch('/api/roles/setoutputs', getPostHeader({ videohub_id: videohub.id, role_id: role.id, outputs: arr })).then(res => {
+                                return undefined;
+                            })
+                        }}
+                        defaultChecked={role.outputs.filter(output => output.videohub_id === props.videohub?.id).map(output => output.output_id.toString())}
+                        choices={props.videohub?.outputs.map(output => {
+                            return { value: output.id.toString(), label: output.label };
+                        }) || []} />
+                </TableCellLayout>,
+                <TableCellLayout key={`${key}_delete`}>
+                    <Button
+                        color="#bc2f32"
+                        icon={<Delete16Regular />}
+                        disabled={!role.editable}
+                        onClick={async () => {
+                            await fetch('/api/roles/delete', getPostHeader({ role_id: role.id })).then(res => {
+                                if (res.status === 200) {
+                                    props.onRoleDeleted(role)
+                                }
+                            });
+                        }}>
+                        Delete
+                    </Button>
+                </TableCellLayout>
+            ]
+
+            items.push({ key: key, cells: cells })
         }
 
         return items;

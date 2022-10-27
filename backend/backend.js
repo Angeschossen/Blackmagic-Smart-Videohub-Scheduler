@@ -179,7 +179,7 @@ module.exports = {
     addRole(data) {
         const prev = roles.get(data.id)
         if (prev == undefined || prev.editable) {
-            roles.set(data.id, new Role(data.id, true, data.name, data.permissions.map(perm => perm.permission) || [], data.outputs || []))
+            roles.set(data.id, new Role(data.id, true, data.name, data.permissions?.map(perm => perm.permission) || [], data.outputs || []))
         }
     }, setup: async function () {
         await this.setupRoles()
