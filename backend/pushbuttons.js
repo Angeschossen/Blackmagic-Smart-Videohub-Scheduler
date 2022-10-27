@@ -10,7 +10,7 @@ class Button {
     }
 
     info(msg) {
-        console.log(`[Button ${this.id}] ${msg}`)
+        console.log(`[${new Date().toLocaleTimeString()}] [Button ${this.id}] ${msg}`)
     }
 
     stopSchedule() {
