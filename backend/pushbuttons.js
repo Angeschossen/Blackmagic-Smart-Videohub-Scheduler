@@ -92,6 +92,8 @@ class Button {
     }
 
     async retrieveUpcomingTriggers(date) {
+        this.info("Retrieving upcoming triggers.")
+        
         const time = new Date(date)
         return await prismadb.pushButtonTrigger.findMany({
             where: {
