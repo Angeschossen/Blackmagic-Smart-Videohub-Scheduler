@@ -1,6 +1,5 @@
 const net = require('net');
 const prismadb = require('../database/prisma');
-const { convert_date_to_utc } = require('../components/utils/dateutils');
 const emit = require('./socketio').emit;
 const pushbuttons = require('./pushbuttons');
 const { retrievescheduledButton } = require('./pushbuttons');
@@ -282,7 +281,7 @@ class Videohub {
         for (const button of this.scheduledButtons) {
             await button.handleScheduleNextTrigger(new Date())
         }
-        
+
         this.info(`Buttons scheduled: ${this.scheduledButtons.length}`)
     }
 
@@ -750,20 +749,43 @@ class Videohub {
     }
 }
 
+function scheduleButtons() {
+    const now = new Date()
+    const night = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate() + 1, // the next day, ...
+        0, 0, 0 // ...at 00:00:00 hours
+    )
+
+    const diff = night.getTime() - now.getTime()
+    console.log(`Midnight is in ${diff / 1000} second(s).`)
+    setTimeout(async function () {
+        for (const hub of module.exports.getClients()) {
+            await hub.scheduleButtons()
+        }
+
+        scheduleButtons()
+    }, diff)
+}
+
+if (global.videohubs == undefined) {
+    global.videohubs = []
+}
+
 module.exports = {
-    hubs: [],
     getClients: function () {
-        return hubs;
+        return global.videohubs
     },
     getClient: function (id) {
-        for (const client of hubs) {
+        for (const client of module.exports.getClients()) {
             if (client.data.id === id) {
                 return client;
             }
         }
     },
     async retrieveUpcomingTriggers(date, videohub) {
-        for (const client of hubs) {
+        for (const client of module.exports.getClients()) {
             if (client.data.id === videohub) {
                 return await client.retrieveUpcomingTriggers(date)
             }
@@ -772,15 +794,10 @@ module.exports = {
         return []
     },
     getVideohubs: function () {
-        const arr = [];
-        hubs.forEach(e => {
-            arr.push(e.data);
-        });
-
-        return arr;
+        return module.exports.getClients().map(client => client.data);
     },
     getVideohub: function (id) {
-        for (const hub of hubs) {
+        for (const hub of module.exports.getClients()) {
             if (hub.data.id === id) {
                 return hub.data;
             }
@@ -788,10 +805,12 @@ module.exports = {
 
         return undefined;
     },
-    loadData: async function () {
-        console.log("Loading data...");
-        hubs = [];
+    setup: async function () {
+        if (module.exports.getClients().length != 0) {
+            throw Error("Already initialized")
+        }
 
+        console.log("Loading data...")
         const arr = await prismadb.videohub.findMany({
             include: {
                 inputs: true,
@@ -808,38 +827,19 @@ module.exports = {
                 e.inputs[i] = { id: input.id, label: input.label }
             }
 
-            const hub = new Videohub(e)
-            hubs.push(hub)
+            global.videohubs.push(new Videohub(e))
         })
 
-        console.log("Initial data loaded.");
-    },
-    connect: async function () {
-        for (const hub of hubs) {
+        console.log("Connecting to videohubs.");
+        for (const hub of module.exports.getClients()) {
             if (hub.isConnected()) {
                 throw Error("Already connected");
             }
 
             hub.reconnect(true)
         }
-    },
-    scheduleButtons: function () {
-        const now = new Date()
-        const night = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate() + 1, // the next day, ...
-            0, 0, 0 // ...at 00:00:00 hours
-        )
 
-        const msToMidnight = night.getTime() - now.getTime()
-        setTimeout(async function () {
-            for (const hub of hubs) {
-                await hub.scheduleButtons()
-            }
-
-            scheduleButtons()
-        }, msToMidnight)
+        scheduleButtons()
     },
     sendRoutingUpdate: function (request) {
         const videohubClient = module.exports.getClient(request.videohub_id);
