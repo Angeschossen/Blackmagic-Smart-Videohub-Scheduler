@@ -11,23 +11,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Event {
-  id          Int      @id @default(autoincrement())
-  videohub    Videohub @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
-  videohub_id Int
-  output      Output   @relation(fields: [videohub_id, output_id], references: [videohub_id, id], onDelete: Cascade)
-  output_id   Int
-  input       Input    @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
-  input_id    Int
-  start       DateTime
-  end         DateTime
-
-  day_of_week       Int
-  repeat_every_week Boolean?
-
-  @@map("events")
-}
-
 model Videohub {
   id                Int                 @id @default(autoincrement())
   ip                String              @unique
@@ -35,7 +18,6 @@ model Videohub {
   version           String
   inputs            Input[]
   outputs           Output[]
-  events            Event[]
   pushbuttons       PushButton[]
   pushbuttonactions PushButtonAction[]
   activity          VideohubActivity[]
@@ -51,7 +33,6 @@ model Input {
   videohub_id       Int
   label             String
   outputs           Output[]
-  events            Event[]
   pushbuttonactions PushButtonAction[]
 
   @@id([videohub_id, id], name: "videohub_input")
@@ -65,7 +46,6 @@ model Output {
   input             Input?              @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id          Int?
   label             String
-  events            Event[]
   pushbuttonactions PushButtonAction[]
   roleoutputs       RoleOutput[]
   PushButtonTrigger PushButtonTrigger[]
