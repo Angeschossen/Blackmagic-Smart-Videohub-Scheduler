@@ -129,7 +129,7 @@ module.exports = {
         if (!allowNonEditable) {
             for (const perm of perms) {
                 if (permissions.toggleablePermissions.indexOf(perm.permission) == -1) {
-                    console.log("Non toggleable permission supplied at set perms.")
+                    console.log(`Non toggleable permission supplied at set perms: ${perm.permission}`)
                     return false
                 }
             }
