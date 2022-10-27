@@ -1,20 +1,17 @@
-import { MessageBarType, ProgressIndicator, Stack } from "@fluentui/react";
-import React, { useState } from "react";
-import { PushButton } from "../../interfaces/PushButton";
-import { RoutingRequest, Videohub } from "../../interfaces/Videohub";
-import { getPostHeader } from "../../utils/fetchutils";
-import { stackTokens } from "../../utils/styles";
-import { BarMessage } from "../../common/Messages";
-import { getRandomKey } from "../../utils/commonutils";
-import { useViewType } from "../DesktopView";
+import { Stack } from "@fluentui/react";
 import { CompoundButton } from "@fluentui/react-components";
-import { AlertMessage } from "../../common/AlertMessage";
 import { ProgressField } from "@fluentui/react-field";
+import { useState } from "react";
+import { IPushButton } from "../../interfaces/PushButton";
+import { RoutingRequest, Videohub } from "../../interfaces/Videohub";
+import { getRandomKey } from "../../utils/commonutils";
+import { getPostHeader } from "../../utils/fetchutils";
+import { useViewType } from "../DesktopView";
 
 interface InputProps {
   videohub?: Videohub,
   onRoutingUpdated?: (data: RoutingRequest) => void,
-  pushbuttons: PushButton[],
+  pushbuttons: IPushButton[],
 }
 
 interface RequestState {

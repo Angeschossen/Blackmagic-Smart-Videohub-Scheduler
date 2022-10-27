@@ -4,6 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import prismadb from '../../../database/prisma';
 import { sanitizeUser } from "../users/[pid]";
 
+const VERSION = "0.1.0"
+
 // import EmailProvider from "next-auth/providers/email"
 // import AppleProvider from "next-auth/providers/apple"
 
@@ -88,7 +90,8 @@ export default NextAuth({
       // Send properties to the client, like an access_token and user id from a provider.
       //session.accessToken = token.accessToken;
       session.user = token.user
-      return session;
+      session.version = VERSION
+      return session
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
