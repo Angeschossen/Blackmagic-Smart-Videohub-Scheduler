@@ -25,7 +25,7 @@ const columns: DataTableColumn[] = [
 ]
 
 export const PushButtonsTableView = (props: { videohub: Videohub, buttons: IPushButton[], onButtonUpdate: (button: IPushButton, action: "create" | "update" | "delete") => void, user: User }) => {
-    const canSchedule: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE)
+    const canSchedule: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_SCHEDULE)
 
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []

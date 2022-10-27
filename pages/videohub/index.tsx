@@ -80,7 +80,7 @@ export function getVideohub(videohubs: Videohub[], id: number) {
     }
   }
 
-  return undefined;
+  return undefined
 }
 
 const VideohubView = (props: VideohubViewProps) => {
@@ -155,7 +155,7 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <h1>Push Buttons</h1>
         <Button
-          disabled={videohub == undefined || !canEditPushButtons}
+          disabled={videohub.videohub == undefined || !canEditPushButtons}
           onClick={() => {
             if (videohub.videohub == undefined) {
               return

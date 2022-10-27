@@ -67,7 +67,7 @@ module.exports = {
             this.addRole(role)
         }
 
-        const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_OUTPUT_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT])
+        const adminRole = new Role(this.ROLE_ADMIN_ID, false, "Admin", [permissions.PERMISSION_VIDEOHUB_EDIT, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_SCHEDULE, permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT, permissions.PERMISSION_ROLE_EDIT, permissions.PERMISSION_USER_EDIT])
         roles.set(adminRole.id, adminRole) // override
 
         // create necesarry roles
