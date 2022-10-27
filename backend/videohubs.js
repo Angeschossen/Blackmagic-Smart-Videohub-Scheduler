@@ -385,11 +385,11 @@ class Videohub {
     }
 
     checkConnectionHealth() {
-        this.info("Checking connection health.");
+        //this.info("Checking connection health.");
 
         const hub = this;
         checkConnection(this.data.ip, VIDEOHUB_PORT, 5000).then(function () {
-            hub.info("Connection is healthy.");
+            //hub.info("Connection is healthy.");
             hub.checkConnectionHealthId = setTimeout(() => {
                 hub.checkConnectionHealth();
             }, CONNECTION_HEALT_CHECK_INTERVAL);
