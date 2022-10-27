@@ -1,11 +1,11 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
-import * as videohubs from '../../../backend/videohubs'
-import { sendRoutingUpdate } from '../../../backend/videohubs';
-import prismadb from '../../../database/prisma';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
+import * as videohubs from '../../../backend/videohubs';
+import { sendRoutingUpdate } from '../../../backend/videohubs';
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
 import { isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
+import prismadb from '../../../database/prisma';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[]

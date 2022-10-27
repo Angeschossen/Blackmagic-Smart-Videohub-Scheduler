@@ -1,30 +1,22 @@
-import { Stack, IStackStyles } from '@fluentui/react';
-import React, { Key, useEffect, useState } from 'react';
-import Router from 'next/router'
-import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
-import { Output, Videohub } from '../../components/interfaces/Videohub';
-import DataTable, { DataTableColumn, DataTableItem } from '../../components/DataTableNew';
-import { getRandomKey } from '../../components/utils/commonutils';
-import { PushButton } from '../../components/interfaces/PushButton';
-import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
-import { VideohubPage } from '../../components/videohub/VideohubPage';
-import SelectVideohub from '../../components/buttons/SelectVideohubNew';
-import { useViewType } from '../../components/views/DesktopView';
-import { useSession } from 'next-auth/react';
-import { useClientSession } from '../../components/auth/ClientAuthentication';
-import Permissions from '../../backend/authentication/Permissions';
-import io from "socket.io-client";
-import { TableCellLayout } from "@fluentui/react-components/unstable";
+import { Stack } from '@fluentui/react';
 import { Button } from '@fluentui/react-components';
-import { Clock12Filled } from '@fluentui/react-icons';
-import OutputView from './events';
-import { OutputsView } from '../../components/views/OutputsView';
-import { User } from '../../components/interfaces/User';
-import { retrieveUserServerSide } from '../api/users/[pid]';
+import Router from 'next/router';
+import React, { useEffect } from 'react';
+import io from "socket.io-client";
+import Permissions from '../../backend/authentication/Permissions';
+import { useClientSession } from '../../components/auth/ClientAuthentication';
 import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
+import SelectVideohub from '../../components/buttons/SelectVideohubNew';
+import { IPushButton } from '../../components/interfaces/PushButton';
+import { User } from '../../components/interfaces/User';
+import { Output, Videohub } from '../../components/interfaces/Videohub';
+import { VideohubPage } from '../../components/videohub/VideohubPage';
+import { useViewType } from '../../components/views/DesktopView';
+import { OutputsView } from '../../components/views/OutputsView';
 import { PushButtonsList } from '../../components/views/pushbuttons/PushButtonsView';
-import { Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
+import { retrieveUserServerSide } from '../api/users/[pid]';
+import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 
 
 export function getPostHeader(e: any): RequestInit {
@@ -38,7 +30,7 @@ export function getPostHeader(e: any): RequestInit {
   };
 }
 
-async function retrievePushButtons(videohub: number): Promise<PushButton[]> {
+async function retrievePushButtons(videohub: number): Promise<IPushButton[]> {
   return (await fetch('/api/pushbuttons/get', getPostHeader({ videohub_id: videohub })).then()).json();
 }
 
@@ -77,7 +69,7 @@ export async function getServerSideProps(context: any) {
 interface VideohubViewProps {
   videohubs: Videohub[],
   videohub: number,
-  pushbuttons: PushButton[],
+  pushbuttons: IPushButton[],
   user: User,
 }
 

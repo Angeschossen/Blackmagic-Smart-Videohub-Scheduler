@@ -1,9 +1,6 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import NextAuth from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import GoogleProvider from "next-auth/providers/google"
-import { OPTIMIZED_FONT_PROVIDERS } from "next/dist/shared/lib/constants";
-import { getRoleById } from "../../../backend/backend";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import prismadb from '../../../database/prisma';
 import { sanitizeUser } from "../users/[pid]";
 

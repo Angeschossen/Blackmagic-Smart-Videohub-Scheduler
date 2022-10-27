@@ -1,7 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions from "../../../backend/authentication/Permissions";
-import { addRole, getRoleById } from "../../../backend/backend";
+import { getRoleById } from "../../../backend/backend";
 import { checkServerPermission, getUserIdFromToken } from "../../../components/auth/ServerAuthentication";
 import { Role, User } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";

@@ -1,19 +1,16 @@
-import '../styles/globals.css'
-import type { AppProps } from 'next/app'
-import Layout from '../components/Layout'
 import { initializeIcons } from '@fluentui/react';
-import React from 'react';
-import { SessionProvider } from "next-auth/react"
-import { Session } from 'next-auth';
-import { ProtectedPage } from '../components/common/ProtectedPage';
 import {
   createDOMRenderer,
   FluentProvider,
-  GriffelRenderer,
-  SSRProvider as OrgiginalSSRProvider,
-  RendererProvider,
-  webLightTheme,
+  GriffelRenderer, RendererProvider, SSRProvider as OrgiginalSSRProvider, webLightTheme
 } from '@fluentui/react-components';
+import { Session } from 'next-auth';
+import { SessionProvider } from "next-auth/react";
+import type { AppProps } from 'next/app';
+import React from 'react';
+import { ProtectedPage } from '../components/common/ProtectedPage';
+import Layout from '../components/Layout';
+import '../styles/globals.css';
 
 
 type EnhancedAppProps = AppProps<{ session: Session }> & { renderer?: GriffelRenderer };

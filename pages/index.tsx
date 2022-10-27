@@ -1,14 +1,9 @@
-import { DefaultButton, DetailsHeader, Link, MessageBar, MessageBarButton, MessageBarType, Stack } from '@fluentui/react'
-import { DismissCircleRegular, DoorArrowRight16Filled, DoorArrowRight16Regular, DoorArrowRightFilled } from '@fluentui/react-icons'
-import type { NextPage } from 'next'
+import { Stack } from '@fluentui/react'
+import { DoorArrowRightFilled } from '@fluentui/react-icons'
 import { signOut, useSession } from 'next-auth/react'
-import Head from 'next/head'
-import Image from 'next/image'
-import Login from '../components/auth/Login'
 import { AlertMessage } from '../components/common/AlertMessage'
 import { VideohubActivity } from '../components/interfaces/Videohub'
 import { VideohubActivityView } from '../components/views/VideohubActivityView'
-import styles from '../styles/Home.module.css'
 import { getVideohubActivityServerSide } from './api/videohubs/[pid]'
 
 export async function getServerSideProps(context: any) {

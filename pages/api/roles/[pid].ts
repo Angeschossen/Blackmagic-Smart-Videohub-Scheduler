@@ -1,4 +1,4 @@
-import { prisma, RoleOutput, RolePermission } from "@prisma/client";
+import { RoleOutput, RolePermission } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 import Permissions, { toggleablePermissions } from "../../../backend/authentication/Permissions";
 import { addRole, getRoleById, getRoles, removeRole, setRoleOutputs, setRolePermissions } from "../../../backend/backend";

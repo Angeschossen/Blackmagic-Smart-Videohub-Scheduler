@@ -183,7 +183,7 @@ module.exports = {
         }
     }, setup: async function () {
         await this.setupRoles()
-        await videohubs.loadData()
+        await videohubs.setup()
 
         // set
         videohubs.getVideohubs().forEach(async hub => {
@@ -195,8 +195,5 @@ module.exports = {
                 }
             }), true)
         })
-
-        videohubs.connect()
-        videohubs.scheduleButtons()
     },
 }

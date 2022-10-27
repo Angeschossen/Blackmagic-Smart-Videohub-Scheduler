@@ -46,6 +46,7 @@ class Button {
         this.info(`Next trigger is in ${diff / 1000} second(s).`)
 
         this.scheduledTrigger = setTimeout(async () => {
+            this.info(`Executing button ${trigger.pushbutton_id}.`)
             const actions = await prismadb.pushButtonAction.findMany({
                 where: {
                     pushbutton_id: trigger.pushbutton_id
