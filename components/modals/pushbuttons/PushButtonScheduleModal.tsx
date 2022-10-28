@@ -1,7 +1,7 @@
 import { Stack } from "@fluentui/react";
 import { Button, InputProps, Label, useId } from "@fluentui/react-components";
 import { Dropdown, InputField, Option } from "@fluentui/react-components/unstable";
-import { DeleteRegular } from "@fluentui/react-icons";
+import { AddRegular, DeleteRegular } from "@fluentui/react-icons";
 import React from "react";
 import { InputState } from "../../input/HandledInputField";
 import { IPushButton, IPushButtonTrigger } from "../../interfaces/PushButton";
@@ -207,6 +207,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
                 {triggers.map((trigger, index) => createTriggerComponent(trigger, `trigger_${index}`))}
             </Stack>
             <Button
+                icon={<AddRegular />}
                 onClick={() => {
                     const arr = [...triggers]
                     arr.push({ id: "null", pushbutton_id: props.button.id, time: getDefaultDate(), days: [] })

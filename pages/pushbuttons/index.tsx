@@ -1,5 +1,6 @@
 import { Stack } from "@fluentui/react";
 import { Button } from "@fluentui/react-components";
+import { AddRegular } from "@fluentui/react-icons";
 import React from "react";
 import { IPushButton } from "../../components/interfaces/PushButton";
 import { User } from "../../components/interfaces/User";
@@ -89,7 +90,7 @@ const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: IPushButton
                     videohub={videohub}
                     buttons={buttons}
                     trigger={
-                        <Button>
+                        <Button icon={<AddRegular />}>
                             Add
                         </Button>}
                     onButtonUpdate={onButtonUpdate} />

@@ -1,5 +1,6 @@
 import { IStackStyles, IStackTokens, Stack } from "@fluentui/react";
 import { Button } from '@fluentui/react-components';
+import { AddRegular } from "@fluentui/react-icons";
 import * as React from 'react';
 import SelectVideohub from "../../components/buttons/SelectVideohubNew";
 import { Role, User } from "../../components/interfaces/User";
@@ -57,9 +58,12 @@ export const Default = (props: InputProps) => {
           onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
         <RoleModal
           roles={roles}
-          trigger={<Button>
-            Add Role
-          </Button>}
+          trigger={
+            <Button
+              icon={<AddRegular />}>
+              Add Role
+            </Button>
+          }
           onRoleCreate={(role: Role) => {
             const arr = [...roles]
             arr.push(role)

@@ -1,5 +1,6 @@
 import { Stack } from '@fluentui/react';
 import { Button } from '@fluentui/react-components';
+import { EditRegular } from '@fluentui/react-icons';
 import Router from 'next/router';
 import React, { useEffect } from 'react';
 import io from "socket.io-client";
@@ -155,6 +156,7 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <h1>Push Buttons</h1>
         <Button
+          icon={<EditRegular />}
           disabled={videohub.videohub == undefined || !canEditPushButtons}
           onClick={() => {
             if (videohub.videohub == undefined) {

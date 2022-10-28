@@ -1,5 +1,6 @@
 import { Button } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
+import { CalendarAddRegular, CalendarEditRegular, EditRegular } from "@fluentui/react-icons";
 import Permissions from "../../../backend/authentication/Permissions";
 import { useClientSession } from "../../auth/ClientAuthentication";
 import DataTable, { DataTableColumn, DataTableItem } from "../../DataTableNew";
@@ -14,7 +15,7 @@ const columns: DataTableColumn[] = [
         label: 'Name'
     },
     {
-        label: 'Actions'
+        label: 'Description'
     },
     {
         label: 'Edit'
@@ -37,8 +38,8 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: IPush
                 <TableCellLayout key={`${key}_name`}>
                     {button.label}
                 </TableCellLayout>,
-                <TableCellLayout key={`${key}_actions`}>
-                    {button.actions.length} Action(s)
+                <TableCellLayout key={`${key}_description`}>
+                    {button.description || `${button.actions.length} Action(s)`}
                 </TableCellLayout>,
                 <TableCellLayout key={`${key}_edit`}>
                     <EditPushButtonModal
@@ -48,7 +49,7 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: IPush
                         buttons={props.buttons}
                         button={button}
                         trigger={
-                            <Button>
+                            <Button icon={<EditRegular />}>
                                 Edit
                             </Button>
                         }
@@ -56,9 +57,11 @@ export const PushButtonsTableView = (props: { videohub: Videohub, buttons: IPush
                 </TableCellLayout>,
                 <TableCellLayout key={`${key}_schedule`}>
                     <PushButtonScheduleModal
-                        button={button} 
+                        button={button}
                         trigger={
-                            <Button disabled={!canSchedule}>
+                            <Button
+                                icon={<CalendarEditRegular />}
+                                disabled={!canSchedule}>
                                 Schedule
                             </Button>
                         } />

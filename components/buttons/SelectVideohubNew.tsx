@@ -1,5 +1,6 @@
 import { IIconProps } from "@fluentui/react";
 import { Menu, MenuButton, MenuItem, MenuItemRadio, MenuList, MenuPopover, MenuProps, MenuTrigger } from "@fluentui/react-components";
+import { AddRegular } from "@fluentui/react-icons";
 import React from "react";
 import Permissions from "../../backend/authentication/Permissions";
 import { useClientSession } from "../auth/ClientAuthentication";
@@ -50,6 +51,7 @@ export const SelectVideohub = (props: InputProps) => {
                             </MenuItemRadio>
                         )}
                         <MenuItem
+                            icon={<AddRegular />}
                             disabled={!canEdit}
                             onClick={() => {
                                 setOpen(true)
@@ -61,7 +63,7 @@ export const SelectVideohub = (props: InputProps) => {
                 </MenuPopover>
             </Menu>
             <EditVideohubModal
-            key={modalKey}
+                key={modalKey}
                 open={open}
                 onOpenChange={(state: boolean) => setOpen(state)}
                 videohubs={props.videohubs}
