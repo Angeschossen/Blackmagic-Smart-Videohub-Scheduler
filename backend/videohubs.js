@@ -275,7 +275,7 @@ class Videohub {
     }
 
     async scheduleButtons() {
-        this.info(`[${new Date().toLocaleDateString()}] Scheduling buttons...`)
+        this.info(`[${new Date().toLocaleString()}] Scheduling buttons...`)
 
         if (!this.isConnected()) {
             this.info("Can't schedule, since not connected")
@@ -763,7 +763,7 @@ function scheduleButtonsAtMidnight() {
     }
 
     cronMidnight = new CronJob('0 0 0 * * *', async function () {
-        console.log(`${new Date().toLocaleDateString()} Executing nightly cronjob.`)
+        console.log(`${new Date().toLocaleString()} Executing nightly cronjob.`)
         for (const hub of module.exports.getClients()) {
             await hub.scheduleButtons()
         }
