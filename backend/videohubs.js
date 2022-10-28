@@ -3,6 +3,7 @@ const prismadb = require('../database/prisma');
 const emit = require('./socketio').emit;
 const pushbuttons = require('./pushbuttons');
 const { retrievescheduledButton } = require('./pushbuttons');
+const CronJob = require('cron').CronJob;
 
 const ICON_ERROR = "Error";
 const ICON_SUCCESS = "Accept";
@@ -274,7 +275,13 @@ class Videohub {
     }
 
     async scheduleButtons() {
-        this.info("Scheduling buttons...")
+        this.info(`[${new Date().toLocaleDateString()}] Scheduling buttons...`)
+
+        if (!this.isConnected()) {
+            this.info("Can't schedule, since not connected")
+            return
+        }
+
         this.stopScheduledButtons()
         this.scheduledButtons = await pushbuttons.retrieveScheduledButtonsToday(this)
 
@@ -749,7 +756,25 @@ class Videohub {
     }
 }
 
-function scheduleButtons() {
+let cronMidnight = undefined
+function scheduleButtonsAtMidnight() {
+    if (cronMidnight != undefined) {
+        throw Error("Nightly cronjob already started.")
+    }
+
+    cronMidnight = new CronJob('0 0 0 * * *', async function () {
+        console.log(`${new Date().toLocaleDateString()} Executing nightly cronjob.`)
+        for (const hub of module.exports.getClients()) {
+            await hub.scheduleButtons()
+        }
+    },
+        null, // on stop function
+        true // start right now
+    )
+
+    console.log("Nightly cronjob started.")
+
+    /*
     const now = new Date()
     const night = new Date(
         now.getFullYear(),
@@ -766,7 +791,7 @@ function scheduleButtons() {
         }
 
         scheduleButtons()
-    }, diff)
+    }, diff) */
 }
 
 if (global.videohubs == undefined) {
@@ -839,7 +864,7 @@ module.exports = {
             hub.reconnect(true)
         }
 
-        scheduleButtons()
+        scheduleButtonsAtMidnight()
     },
     sendRoutingUpdate: function (request) {
         const videohubClient = module.exports.getClient(request.videohub_id);
