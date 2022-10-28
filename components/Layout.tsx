@@ -33,12 +33,12 @@ const Layout = (a: LayoutProps) => {
   const [ready, setReady] = useState(false);
   const isDekstop = useViewType();
   useEffect(() => {
-    setReady(true);
+    setReady(true)
   }, [])
 
   return (
     <>
-      {ready ?
+      {true ?
         <Stack>
           <Navigation />
           <Stack styles={isDekstop ? StackStylesDesktop : StackStylesMobile}>
