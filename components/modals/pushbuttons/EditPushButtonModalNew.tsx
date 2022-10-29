@@ -204,10 +204,11 @@ export const EditPushButtonModal = (props: Props) => {
                 return Promise.resolve("Please specify at leat one complete routing with an input and output.")
             }}>
             <Stack horizontal tokens={stackTokens}>
-                <Stack.Item tokens={stackTokens}>
+                <Stack.Item>
                     <div className={styles.root}>
                         <Label htmlFor={inputNameId}>Name</Label>
                         <InputField
+                            input={{ style: { width: 248 } }}
                             value={name.value}
                             onChange={onChangeName}
                             id={inputNameId}
@@ -216,6 +217,7 @@ export const EditPushButtonModal = (props: Props) => {
                         />
                         <Label htmlFor={inputDescriptionId}>Description</Label>
                         <TextareaField
+                            textarea={{ style: { width: 268 } }}
                             size="small"
                             value={description.value}
                             onChange={onChangeDescription}
