@@ -191,7 +191,7 @@ export const EditPushButtonModal = (props: Props) => {
                         const buttonNew = {
                             ...r,
                             triggers: props.button?.triggers || [],
-                            actions: actions,
+                            actions: (r as any).actions,
                             color: r.color || undefined,
                         }
 

@@ -222,7 +222,7 @@ export default async function handler(
             }
 
             await handleButtonReSchedule(videohub_id, buttonId)
-      
+
             sendResponseValid(req, res)
             return
         }
