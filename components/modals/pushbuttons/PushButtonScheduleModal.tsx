@@ -47,6 +47,7 @@ const days: Day[] = [
 
 const Trigger = (props: {
     trigger: IPushButtonTrigger,
+    num: number,
     onSelectDay: (index: number) => void,
     onChangeTime: (value: string) => void,
     onDelete: () => void,
@@ -72,6 +73,7 @@ const Trigger = (props: {
     return (
         <Stack tokens={{ childrenGap: 10 }}>
             <Stack.Item>
+                <h3>#{props.num}</h3>
                 <div className={styles.root}>
                     <Label htmlFor={inputTimeId}>Time</Label>
                     <InputField
@@ -88,6 +90,7 @@ const Trigger = (props: {
                 <div className={styles.root}>
                     <Label htmlFor={inputDaysId}>Days</Label>
                     <Dropdown
+                        style={{ maxWidth: 200 }}
                         multiselect
                         id={inputDaysId}
                         defaultSelectedOptions={props.trigger.days.map((day: number) => days[day].label)}
@@ -157,14 +160,15 @@ function getDefaultDate() {
 export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: JSX.Element, }) => {
     const [triggers, setTriggers] = React.useState<IPushButtonTrigger[]>(props.button.triggers.length == 0 ? [{ id: "null", pushbutton_id: props.button.id, time: getDefaultDate(), days: [] }] : collectTriggers(props.button))
 
-    function createTriggerComponent(trigger: IPushButtonTrigger, id: string) {
+    function createTriggerComponent(trigger: IPushButtonTrigger, index: number) {
         if (!(trigger.time instanceof Date)) {
             trigger.time = convertTriggerTime(trigger.time)
         }
 
         return (
             <Trigger
-                key={id}
+                num={index + 1}
+                key={`trigger_${index}`}
                 trigger={trigger}
                 onSelectDay={function (value: number): void {
                     if (trigger.days.indexOf(value) === -1) {
@@ -204,7 +208,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
                 return Promise.resolve(undefined)
             }}>
             <Stack tokens={stackTokens}>
-                {triggers.map((trigger, index) => createTriggerComponent(trigger, `trigger_${index}`))}
+                {triggers.map((trigger, index) => createTriggerComponent(trigger, index))}
             </Stack>
             <Button
                 icon={<AddRegular />}
