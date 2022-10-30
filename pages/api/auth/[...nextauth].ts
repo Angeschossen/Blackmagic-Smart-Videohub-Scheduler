@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { User } from "../../../components/interfaces/User";
 import prismadb from '../../../database/prisma';
 import { retrieveUserExists, retrieveUserServerSide, sanitizeUser } from "../users/[pid]";
 
@@ -77,17 +78,17 @@ export default NextAuth({
   providers: prodivers,
   callbacks: {
     async jwt({ token, user, account, profile, isNewUser }: any) {
-      console.log("JWT")
-      //console.log(await retrieveUserServerSide(user.id))
       // Persist the OAuth access_token and or the user id to the token right after signin
       if (user) {
         //token.accessToken = account.access_token;
         token.user = user
-      }
-
-      if (!await retrieveUserExists(token.user?.id)) {
-        console.log("USER DOESNT EXIST!!!!!!!!")
-        return undefined
+      } else {
+        const registeredUser: User | undefined = await retrieveUserServerSide(token.user?.id)
+        if (registeredUser == undefined) {
+          return undefined // user no longer exists
+        } else {
+          token.user = registeredUser
+        }
       }
 
       return token;
