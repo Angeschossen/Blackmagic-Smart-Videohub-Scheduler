@@ -193,8 +193,6 @@ class Output {
                 inputs.push(action.input_id)
             }
 
-            console.log(outputs)
-
             this.videohub.sendRoutingUpdateRequest(outputs, inputs).then(async result => {
                 if (result != undefined) {
                     await this.videohub.logActivity(`Scheduled routing update failed.`, ICON_ERROR);

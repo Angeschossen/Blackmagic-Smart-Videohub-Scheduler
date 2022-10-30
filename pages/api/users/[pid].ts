@@ -48,14 +48,11 @@ export async function retrieveUserExists(userId?: string) {
 }
 
 export async function retrieveUserServerSide(userId?: string) {
-    console.log(userId)
     if (userId == undefined) {
         return undefined
     }
 
     const cacheResult: User | undefined = usersCache.get(userId)
-    console.log("CACHE:")
-    console.log(cacheResult)
     if (cacheResult != undefined) {
         return cacheResult
     } else {
@@ -76,7 +73,6 @@ export async function retrieveUserServerSide(userId?: string) {
 
         const res: User | undefined = user == undefined ? undefined : sanitizeUser(user)
         usersCache.set(userId, res)
-        console.log("Set cache: " + res)
         return res
     }
 }
