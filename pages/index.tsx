@@ -1,5 +1,5 @@
 import { Stack } from '@fluentui/react'
-import { DoorArrowRightFilled } from '@fluentui/react-icons'
+import { DoorArrowRightFilled, DoorArrowRightRegular } from '@fluentui/react-icons'
 import { signOut, useSession } from 'next-auth/react'
 import { AlertMessage } from '../components/common/AlertMessage'
 import { VideohubActivity } from '../components/interfaces/Videohub'
@@ -39,7 +39,7 @@ const Home = (p: InputProps) => {
           message={`You're logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
           action={
             {
-              icon: <DoorArrowRightFilled aria-label="dismiss message" />,
+              icon: <DoorArrowRightRegular/>,
               onClick: () => {
                 signOut()
               }

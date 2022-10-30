@@ -11,6 +11,7 @@ import SelectVideohub from '../../components/buttons/SelectVideohubNew';
 import { IPushButton } from '../../components/interfaces/PushButton';
 import { User } from '../../components/interfaces/User';
 import { Output, Videohub } from '../../components/interfaces/Videohub';
+import { getPostHeader } from '../../components/utils/fetchutils';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
 import { useViewType } from '../../components/views/DesktopView';
 import { OutputsView } from '../../components/views/OutputsView';
@@ -19,17 +20,6 @@ import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
 import { retrieveUserServerSide } from '../api/users/[pid]';
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 
-
-export function getPostHeader(e: any): RequestInit {
-  return {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-
-    body: JSON.stringify(e),
-  };
-}
 
 async function retrievePushButtons(videohub: number): Promise<IPushButton[]> {
   return (await fetch('/api/pushbuttons/get', getPostHeader({ videohub_id: videohub })).then()).json();
@@ -57,7 +47,6 @@ export async function getServerSideProps(context: any) {
     buttons = []
   }
 
-  console.log(await retrieveUserServerSide(await getUserIdFromToken(context.req)))
   return {
     props: {
       user: JSON.parse(JSON.stringify(await retrieveUserServerSide(await getUserIdFromToken(context.req)))),

@@ -17,6 +17,6 @@
     "sourceMap": true,
     "outDir": "dist",
   },
-  "include": ["backend/server/custom_server.js", "next-env.d.ts", "types/**/*.ts", "**/*.ts", "**/*.tsx", "server.tsx", "database/prisma.js", "components/utils/DateUtils.js", "pages/api/socket.js"],
+  "include": ["backend/server/custom_server.js", "next-env.d.ts", "types/**/*.ts", "**/*.ts", "**/*.tsx", "server.tsx", "database/prisma.js", "components/utils/DateUtils.js", "pages/api/socket.js", "database/cache"],
   "exclude": ["node_modules"]
 }

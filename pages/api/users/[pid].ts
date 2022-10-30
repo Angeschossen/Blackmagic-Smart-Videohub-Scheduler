@@ -4,9 +4,13 @@ import { getRoleById } from "../../../backend/backend";
 import { checkServerPermission, getUserIdFromToken } from "../../../components/auth/ServerAuthentication";
 import { Role, User } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
+import { Cache } from "../../../database/cache/cache";
+import TTLCacheService from "../../../database/cache/ttlcache";
 import prismadb from '../../../database/prismadb';
 import { getRoleByIdBackendUsage, sanitizeRole } from "../roles/[pid]";
 
+
+const usersCache: Cache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 30 })
 
 export function sanitizeUser(user: any): User {
     return { id: user.id, username: user.username, role_id: user.role_id, role: sanitizeRole(user.role) }
@@ -33,29 +37,48 @@ export async function retrieveUsersServerSide() {
     return arr;
 
 }
+
 export async function retrieveUserServerSideByReq(req: any) {
     const id = await getUserIdFromToken(req)
     return id == undefined ? {} : await retrieveUserServerSide(id)
 }
 
-export async function retrieveUserServerSide(userId: string) {
-    console.log(userId)
-    const user = await prismadb.user.findUnique({
-        where: {
-            id: userId,
-        },
-        select: {
-            ...selectUserParams,
-            role: {
-                include: {
-                    permissions: true,
-                    outputs: true,
-                }
-            }
-        } // does include role
-    })
+export async function retrieveUserExists(userId?: string) {
+    return userId != undefined && await retrieveUserServerSide(userId) != undefined
+}
 
-    return user == undefined ? undefined : sanitizeUser(user)
+export async function retrieveUserServerSide(userId?: string) {
+    console.log(userId)
+    if (userId == undefined) {
+        return undefined
+    }
+
+    const cacheResult: User | undefined = usersCache.get(userId)
+    console.log("CACHE:")
+    console.log(cacheResult)
+    if (cacheResult != undefined) {
+        return cacheResult
+    } else {
+        const user = await prismadb.user.findUnique({
+            where: {
+                id: userId,
+            },
+            select: {
+                ...selectUserParams,
+                role: {
+                    include: {
+                        permissions: true,
+                        outputs: true,
+                    }
+                }
+            } // does include role
+        })
+
+        const res: User | undefined = user == undefined ? undefined : sanitizeUser(user)
+        usersCache.set(userId, res)
+        console.log("Set cache: " + res)
+        return res
+    }
 }
 
 export default async function handler(
@@ -156,6 +179,7 @@ export default async function handler(
                 }
             })
 
+            usersCache.delete(userId)
             sendResponseValid(req, res)
             return
         }
@@ -203,6 +227,7 @@ export default async function handler(
                 }
             })
 
+            usersCache.delete(userId)
             sendResponseValid(req, res)
             return
         }
