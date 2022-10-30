@@ -14,7 +14,6 @@ import { retrievePermissionsServerSide, retrieveRolesServerSide } from "../api/r
 import { retrieveUsersServerSide } from "../api/users/[pid]";
 import { retrieveVideohubsServerSide } from "../api/videohubs/[pid]";
 
-const stackStyles: Partial<IStackStyles> = { root: { height: 44 } };
 const tableStackTokens: IStackTokens = { childrenGap: 30 };
 
 
