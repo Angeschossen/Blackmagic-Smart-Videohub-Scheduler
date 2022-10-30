@@ -4,9 +4,9 @@ import messageHandler from "../../backend/utils/socketMessageHandler";
 export default function SocketHandler(req: any, res: any) {
     // it means that socket server was already initialised
     if (res.socket.server.io) {
-        console.log("Socket already set up.");
-        res.end();
-        return;
+        //console.log("Socket already set up.");
+        res.end()
+        return
     }
 
     console.log("Setting up socket...");
