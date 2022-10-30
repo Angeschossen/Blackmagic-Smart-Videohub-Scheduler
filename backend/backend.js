@@ -153,7 +153,7 @@ module.exports = {
         role.setPermissions(perms)
         return true
     }, setRoleOutputs: async function (roleId, videohubId, outputs, allowNonEditable) {
-        console.log("Setting role perms for role: " + roleId)
+        console.log("Setting role outputs for role: " + roleId)
 
         const role = roles.get(roleId)
         if (role == undefined || (!role.editable && !allowNonEditable)) {
