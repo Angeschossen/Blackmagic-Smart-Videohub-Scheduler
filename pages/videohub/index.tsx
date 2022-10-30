@@ -57,7 +57,6 @@ export async function getServerSideProps(context: any) {
     buttons = []
   }
 
-  console.log(context)
   console.log(await retrieveUserServerSide(await getUserIdFromToken(context.req)))
   return {
     props: {

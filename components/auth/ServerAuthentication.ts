@@ -26,6 +26,7 @@ export async function checkServerPermission(req: any, res: any, permission?: str
 
 export async function getUserIdFromToken(req: any) {
     const token: any = await getToken({ req: req });
+    console.log(token)
     return token.user.id
 }
 

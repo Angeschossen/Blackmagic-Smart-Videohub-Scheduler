@@ -39,6 +39,7 @@ export async function retrieveUserServerSideByReq(req: any) {
 }
 
 export async function retrieveUserServerSide(userId: string) {
+    console.log(userId)
     const user = await prismadb.user.findUnique({
         where: {
             id: userId,
