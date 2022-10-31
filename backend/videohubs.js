@@ -265,7 +265,6 @@ class Videohub {
         this.data = data
         this.requestQueque = []
         this.outputs = new Array(0)
-        this.inputs = []
         this.data.connected = false
         this.connectionAttempt = 0
         this.checkConnectionHealthId = undefined
@@ -461,7 +460,11 @@ class Videohub {
         client.on("data", async data => {
             data = data.toString();
             this.info("Received:\n" + data)
-            await this.handle_received(data);
+            try {
+                await this.handleReceivedData(data)
+            } catch (ex) {
+                console.log("Failed to handle received text: " + ex)
+            }
         })
 
         client.on("close", async () => {
@@ -546,7 +549,12 @@ class Videohub {
     }
 
     getOutput(id) {
-        return this.outputs[id];
+        const output = this.outputs[id]
+        if (output == undefined) {
+            throw Error("Output doesn't exist: " + id)
+        }
+
+        return output
     }
 
 
@@ -558,7 +566,7 @@ class Videohub {
         return this.data.inputs[id];
     }
 
-    async handle_received(text) {
+    async handleReceivedData(text) {
         const lines = getLines(text);
 
         let found = false;
@@ -595,7 +603,7 @@ class Videohub {
 
             case PROTOCOL_INPUT_LABELS: {
                 // inputs and outputs
-                this.data.inputs = [];
+                let i = 0
                 for (const line of getCorrespondingLines(lines, index)) {
                     const index = line.indexOf(" ");
                     const id = Number(line.substring(0, index));
@@ -616,31 +624,31 @@ class Videohub {
                         update: {
                             label: label,
                         }
-                    });
+                    })
 
-                    this.data.inputs.push({ id: id, label: label });
+                    this.data.inputs[id].label = label
+                    i++
                 }
 
-                return this.data.inputs.length;
+                return i
             }
 
             case PROTOCOL_OUTPUT_LABELS: {
                 // inputs and outputs
-                this.data.outputs = []
+                let i = 0
                 for (const line of getCorrespondingLines(lines, index)) {
                     const index = line.indexOf(" ")
                     const id = Number(line.substring(0, index))
                     const label = line.substring(index + 1)
 
                     const output = this.getOutput(id)
-                    if (output != undefined) {
-                        await output.save(label)
-                    }
+                    this.data.outputs[id].label = label
+                    await output.save(label)
 
-                    this.data.outputs.push({ id: id, label: label, input_id: undefined })
+                    i++
                 }
 
-                return this.data.outputs.length
+                return i
             }
 
             case PROTOCOL_VIDEOHUB_DEVICE: {
@@ -655,9 +663,31 @@ class Videohub {
                 if (outputs === 12 || outputs === 20 || outputs === 40) {
                     if (this.outputs.length === 0) {
                         this.outputs = new Array(outputs)
+
+                        let setOutputs = false
+                        if (this.data.outputs.length != outputs) { // because of db
+                            this.data.outputs = new Array(outputs)
+                            setOutputs = true
+                        }
+
+                        let setInputs = false
+                        if (this.data.inputs.length != outputs) { // because of db
+                            this.data.inputs = new Array(outputs)
+                            setInputs = true
+                        }
+
                         for (let i = 0; i < this.outputs.length; i++) {
                             const output = new Output(this, i)
                             this.outputs[i] = output
+
+                            if (setOutputs) {
+                                this.data.outputs[i] = { id: i, label: "Unkown", input_id: undefined }
+                            }
+
+                            if (setInputs) {
+                                this.data.inputs[i] = { id: i, label: "Unkown" }
+                            }
+
                             await output.save("Unknown")
                             //output.scheduleNextTrigger(new Date())
                         }
@@ -714,10 +744,6 @@ class Videohub {
 
     async updateRouting(output_id, input_id) {
         const output = this.getOutput(output_id)
-        if (output == undefined) {
-            throw Error("Output doesn't exist: " + output_id)
-        }
-
         const outputData = this.data.outputs[output_id]
         outputData.input_id = input_id
         output.updateRouting(input_id)
@@ -846,7 +872,7 @@ module.exports = {
             // turn into objects
             for (let i = 0; i < e.outputs.length; i++) {
                 const output = e.outputs[i]
-                e.outputs[i] = { id: output.id, label: output.label, input_id: undefined }
+                e.outputs[i] = { id: output.id, label: output.label, input_id: output.input_id }
                 const input = e.inputs[i];
                 e.inputs[i] = { id: input.id, label: input.label }
             }
