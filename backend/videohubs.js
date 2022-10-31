@@ -658,7 +658,7 @@ class Videohub {
                         for (let i = 0; i < this.outputs.length; i++) {
                             const output = new Output(this, i)
                             this.outputs[i] = output
-                            output.save("Unknown")
+                            await output.save("Unknown")
                             //output.scheduleNextTrigger(new Date())
                         }
 
@@ -715,7 +715,7 @@ class Videohub {
     async updateRouting(output_id, input_id) {
         const output = this.getOutput(output_id)
         if (output == undefined) {
-            return
+            throw Error("Output doesn't exist: " + output_id)
         }
 
         const outputData = this.data.outputs[output_id]
