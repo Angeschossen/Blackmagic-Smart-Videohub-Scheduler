@@ -5,26 +5,27 @@ const pushbuttons = require('./pushbuttons');
 const { retrievescheduledButton } = require('./pushbuttons');
 const CronJob = require('cron').CronJob;
 
+/* Icons */
 const ICON_ERROR = "Error";
-const ICON_SUCCESS = "Accept";
 const ICON_CONNECTION_SUCCESS = "NetworkTower";
 
+/* Videohub statics */
 const VIDEOHUB_PORT = 9990;
 const CONNECTION_HEALT_CHECK_INTERVAL = 60000;
-
 const REQUEST_TIMEOUT = 5000;
-const CLIENT_RECONNECT_INTERVAL_LOWEST = 5000;
-const CLIENT_RECONNECT_ATTEMPTS_LOWEST = 6; // 30 seconds
-const CLIENT_RECONNECT_INTERVAL_LOW = 120000;
-const CLIENT_RECONNECT_ATTEMPTS_LOW = 11; // 10 minutes
-const CLIENT_RECONNECT_INTERVAL_NORMAL = 300000;
-
 const REQUEST_RECONNECT_GRACE_TIME = 2000;
 
+/* Reconnect */
+const CLIENT_RECONNECT_INTERVAL_LOWEST = 5 * 1000; // 5 seconds
+const CLIENT_RECONNECT_ATTEMPTS_LOWEST = 6;
+const CLIENT_RECONNECT_INTERVAL_LOW = 2 * 60 * 1000; // 2 minutes
+const CLIENT_RECONNECT_ATTEMPTS_LOW = 11;
+const CLIENT_RECONNECT_INTERVAL_NORMAL = 4 * 60 * 1000; // 4 minutes
+
+/* Protocol */
 const PROTOCOL_CONFIGURATION = "CONFIGURATION:"
 const PROTOCOL_END_PRELUDE = "END PRELUDE:"
 const PROTOCOL_VIDEO_OUTPUT_LOCKS = "VIDEO OUTPUT LOCKS:"
-
 const PROTOCOL_INPUT_LABELS = "INPUT LABELS:"
 const PROTOCOL_PREAMPLE = "PROTOCOL PREAMBLE:"
 const PROTOCOL_ACKNOWLEDGED = "ACK";
