@@ -464,6 +464,7 @@ class Videohub {
                 await this.handleReceivedData(data)
             } catch (ex) {
                 console.log("Failed to handle received text: " + ex)
+                console.log(ex)
             }
         })
 
