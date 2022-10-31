@@ -1,5 +1,5 @@
 import { Stack } from '@fluentui/react';
-import { Button } from '@fluentui/react-components';
+import { Button, Tooltip } from '@fluentui/react-components';
 import { EditRegular } from '@fluentui/react-icons';
 import Router from 'next/router';
 import React, { useEffect } from 'react';
@@ -74,6 +74,10 @@ export function getVideohub(videohubs: Videohub[], id: number) {
   return undefined
 }
 
+function canEditPushButtons(canEditPushButtons: boolean, videohub?: Videohub) {
+  return videohub != undefined && canEditPushButtons
+}
+
 const VideohubView = (props: VideohubViewProps) => {
   const isDekstop = useViewType();
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
@@ -122,10 +126,10 @@ const VideohubView = (props: VideohubViewProps) => {
   function onSelectVideohub(hub: Videohub) {
     retrievePushButtons(hub.id).then(pushbuttons => {
       setVideohub({ videohub: hub, buttons: pushbuttons })
-    });
+    })
   }
 
-  const canEditPushButtons: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
+  const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
   return (
     <VideohubPage videohub={videohub.videohub}>
       <Stack horizontal>
@@ -145,21 +149,23 @@ const VideohubView = (props: VideohubViewProps) => {
       }
       <Stack.Item>
         <h1>Push Buttons</h1>
-        <Button
-          icon={<EditRegular />}
-          disabled={videohub.videohub == undefined || !canEditPushButtons}
-          onClick={() => {
-            if (videohub.videohub == undefined) {
-              return
-            }
+        <Tooltip content="Here you can create buttons to execute multiple routing updates at once." relationship="description">
+          <Button
+            icon={<EditRegular />}
+            disabled={!canEditPushButtons(canEdit, videohub.videohub)}
+            onClick={() => {
+              if (videohub.videohub == undefined) {
+                return
+              }
 
-            Router.push({
-              pathname: '../pushbuttons',
-              query: { videohub: videohub.videohub.id },
-            });
-          }}>
-          Edit
-        </Button>
+              Router.push({
+                pathname: '../pushbuttons',
+                query: { videohub: videohub.videohub.id },
+              });
+            }}>
+            Edit
+          </Button>
+        </Tooltip>
         <PushButtonsList
           pushbuttons={videohub.buttons}
           videohub={videohub.videohub}

@@ -1,5 +1,5 @@
 import { Stack } from "@fluentui/react";
-import { Button } from "@fluentui/react-components";
+import { Button, Tooltip } from "@fluentui/react-components";
 import { TableCellLayout } from "@fluentui/react-components/unstable";
 import { Delete16Regular } from '@fluentui/react-icons';
 import Permissions from "../../../backend/authentication/Permissions";
@@ -64,10 +64,12 @@ export const RolesView = (props: Props) => {
                 <TableCellLayout key={`${key}_permissions`}>
                     <CheckBoxModal
                         title={"Permissions"}
-                        description="Permissions are global."
-                        trigger={<Button disabled={!role.editable}>
-                            Permissions
-                        </Button>}
+                        description="Permissions are global and active for each videohub."
+                        trigger={
+                            <Button disabled={!role.editable}>
+                                Permissions
+                            </Button>
+                        }
                         handleSubmit={async function (checked: string[]): Promise<string | undefined> {
                             return fetch('/api/roles/setpermissions', getPostHeader({ role_id: role.id, permissions: checked })).then(res => {
                                 return undefined;
@@ -79,10 +81,14 @@ export const RolesView = (props: Props) => {
                 <TableCellLayout key={`${key}_outputs`}>
                     <CheckBoxModal
                         title={"Outputs"}
-                        description="Outputs are per videohub."
-                        trigger={<Button disabled={!role.editable}>
-                            Outputs
-                        </Button>}
+                        description="Outputs are given for each specific videohub."
+                        trigger={
+                            <Tooltip content={"Outputs are given for each videohub. You can change the videohub at the top."} relationship={"description"}>
+                                <Button disabled={!role.editable}>
+                                    Outputs
+                                </Button>
+                            </Tooltip>
+                        }
                         handleSubmit={async function (checked: string[]): Promise<string | undefined> {
                             const videohub: Videohub | undefined = props.videohub
                             if (videohub == undefined) {

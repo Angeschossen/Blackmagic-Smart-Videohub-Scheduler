@@ -199,6 +199,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
             {...props}
             title={"Triggers"}
             trigger={props.trigger}
+            description="You can add multiple triggers for each button. However, they can only be executed when the videohub is reachable."
             handleSubmit={async function (): Promise<string | undefined> {
                 const res = await fetch('/api/pushbuttons/setTriggers', getPostHeader({ pushbutton_id: props.button.id, videohub_id: props.button.videohub_id, actions: props.button.actions, triggers: triggers }))
                 if (res.status != 200) {

@@ -39,7 +39,7 @@ const Home = (p: InputProps) => {
           message={`You're logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
           action={
             {
-              icon: <DoorArrowRightRegular/>,
+              icon: <DoorArrowRightFilled/>,
               onClick: () => {
                 signOut()
               }
