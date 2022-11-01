@@ -7,6 +7,7 @@ class Button {
     constructor(videohub, id) {
         this.id = id
         this.videohub = videohub
+        this.success = false
     }
 
     info(msg) {
@@ -47,6 +48,7 @@ class Button {
 
         this.scheduledTrigger = setTimeout(async () => {
             this.info(`Executing button ${trigger.pushbutton_id}.`)
+            this.success = true // prevent getting stuck in case of error
             const actions = await prismadb.pushButtonAction.findMany({
                 where: {
                     pushbutton_id: trigger.pushbutton_id
