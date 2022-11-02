@@ -1,7 +1,7 @@
 import { PushButton, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
-import { getClient, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
+import { executeButton, getClient, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { IPushButton, IPushButtonTrigger, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
@@ -224,6 +224,17 @@ export default async function handler(
             await handleButtonReSchedule(videohub_id, buttonId)
 
             sendResponseValid(req, res)
+            return
+        }
+
+        case "execute": {
+            const buttonId: number | undefined = body.id;
+            const videohub_id: number | undefined = body.videohub_id
+            if (!hasParams(req, res, buttonId, videohub_id)) {
+                return
+            }
+            
+            sendResponseValid(req, res, { result: await executeButton(videohub_id, buttonId) })
             return
         }
 

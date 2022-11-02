@@ -7,7 +7,8 @@ const { retrievescheduledButton } = require('./pushbuttons');
 const CronJob = require('cron').CronJob;
 
 /* Icons */
-const ICON_ERROR = "Error";
+const ICON_ERROR = "Error"
+const ICON_SUCCESS = "Accept"
 const ICON_CONNECTION_SUCCESS = "NetworkTower";
 
 /* Videohub statics */
@@ -309,15 +310,16 @@ class Videohub {
     }
 
     async retryFailedButtons() {
-        for (const [key, failed] of this.failedButtonsCache.entries()) {
+        this.info("Retrying scheduled buttons.")
+        for (const [key, failed] of this.failedButtonsCache.getEntries()) {
             await this.executeButton(failed.id).then(async result => {
-                const label = await pushbuttons.getLabelOfButton(trigger.pushbutton_id)
+                const label = await pushbuttons.getLabelOfButton(failed.id)
 
                 if (result != undefined) {
-                    await this.videohub.logActivity(`Rescheduled button failed: ${label}`, ICON_ERROR)
+                    await this.logActivity(`Rescheduled button failed: ${label}`, ICON_ERROR)
                     // dont remove. They will be removed when ttl expires
                 } else {
-                    await this.videohub.logActivity(`Rescheduled button was successful: ${label}`, ICON_SUCCESS)
+                    await this.logActivity(`Rescheduled button was successful: ${label}`, ICON_SUCCESS)
                     this.failedButtonsCache.delete(failed.id) // only remove if success
                 }
             })
@@ -366,6 +368,7 @@ class Videohub {
             }
         }
 
+        // not in arr yet
         const button = await retrievescheduledButton(this, buttonId, new Date())
         if (button != undefined) {
             this.scheduledButtons.push(button)
@@ -507,12 +510,13 @@ class Videohub {
             this.connectionAttempt = 0
             this.clearReconnect()
             this.scheduleCheckConnectionHealth()
-            await this.retryFailedButtons()
             this.onUpdate()
 
             if (!isInitial) {
                 await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS);
             }
+
+            await this.retryFailedButtons()
         });
 
         client.on("data", async data => {
@@ -562,9 +566,6 @@ class Videohub {
             this.client.removeAllListeners();
             this.client.destroy();
             this.client = undefined;
-
-            // stop schedules
-            this.stopScheduledButtons()
         }
 
         const wasConnected = this.data.connected;
@@ -761,15 +762,15 @@ class Videohub {
             }
 
             case PROTOCOL_VIDEO_OUTPUT_ROUTING: {
-                let i = 0;
+                let i = 0
                 for (const line of getCorrespondingLines(lines, index)) {
                     const data = line.split(" ")
-                    await this.updateRouting(Number(data[0]), Number(data[1]));
-                    i++;
+                    await this.updateRouting(Number(data[0]), Number(data[1]))
+                    i++
                 }
 
-                this.onUpdate();
-                return i;
+                this.onUpdate()
+                return i
             }
 
             case PROTOCOL_ACKNOWLEDGED: {
@@ -778,20 +779,22 @@ class Videohub {
                     throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.")
                 }
 
+
                 request.onSuccess()
+                this.info("Routing update acknowledged.")
                 return 1
             }
 
             case PROTOCOL_CONFIGURATION: {
-                return 1;
+                return 1; // skip them all 
             }
 
             case PROTOCOL_END_PRELUDE: {
-                return 1;
+                return 0; // nothing to skip, if we would return 1, then unexpected results since it's only one line ++
             }
 
             case PROTOCOL_VIDEO_OUTPUT_LOCKS: {
-                return 1;
+                return 1; // skip them all
             }
 
             default: {
@@ -813,7 +816,7 @@ class Videohub {
         })*/
 
         this.data.lastRoutingUpdate = new Date()
-        output.save(outputData.label)
+        await output.save(outputData.label)
     }
 
     async save() {
@@ -932,13 +935,21 @@ module.exports = {
 
         scheduleButtonsAtMidnight()
     },
-    sendRoutingUpdate: function (request) {
-        const videohubClient = module.exports.getClient(request.videohub_id);
+    sendRoutingUpdate: function (videohub_id, outputs, inputs) {
+        const videohubClient = module.exports.getClient(videohub_id);
         if (videohubClient == undefined) {
-            throw Error("Client not found: " + request.videohub_id);
+            throw Error("Client not found: " + videohub_id);
         }
 
-        return videohubClient.sendRoutingUpdateRequest(request.outputs, request.inputs);
+        return videohubClient.sendRoutingUpdateRequest(outputs, inputs)
+    },
+    executeButton: function (videohub_id, button_id) {
+        const videohubClient = module.exports.getClient(videohub_id);
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + videohub_id);
+        }
+
+        return videohubClient.executeButton(button_id)
     },
     handleButtonReSchedule: async function (videohubId, buttonId) {
         const videohubClient = module.exports.getClient(videohubId);

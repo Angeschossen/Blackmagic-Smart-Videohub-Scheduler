@@ -4,7 +4,7 @@ import * as videohubs from '../../../backend/videohubs';
 import { sendRoutingUpdate } from '../../../backend/videohubs';
 import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
 import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
-import { isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
+import { hasParams, isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prisma';
 
 export function retrieveVideohubsServerSide() {
@@ -59,7 +59,15 @@ export default async function handler(
                 return
             }
 
-            sendResponseValid(req, res, { result: await sendRoutingUpdate(req.body as RoutingRequest) })
+            const body = req.body
+            const videohub_id = body.videohub_id
+            const outputs = body.outputs
+            const inputs = body.inputs
+            if (!hasParams(req, res, videohub_id, outputs, inputs)) {
+                return
+            }
+
+            sendResponseValid(req, res, { result: await sendRoutingUpdate(videohub_id, outputs, inputs) })
             return
         }
 
