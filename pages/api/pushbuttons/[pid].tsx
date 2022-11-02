@@ -1,7 +1,7 @@
 import { PushButton, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
-import { handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
+import { getClient, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { IPushButton, IPushButtonTrigger, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
@@ -244,7 +244,7 @@ export default async function handler(
                 }
             })
 
-
+            handleButtonDeletion(id)
             sendResponseValid(req, res)
             return
         }
