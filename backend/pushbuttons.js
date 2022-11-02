@@ -7,7 +7,6 @@ class Button {
     constructor(videohub, id) {
         this.id = id
         this.videohub = videohub
-        this.success = false
     }
 
     info(msg) {
@@ -22,6 +21,7 @@ class Button {
         this.stopSchedule()
 
         const next = await this.retrieveUpcomingTriggers(date)
+        this.info(`Retrieved ${next.length} upcoming triggers.`)
         if (next.length === 0) {
             return
         }
@@ -47,44 +47,14 @@ class Button {
         this.info(`Next trigger is in ${diff / 1000} second(s).`)
 
         this.scheduledTrigger = setTimeout(async () => {
-            this.info(`Executing button ${trigger.pushbutton_id}.`)
-            this.success = true // prevent getting stuck in case of error
-            const actions = await prismadb.pushButtonAction.findMany({
-                where: {
-                    pushbutton_id: trigger.pushbutton_id
-                },
-                select: {
-                    output_id: true,
-                    input_id: true,
-                }
-            })
+            await this.videohub.executeButton(trigger.pushbutton_id).then(async result => {
+                const label = await module.exports.getLabelOfButton(trigger.pushbutton_id)
 
-            if (actions.length === 0) {
-                this.info("Scheduled button doesn't exist any longer.")
-                return
-            }
-
-            const label = await prismadb.pushButton.findUnique({
-                where: {
-                    id: trigger.pushbutton_id
-                },
-                select: {
-                    label: true,
-                }
-            }).then(res => res.label)
-
-            const outputs = []
-            const inputs = []
-            for (const action of actions) {
-                outputs.push(action.output_id)
-                inputs.push(action.input_id)
-            }
-
-            this.videohub.sendRoutingUpdateRequest(outputs, inputs).then(async result => {
                 if (result != undefined) {
-                    await this.videohub.logActivity(`Scheduled button execution failed: ${label}`, ICON_ERROR);
+                    this.videohub.addFailedButton(this)
+                    await this.videohub.logActivity(`Scheduled button failed: ${label}`, ICON_ERROR);
                 } else {
-                    await this.videohub.logActivity(`Scheduled button execution was successful: ${label}`, ICON_SUCCESS);
+                    await this.videohub.logActivity(`Scheduled button was successful: ${label}`, ICON_SUCCESS);
                 }
 
                 // go to next
@@ -114,6 +84,17 @@ class Button {
 }
 
 module.exports = {
+    getLabelOfButton: async function (buttonId) {
+        const label = await prismadb.pushButton.findUnique({
+            where: {
+                id: buttonId
+            },
+            select: {
+                label: true,
+            }
+        }).then(res => res.label)
+        return label
+    },
     retrievescheduledButton: async function (videohub, buttonId, time) {
         const res = await prismadb.pushButtonTrigger.findFirst({
             where: {

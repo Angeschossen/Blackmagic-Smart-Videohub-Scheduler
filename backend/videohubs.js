@@ -1,4 +1,5 @@
 const net = require('net');
+const TTLCacheService = require('../database/cache/ttlcache');
 const prismadb = require('../database/prisma');
 const emit = require('./socketio').emit;
 const pushbuttons = require('./pushbuttons');
@@ -270,16 +271,61 @@ class Videohub {
         this.checkConnectionHealthId = undefined
         this.data.lastRoutingUpdate = new Date()
         this.scheduledButtons = []
+        this.failedButtonsCache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 30 }) // keep them 30 minutes until they expire
+    }
+
+    addFailedButton(button) {
+        this.info(`Adding failed button ${button.id}.`)
+        button.stopSchedule() // make sure it's always stopped, fallback
+        this.failedButtonsCache.set(button.id, button)
+    }
+
+    async executeButton(buttonId) {
+        this.info(`Executing button ${buttonId}.`)
+
+        const actions = await prismadb.pushButtonAction.findMany({
+            where: {
+                pushbutton_id: buttonId,
+            },
+            select: {
+                output_id: true,
+                input_id: true,
+            }
+        })
+
+        if (actions.length === 0) {
+            this.info("Button doesn't exist any longer.")
+            return
+        }
+
+        const outputs = []
+        const inputs = []
+        for (const action of actions) {
+            outputs.push(action.output_id)
+            inputs.push(action.input_id)
+        }
+
+        return this.sendRoutingUpdateRequest(outputs, inputs)
+    }
+
+    async retryFailedButtons() {
+        for (const [key, failed] of this.failedButtonsCache.entries()) {
+            await this.executeButton(failed.id).then(async result => {
+                const label = await pushbuttons.getLabelOfButton(trigger.pushbutton_id)
+
+                if (result != undefined) {
+                    await this.videohub.logActivity(`Rescheduled button failed: ${label}`, ICON_ERROR)
+                    // dont remove. They will be removed when ttl expires
+                } else {
+                    await this.videohub.logActivity(`Rescheduled button was successful: ${label}`, ICON_SUCCESS)
+                    this.failedButtonsCache.delete(failed.id) // only remove if success
+                }
+            })
+        }
     }
 
     async scheduleButtons() {
         this.info(`[${new Date().toLocaleString()}] Scheduling buttons...`)
-
-        if (!this.isConnected()) {
-            this.info("Can't schedule, since not connected")
-            return
-        }
-
         this.stopScheduledButtons()
         this.scheduledButtons = await pushbuttons.retrieveScheduledButtonsToday(this)
 
@@ -299,6 +345,18 @@ class Videohub {
 
         return output.retrieveUpcomingTriggers(date)
     } */
+
+    handleButtonDeleted(buttonId) {
+        // stop and remove
+        this.scheduledButtons = this.scheduledButtons.filter(button => {
+            if (button.id === buttonId) {
+                button.stopSchedule()
+                return false
+            }
+
+            return true
+        })
+    }
 
     async handleButtonReSchedule(buttonId) {
         for (const button of this.scheduledButtons) {
@@ -444,12 +502,12 @@ class Videohub {
             host: this.data.ip,
         }, async () => {
             this.info("Successfully connected.");
-            this.client = client;
-            this.data.connected = true;
-            this.connectionAttempt = 0;
-            this.clearReconnect();
-            this.scheduleCheckConnectionHealth();
-            await this.scheduleButtons();
+            this.client = client
+            this.data.connected = true
+            this.connectionAttempt = 0
+            this.clearReconnect()
+            this.scheduleCheckConnectionHealth()
+            await this.retryFailedButtons()
             this.onUpdate()
 
             if (!isInitial) {
@@ -799,25 +857,6 @@ function scheduleButtonsAtMidnight() {
     )
 
     console.log("Nightly cronjob started.")
-
-    /*
-    const now = new Date()
-    const night = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1, // the next day, ...
-        0, 0, 0 // ...at 00:00:00 hours
-    )
-
-    const diff = night.getTime() - now.getTime()
-    console.log(`Midnight is in ${diff / 1000} second(s).`)
-    setTimeout(async function () {
-        for (const hub of module.exports.getClients()) {
-            await hub.scheduleButtons()
-        }
-
-        scheduleButtons()
-    }, diff) */
 }
 
 if (global.videohubs == undefined) {
@@ -887,6 +926,7 @@ module.exports = {
                 throw Error("Already connected");
             }
 
+            await hub.scheduleButtons()
             hub.reconnect(true)
         }
 
@@ -907,6 +947,11 @@ module.exports = {
         }
 
         await videohubClient.handleButtonReSchedule(buttonId)
+    },
+    handleButtonDeletion: function (buttonId) {
+        for (const client of module.exports.getClients()) {
+            client.handleButtonDeleted(buttonId)
+        }
     }
 
     /*
