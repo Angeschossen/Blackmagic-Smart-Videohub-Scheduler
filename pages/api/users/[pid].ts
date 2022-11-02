@@ -4,13 +4,12 @@ import { getRoleById } from "../../../backend/backend";
 import { checkServerPermission, getUserIdFromToken } from "../../../components/auth/ServerAuthentication";
 import { Role, User } from "../../../components/interfaces/User";
 import { sendResponseInvalid, sendResponseValid } from "../../../components/utils/requestutils";
-import { Cache } from "../../../database/cache/cache";
 import TTLCacheService from "../../../database/cache/ttlcache";
 import prismadb from '../../../database/prismadb';
 import { getRoleByIdBackendUsage, sanitizeRole } from "../roles/[pid]";
 
 
-const usersCache: Cache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 30 })
+const usersCache: TTLCacheService = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 30 })
 
 export function sanitizeUser(user: any): User {
     return { id: user.id, username: user.username, role_id: user.role_id, role: sanitizeRole(user.role) }
