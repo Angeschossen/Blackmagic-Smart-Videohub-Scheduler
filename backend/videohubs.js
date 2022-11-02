@@ -272,7 +272,7 @@ class Videohub {
         this.checkConnectionHealthId = undefined
         this.data.lastRoutingUpdate = new Date()
         this.scheduledButtons = []
-        this.failedButtonsCache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 30 }) // keep them 30 minutes until they expire
+        this.failedButtonsCache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 10 }) // keep them 10 minutes until they expire
     }
 
     addFailedButton(button) {
