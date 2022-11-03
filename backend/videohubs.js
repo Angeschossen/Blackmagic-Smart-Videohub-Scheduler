@@ -275,6 +275,11 @@ class Videohub {
         this.failedButtonsCache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 10 }) // keep them 10 minutes until they expire
     }
 
+    removeScheduledButton(button) {
+        this.info(`Removing scheduled button: ${button.id}`)
+        this.scheduledButtons = this.scheduledButtons.filter(b => b.id != button.id)
+    }
+
     addFailedButton(button) {
         this.info(`Adding failed button ${button.id}.`)
         button.stopSchedule() // make sure it's always stopped, fallback
@@ -963,6 +968,16 @@ module.exports = {
         for (const client of module.exports.getClients()) {
             client.handleButtonDeleted(buttonId)
         }
+    },
+    getScheduledButtons: function (videohubId) {
+        const videohubClient = module.exports.getClient(videohubId);
+        if (videohubClient == undefined) {
+            return []
+        }
+
+        return videohubClient.scheduledButtons.map(button => {
+            return { id: button.id, label: button.label }
+        })
     }
 
     /*

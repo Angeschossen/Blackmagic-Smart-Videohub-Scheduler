@@ -4,9 +4,10 @@ const ICON_ERROR = "Error"
 const ICON_SUCCESS = "Accept"
 
 class Button {
-    constructor(videohub, id) {
+    constructor(videohub, id, label) {
         this.id = id
         this.videohub = videohub
+        this.label = label
     }
 
     info(msg) {
@@ -23,6 +24,7 @@ class Button {
         const next = await this.retrieveUpcomingTriggers(date)
         this.info(`Retrieved ${next.length} upcoming triggers.`)
         if (next.length === 0) {
+            this.videohub.removeScheduledButton(this)
             return
         }
 
@@ -83,6 +85,12 @@ class Button {
     }
 }
 
+
+const BUTTON_SELECT = {
+    pushbutton_id: true,
+    label: true,
+}
+
 module.exports = {
     getLabelOfButton: async function (buttonId) {
         const label = await prismadb.pushButton.findUnique({
@@ -105,13 +113,11 @@ module.exports = {
                     gte: time
                 }
             },
-            select: {
-                pushbutton_id: true,
-            }
+            select: BUTTON_SELECT
         })
 
         if (res != undefined) {
-            return new Button(videohub, buttonId)
+            return new Button(videohub, buttonId, label)
         } else {
             return undefined
         }
@@ -127,17 +133,20 @@ module.exports = {
                     gte: time
                 }
             },
-            select: {
-                pushbutton_id: true,
-            }
+            select: BUTTON_SELECT
         })
 
         const buttons = []
-        const ids = new Set(res.map(r => r.pushbutton_id))
+        const done = new Set()
 
-        for (const button of Array.from(ids)) {
-            const b = new Button(videohub, button)
+        for (const button of res) {
+            if (done.has(button.id)) {
+                continue
+            }
+
+            const b = new Button(videohub, button.id, button.label)
             buttons.push(b)
+            done.add(button.id)
         }
 
         return buttons

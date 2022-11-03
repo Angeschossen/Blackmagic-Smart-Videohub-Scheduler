@@ -11,6 +11,11 @@ export interface IPushButton {
     triggers: PushButtonTrigger[],
 }
 
+export interface IUpcomingPushButton {
+    id: number, 
+    label: string,
+}
+
 export interface IPushButtonTrigger {
     id: string,
     pushbutton_id: number,

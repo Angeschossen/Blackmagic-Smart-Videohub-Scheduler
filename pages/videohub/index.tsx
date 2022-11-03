@@ -148,7 +148,7 @@ const VideohubView = (props: VideohubViewProps) => {
         </Stack.Item>
       }
       <Stack.Item>
-        <h1>Push Buttons</h1>
+        <h1>Update Routing</h1>
         <Tooltip content="Here you can create buttons to execute multiple routing updates at once." relationship="description">
           <Button
             icon={<EditRegular />}
