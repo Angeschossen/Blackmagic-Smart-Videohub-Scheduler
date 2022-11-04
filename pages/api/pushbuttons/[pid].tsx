@@ -32,6 +32,10 @@ export async function getUserFromButton(id: number): Promise<string | undefined>
     }).then(res => res?.user_id)
 }
 
+export function retrieveScheduledButtons(videohub_id: number) {
+    return getScheduledButtons(videohub_id)
+}
+
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -239,12 +243,12 @@ export default async function handler(
         }
 
         case "getScheduled": {
-            const videohub_id: number | undefined = body.videohub_id
+            const videohub_id: number = body.videohub_id
             if (!hasParams(req, res, videohub_id)) {
                 return
             }
 
-            sendResponseValid(req, res, getScheduledButtons(videohub_id))
+            sendResponseValid(req, res, retrieveScheduledButtons(videohub_id))
             return
         }
 

@@ -4,10 +4,11 @@ const ICON_ERROR = "Error"
 const ICON_SUCCESS = "Accept"
 
 class Button {
-    constructor(videohub, id, label) {
+    constructor(videohub, id, label, time) {
         this.id = id
         this.videohub = videohub
         this.label = label
+        this.time = time
     }
 
     info(msg) {
@@ -88,7 +89,12 @@ class Button {
 
 const BUTTON_SELECT = {
     pushbutton_id: true,
-    label: true,
+    time: true,
+    pushbutton: {
+        select: {
+            label: true
+        }
+    },
 }
 
 module.exports = {
@@ -117,7 +123,7 @@ module.exports = {
         })
 
         if (res != undefined) {
-            return new Button(videohub, buttonId, label)
+            return new Button(videohub, buttonId, res.pushbutton.label, res.time)
         } else {
             return undefined
         }
@@ -144,7 +150,7 @@ module.exports = {
                 continue
             }
 
-            const b = new Button(videohub, button.id, button.label)
+            const b = new Button(videohub, button.pushbutton_id, button.pushbutton.label, button.time)
             buttons.push(b)
             done.add(button.id)
         }

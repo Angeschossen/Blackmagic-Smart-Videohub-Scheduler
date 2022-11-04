@@ -8,7 +8,7 @@ import Permissions from '../../backend/authentication/Permissions';
 import { useClientSession } from '../../components/auth/ClientAuthentication';
 import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
 import SelectVideohub from '../../components/buttons/SelectVideohubNew';
-import { IPushButton } from '../../components/interfaces/PushButton';
+import { IPushButton, IUpcomingPushButton } from '../../components/interfaces/PushButton';
 import { User } from '../../components/interfaces/User';
 import { Output, Videohub } from '../../components/interfaces/Videohub';
 import { getPostHeader } from '../../components/utils/fetchutils';
@@ -16,13 +16,18 @@ import { VideohubPage } from '../../components/videohub/VideohubPage';
 import { useViewType } from '../../components/views/DesktopView';
 import { OutputsView } from '../../components/views/OutputsView';
 import { PushButtonsList } from '../../components/views/pushbuttons/PushButtonsView';
-import { retrievePushButtonsServerSide } from '../api/pushbuttons/[pid]';
+import { UpcomingTriggers } from '../../components/views/pushbuttons/UpcomingPushButtonExecutions';
+import { retrievePushButtonsServerSide, retrieveScheduledButtons } from '../api/pushbuttons/[pid]';
 import { retrieveUserServerSide } from '../api/users/[pid]';
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
 
 
 async function retrievePushButtons(videohub: number): Promise<IPushButton[]> {
   return (await fetch('/api/pushbuttons/get', getPostHeader({ videohub_id: videohub })).then()).json();
+}
+
+async function retrieveScheduledButtonsClientSide(videohub: number): Promise<IUpcomingPushButton[]> {
+  return (await fetch('/api/pushbuttons/getScheduled', getPostHeader({ videohub_id: videohub })).then()).json()
 }
 
 export async function getServerSideProps(context: any) {
@@ -41,10 +46,13 @@ export async function getServerSideProps(context: any) {
   }
 
   let buttons: any[]
+  let scheduled: IUpcomingPushButton[]
   if (selected != undefined) {
     buttons = await retrievePushButtonsServerSide(context.req, selected.id)
+    scheduled = retrieveScheduledButtons(selected.id)
   } else {
     buttons = []
+    scheduled = []
   }
 
   return {
@@ -53,6 +61,7 @@ export async function getServerSideProps(context: any) {
       videohubs: JSON.parse(JSON.stringify(hubs)),
       videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),
+      scheduledButtons: JSON.parse(JSON.stringify(scheduled))
     },
   }
 }
@@ -62,6 +71,7 @@ interface VideohubViewProps {
   videohub: number,
   pushbuttons: IPushButton[],
   user: User,
+  scheduledButtons: IUpcomingPushButton[],
 }
 
 export function getVideohub(videohubs: Videohub[], id: number) {
@@ -80,7 +90,7 @@ function canEditPushButtons(canEditPushButtons: boolean, videohub?: Videohub) {
 
 const VideohubView = (props: VideohubViewProps) => {
   const isDekstop = useViewType();
-  const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
+  const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons, scheduledButtons: props.scheduledButtons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
   const socketData = React.useRef<{ socket?: any, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[] }>({
     socket: undefined,
@@ -89,7 +99,7 @@ const VideohubView = (props: VideohubViewProps) => {
   })
 
   function onVideohubUpdate(hub: Videohub) {
-    setVideohub({ videohub: hub, buttons: videohub.buttons })
+    setVideohub({ videohub: hub, buttons: videohub.buttons, scheduledButtons: videohub.scheduledButtons })
     setOutputs(hub.outputs)
   }
 
@@ -123,10 +133,10 @@ const VideohubView = (props: VideohubViewProps) => {
     })
   }, [])
 
-  function onSelectVideohub(hub: Videohub) {
-    retrievePushButtons(hub.id).then(pushbuttons => {
-      setVideohub({ videohub: hub, buttons: pushbuttons })
-    })
+  async function onSelectVideohub(hub: Videohub) {
+    const buttons: IPushButton[] = await retrievePushButtons(hub.id)
+    const scheduled: IUpcomingPushButton[] = await retrieveScheduledButtonsClientSide(hub.id)
+    setVideohub({ videohub: hub, buttons: buttons, scheduledButtons: scheduled })
   }
 
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
@@ -149,6 +159,9 @@ const VideohubView = (props: VideohubViewProps) => {
       }
       <Stack.Item>
         <h1>Update Routing</h1>
+        <UpcomingTriggers
+          scheduledButtons={videohub.scheduledButtons}
+        />
         <Tooltip content="Here you can create buttons to execute multiple routing updates at once." relationship="description">
           <Button
             icon={<EditRegular />}

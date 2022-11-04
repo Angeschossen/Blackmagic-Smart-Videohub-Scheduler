@@ -14,6 +14,7 @@ export interface IPushButton {
 export interface IUpcomingPushButton {
     id: number, 
     label: string,
+    time: string,
 }
 
 export interface IPushButtonTrigger {
