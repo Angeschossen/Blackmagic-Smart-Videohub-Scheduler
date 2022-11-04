@@ -16,7 +16,7 @@ import { VideohubPage } from '../../components/videohub/VideohubPage';
 import { useViewType } from '../../components/views/DesktopView';
 import { OutputsView } from '../../components/views/OutputsView';
 import { PushButtonsList } from '../../components/views/pushbuttons/PushButtonsView';
-import { UpcomingTriggers } from '../../components/views/pushbuttons/UpcomingPushButtonExecutions';
+import { ScheduledButtons } from '../../components/views/pushbuttons/UpcomingPushButtonExecutions';
 import { retrievePushButtonsServerSide, retrieveScheduledButtons } from '../api/pushbuttons/[pid]';
 import { retrieveUserServerSide } from '../api/users/[pid]';
 import { getVideohubFromQuery, retrieveVideohubsServerSide } from '../api/videohubs/[pid]';
@@ -158,31 +158,42 @@ const VideohubView = (props: VideohubViewProps) => {
         </Stack.Item>
       }
       <Stack.Item>
-        <h1>Update Routing</h1>
-        <UpcomingTriggers
-          scheduledButtons={videohub.scheduledButtons}
-        />
-        <Tooltip content="Here you can create buttons to execute multiple routing updates at once." relationship="description">
-          <Button
-            icon={<EditRegular />}
-            disabled={!canEditPushButtons(canEdit, videohub.videohub)}
-            onClick={() => {
-              if (videohub.videohub == undefined) {
-                return
-              }
+        <Stack horizontal style={{ justifyContent: 'space-between' }}>
+          <h1>Update Routing</h1>
+          {isDekstop &&
+            <Stack.Item>
+              <ScheduledButtons
+                scheduledButtons={videohub.scheduledButtons}
+              />
+            </Stack.Item>
+          }
+        </Stack>
+        {isDekstop &&
+          <Stack.Item>
+            <Tooltip content="Here you can create buttons to execute multiple routing updates at once." relationship="description">
+              <Button
+                icon={<EditRegular />}
+                disabled={!canEditPushButtons(canEdit, videohub.videohub)}
+                onClick={() => {
+                  if (videohub.videohub == undefined) {
+                    return
+                  }
 
-              Router.push({
-                pathname: '../pushbuttons',
-                query: { videohub: videohub.videohub.id },
-              });
-            }}>
-            Edit
-          </Button>
-        </Tooltip>
-        <PushButtonsList
-          pushbuttons={videohub.buttons}
-          videohub={videohub.videohub}
-        />
+                  Router.push({
+                    pathname: '../pushbuttons',
+                    query: { videohub: videohub.videohub.id },
+                  });
+                }}>
+                Edit
+              </Button>
+            </Tooltip>
+          </Stack.Item>}
+        <Stack.Item>
+          <PushButtonsList
+            pushbuttons={videohub.buttons}
+            videohub={videohub.videohub}
+          />
+        </Stack.Item>
       </Stack.Item>
     </VideohubPage>
   )

@@ -1,16 +1,19 @@
 import { Stack } from "@fluentui/react";
+import { ClockRegular } from "@fluentui/react-icons";
+import { AlertMessage } from "../../common/AlertMessage";
 import { IUpcomingPushButton } from "../../interfaces/PushButton";
 import { convertTriggerTime } from "../../modals/pushbuttons/PushButtonScheduleModal";
 
 
-export const UpcomingTriggers = (props: { scheduledButtons: IUpcomingPushButton[] }) => {
+export const ScheduledButtons = (props: { scheduledButtons: IUpcomingPushButton[] }) => {
     if (props.scheduledButtons.length === 0) {
-        return <p>None today.</p>
+        return <AlertMessage message="No upcoming automated execution today." />
     }
 
     const button: IUpcomingPushButton = props.scheduledButtons[0]
-    const next = convertTriggerTime(button.time)
     return (
-        <p>Next automated execution: {button.label} at {next.toLocaleTimeString()}</p>
+        <AlertMessage
+            icon={<ClockRegular />}
+            message={`Next automated execution: ${button.label} at ${convertTriggerTime(button.time).toLocaleTimeString()}`} />
     )
 }

@@ -208,6 +208,7 @@ export const EditPushButtonModal = (props: Props) => {
                     <div className={styles.root}>
                         <Label htmlFor={inputNameId}>Name</Label>
                         <InputField
+                            required
                             input={{ style: { width: 248 } }}
                             value={name.value}
                             onChange={onChangeName}

@@ -1,8 +1,8 @@
 import { INavLink, INavStyles, Nav } from "@fluentui/react";
 import React, { useState } from 'react';
+import { useMediaQuery } from "react-responsive";
 import Permissions from "../backend/authentication/Permissions";
 import { useClientSession } from "./auth/ClientAuthentication";
-import { useViewType } from "./views/DesktopView";
 
 
 // icons: https://www.flicon.io/
@@ -62,10 +62,12 @@ const baseLinks: INavLink[] = [
     }
 ]
 
-
+export function useNavViewType() {
+    return useMediaQuery({ query: `(min-width: 1920px)` });
+}
 
 export const Navigation = () => {
-    const isDekstop = useViewType();
+    const isDekstop = useNavViewType();
     const [selectedKey, setSelectedKey] = useState<string | undefined>();
     const canEditRoles = React.useRef(useClientSession(Permissions.PERMISSION_ROLE_EDIT))
     const canEditUsers = React.useRef(useClientSession(Permissions.PERMISSION_USER_EDIT))

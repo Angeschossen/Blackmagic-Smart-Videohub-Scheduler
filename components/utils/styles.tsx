@@ -1,7 +1,7 @@
 import { IDropdownStyles, IStackStyles, IStackTokens } from "@fluentui/react";
 import { makeStyles, shorthands, tokens } from "@fluentui/react-components";
 
-export const desktopMinWidth = 700;
+export const desktopMinWidth = 800;
 export const dropdownStyles: Partial<IDropdownStyles> = {
   dropdown: { width: 150 },
 };
