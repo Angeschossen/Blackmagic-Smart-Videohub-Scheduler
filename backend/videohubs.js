@@ -976,7 +976,7 @@ module.exports = {
         }
 
         return videohubClient.scheduledButtons.map(button => {
-            return { id: button.id, label: button.label }
+            return { id: button.id, label: button.label, time: button.time }
         })
     }
 
