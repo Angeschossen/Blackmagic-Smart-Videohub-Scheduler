@@ -7,7 +7,7 @@ import { convertTriggerTime } from "../../modals/pushbuttons/PushButtonScheduleM
 
 export const ScheduledButtons = (props: { scheduledButtons: IUpcomingPushButton[] }) => {
     if (props.scheduledButtons.length === 0) {
-        return undefined
+        return <></>
     }
 
     const button: IUpcomingPushButton = props.scheduledButtons[0]
