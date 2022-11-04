@@ -45,11 +45,12 @@ export async function getServerSideProps(context: any) {
     }
   }
 
+  const userId: string = await getUserIdFromToken(context.req)
   let buttons: any[]
   let scheduled: IUpcomingPushButton[]
   if (selected != undefined) {
     buttons = await retrievePushButtonsServerSide(context.req, selected.id)
-    scheduled = retrieveScheduledButtons(selected.id)
+    scheduled = retrieveScheduledButtons(selected.id, userId)
   } else {
     buttons = []
     scheduled = []
@@ -57,7 +58,7 @@ export async function getServerSideProps(context: any) {
 
   return {
     props: {
-      user: JSON.parse(JSON.stringify(await retrieveUserServerSide(await getUserIdFromToken(context.req)))),
+      user: JSON.parse(JSON.stringify(await retrieveUserServerSide(userId))),
       videohubs: JSON.parse(JSON.stringify(hubs)),
       videohub: selected == undefined ? 0 : selected.id,
       pushbuttons: JSON.parse(JSON.stringify(buttons)),

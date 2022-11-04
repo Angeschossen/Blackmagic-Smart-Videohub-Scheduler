@@ -63,7 +63,7 @@ const baseLinks: INavLink[] = [
 ]
 
 export function useNavViewType() {
-    return useMediaQuery({ query: `(min-width: 1920px)` });
+    return useMediaQuery({ query: `(min-width: 1025px)` });
 }
 
 export const Navigation = () => {

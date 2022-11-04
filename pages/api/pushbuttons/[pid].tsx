@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
 import { executeButton, getClient, getScheduledButtons, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
-import { IPushButton, IPushButtonTrigger, PushbuttonAction } from '../../../components/interfaces/PushButton';
+import { IPushButton, IPushButtonTrigger, IUpcomingPushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prismadb';
 
@@ -32,8 +32,14 @@ export async function getUserFromButton(id: number): Promise<string | undefined>
     }).then(res => res?.user_id)
 }
 
-export function retrieveScheduledButtons(videohub_id: number) {
-    return getScheduledButtons(videohub_id)
+export function retrieveScheduledButtons(videohub_id: number, userId?: string): IUpcomingPushButton[] {
+    return userId == undefined ? [] : getScheduledButtons(videohub_id).filter((button: IUpcomingPushButton) => button.userId === userId)
+}
+
+
+async function canEditButton(buttonId: number, req: any, res: any) {
+    const owner: string | undefined = await getUserFromButton(buttonId)
+    return isUser(req, res, owner)
 }
 
 export default async function handler(
@@ -80,7 +86,7 @@ export default async function handler(
             }
 
             let pushButton: IPushButton = body;
-            if (pushButton.id == -1) { // creare
+            if (pushButton.id == -1) { // create
                 const result: any = await prismadb.pushButton.create({
                     data: {
                         videohub_id: videohub_id,
@@ -112,8 +118,7 @@ export default async function handler(
                 sendResponseValid(req, res, result)
 
             } else {
-                const owner: string | undefined = await getUserFromButton(pushButton.id)
-                if (!isUser(req, res, owner)) {
+                if (!await canEditButton(pushButton.id, req, res)) {
                     return
                 }
 
@@ -173,8 +178,7 @@ export default async function handler(
                 return
             }
 
-            const owner: string | undefined = await getUserFromButton(buttonId)
-            if (!isUser(req, res, owner)) {
+            if (!await canEditButton(buttonId, req, res)) {
                 return
             }
 
@@ -226,15 +230,18 @@ export default async function handler(
             }
 
             await handleButtonReSchedule(videohub_id, buttonId)
-
             sendResponseValid(req, res)
             return
         }
 
         case "execute": {
-            const buttonId: number | undefined = body.id;
+            const buttonId: number = body.id;
             const videohub_id: number | undefined = body.videohub_id
             if (!hasParams(req, res, buttonId, videohub_id)) {
+                return
+            }
+
+            if (!await canEditButton(buttonId, req, res)) {
                 return
             }
 
@@ -248,7 +255,7 @@ export default async function handler(
                 return
             }
 
-            sendResponseValid(req, res, retrieveScheduledButtons(videohub_id))
+            sendResponseValid(req, res, retrieveScheduledButtons(videohub_id, await getUserIdFromToken(req)))
             return
         }
 
@@ -260,6 +267,10 @@ export default async function handler(
             const id: number | undefined = body.id;
             if (id == undefined) {
                 sendResponseInvalid(req, res, "Missing parameters.")
+                return
+            }
+
+            if (!await canEditButton(id, req, res)) {
                 return
             }
 

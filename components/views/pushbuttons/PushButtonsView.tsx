@@ -1,5 +1,5 @@
 import { Stack } from "@fluentui/react";
-import { CompoundButton } from "@fluentui/react-components";
+import { CompoundButton, makeStyles } from "@fluentui/react-components";
 import { ProgressField } from "@fluentui/react-field";
 import { useState } from "react";
 import { IPushButton } from "../../interfaces/PushButton";
@@ -13,6 +13,13 @@ interface InputProps {
   onRoutingUpdated?: (data: RoutingRequest) => void,
   pushbuttons: IPushButton[],
 }
+
+const useStyles = makeStyles({
+  longText: {
+    width: '200px',
+    height: '80px',
+  },
+});
 
 interface RequestState {
   state?: "success" | "error",
@@ -56,6 +63,7 @@ const RequestStatus = (props: { request?: RoutingRequest }) => {
 export const PushButtonsList = (props: InputProps) => {
   const isDekstop = useViewType()
   const [request, setRequest] = useState<RoutingRequest>()
+  const styles = useStyles();
 
   const isRequestComplete = () => {
     return request == undefined || request.success || request.error != undefined
@@ -71,11 +79,11 @@ export const PushButtonsList = (props: InputProps) => {
               request={request}
             />
           </Stack.Item>
-          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{childrenGap: 20}}>
+          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 20 }}>
             {props.pushbuttons.map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>
-                  <CompoundButton disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ width:200, height: 80, backgroundColor: button.color }}
+                  <CompoundButton className={styles.longText} disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
                     onClick={async () => {
                       if (props.videohub == undefined || !isRequestComplete()) {
                         return
