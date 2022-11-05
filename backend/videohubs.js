@@ -739,7 +739,7 @@ class Videohub {
 
                 if (this.data.name === this.data.ip) {
                     this.data.name = getConfigEntry(entries, 2);
-                    await this.save()
+                    //await this.save()
                 }
 
                 const outputs = Number(getConfigEntry(entries, 6))
@@ -771,11 +771,15 @@ class Videohub {
                                 this.data.inputs[i] = { id: i, label: "Unkown" }
                             }
 
-                            await output.save("Unknown")
-                            //output.scheduleNextTrigger(new Date())
+                            //await output.save("Unknown")
                         }
 
                         this.info(`Setup ${this.outputs.length} outputs.`)
+
+                        await this.save()
+                        for (const output of this.outputs) {
+                            await output.save("Unknown")
+                        }
                     }
                 } else {
                     throw Error(`Invalid amount of outputs: ${outputs}`)
