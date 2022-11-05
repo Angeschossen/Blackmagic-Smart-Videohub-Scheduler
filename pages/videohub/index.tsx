@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { Socket } from 'socket.io';
 import io from "socket.io-client";
 import Permissions from '../../backend/authentication/Permissions';
-import { useClientSession } from '../../components/auth/ClientAuthentication';
+import { useClientSession, useGetClientId } from '../../components/auth/ClientAuthentication';
 import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
 import SelectVideohub from '../../components/buttons/SelectVideohubNew';
 import { IPushButton, IUpcomingPushButton } from '../../components/interfaces/PushButton';
@@ -95,6 +95,7 @@ const VideohubView = (props: VideohubViewProps) => {
   const [scheduledButtons, setScheduledButtons] = React.useState(props.scheduledButtons)
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
+  const userId = useGetClientId()
 
   const socketData = React.useRef<{ socket?: any, onInit: () => void, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
     socket: undefined,
@@ -131,7 +132,7 @@ const VideohubView = (props: VideohubViewProps) => {
 
       const scheduledChannel: string = `${channel}_${now.id}_scheduled`
       socketData.current.socket.on(scheduledChannel, (arr: IUpcomingPushButton[]) => {
-        setScheduledButtons(arr)
+        setScheduledButtons(arr.filter(button => button.userId === userId))
       })
     }
   })

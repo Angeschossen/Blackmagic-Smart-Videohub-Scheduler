@@ -38,7 +38,7 @@ class Button {
     async scheduleNextTrigger(trigger) {
         this.stopSchedule()
 
-        this.time = trigger.time // update
+        this.time = new Date(trigger.time) // update, wrap into new Date to prevent wrong time at client side
 
         const hour = trigger.time.getUTCHours()
         const minutes = trigger.time.getUTCMinutes()
