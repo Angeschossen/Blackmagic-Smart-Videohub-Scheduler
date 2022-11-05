@@ -542,11 +542,11 @@ class Videohub {
             await this.retryFailedButtons()
         });
 
-        client.on("data", async data => {
+        client.on("data", data => {
             data = data.toString();
             this.info("Received:\n" + data)
             try {
-                await this.handleReceivedData(data)
+                this.handleReceivedData(data)
             } catch (ex) {
                 console.log("Failed to handle received text: " + ex)
                 console.log(ex)
