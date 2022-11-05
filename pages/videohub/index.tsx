@@ -96,8 +96,11 @@ const VideohubView = (props: VideohubViewProps) => {
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
 
-  const socketData = React.useRef<{ socket?: any, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
+  const socketData = React.useRef<{ socket?: any, onInit: () => void, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
     socket: undefined,
+    onInit: () => {
+      socketData.current.subScribeToChannels(videohub.videohub)
+    },
     onVideohubUpdate: onVideohubUpdate,
     videohubs: props.videohubs,
     subScribeToChannels: (now?: Videohub) => {
@@ -126,7 +129,7 @@ const VideohubView = (props: VideohubViewProps) => {
         }
       })
 
-      const scheduledChannel:string = `${channel}_${now.id}_scheduled`
+      const scheduledChannel: string = `${channel}_${now.id}_scheduled`
       socketData.current.socket.on(scheduledChannel, (arr: IUpcomingPushButton[]) => {
         setScheduledButtons(arr)
       })
@@ -145,7 +148,7 @@ const VideohubView = (props: VideohubViewProps) => {
       }
 
       socketData.current.socket = io()
-      socketData.current.subScribeToChannels(videohub.videohub)
+      socketData.current.onInit()
     })
   }, [])
 
