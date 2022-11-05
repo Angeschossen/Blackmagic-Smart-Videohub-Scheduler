@@ -678,10 +678,10 @@ class Videohub {
 
         switch (text) {
             case PROTOCOL_PREAMPLE: {
-                lines = getCorrespondingLines(lines, index);
-                this.data.version = getConfigEntry(lines, 0);
-                await this.save()
-                return 1;
+                lines = getCorrespondingLines(lines, index)
+                this.data.version = getConfigEntry(lines, 0)
+                // dont save as we alr save below at outputs setup
+                return 1
             }
 
             case PROTOCOL_INPUT_LABELS: {
@@ -692,6 +692,7 @@ class Videohub {
                     const id = Number(line.substring(0, index));
                     const label = line.substring(index + 1);
 
+                    // save imm
                     await prismadb.input.upsert({
                         where: {
                             videohub_input: {
@@ -726,7 +727,7 @@ class Videohub {
 
                     const output = this.getOutput(id)
                     this.data.outputs[id].label = label
-                    await output.save(label)
+                    await output.save(label) // save imm.
 
                     i++
                 }
@@ -771,14 +772,13 @@ class Videohub {
                             }
                         }
 
-                        // save async
-                        this.save().then(async () => {
-                            for (const output of this.outputs) {
-                                await output.save("Unknown")
-                            }
-                        })
-
                         this.info(`Setup ${this.outputs.length} outputs.`)
+
+                        // save 
+                        await this.save()
+                        for (const output of this.outputs) {
+                            await output.save("Unknown")
+                        }
                     }
                 } else {
                     throw Error(`Invalid amount of outputs: ${outputs}`)
@@ -804,7 +804,6 @@ class Videohub {
                 if (request == undefined) {
                     throw Error("Got " + PROTOCOL_ACKNOWLEDGED + ", but no request sent.")
                 }
-
 
                 request.onSuccess()
                 this.info("Routing update acknowledged.")
