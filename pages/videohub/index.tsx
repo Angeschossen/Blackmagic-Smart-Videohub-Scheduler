@@ -3,6 +3,7 @@ import { Button, Tooltip } from '@fluentui/react-components';
 import { EditRegular } from '@fluentui/react-icons';
 import Router from 'next/router';
 import React, { useEffect } from 'react';
+import { Socket } from 'socket.io';
 import io from "socket.io-client";
 import Permissions from '../../backend/authentication/Permissions';
 import { useClientSession } from '../../components/auth/ClientAuthentication';
@@ -91,32 +92,27 @@ function canEditPushButtons(canEditPushButtons: boolean, videohub?: Videohub) {
 
 const VideohubView = (props: VideohubViewProps) => {
   const isDekstop = useViewType();
-  const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons, scheduledButtons: props.scheduledButtons })
+  const [scheduledButtons, setScheduledButtons] = React.useState(props.scheduledButtons)
+  const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
-  const socketData = React.useRef<{ socket?: any, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[] }>({
+
+  const socketData = React.useRef<{ socket?: any, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
     socket: undefined,
     onVideohubUpdate: onVideohubUpdate,
     videohubs: props.videohubs,
-  })
-
-  function onVideohubUpdate(hub: Videohub) {
-    setVideohub({ videohub: hub, buttons: videohub.buttons, scheduledButtons: videohub.scheduledButtons })
-    setOutputs(hub.outputs)
-  }
-
-  useEffect(() => {
-    fetch("/api/socket").then(() => {
-      if (socketData.current.socket != undefined) {
+    subScribeToChannels: (now?: Videohub) => {
+      const socket: Socket = socketData.current.socket
+      if (socket == undefined) {
         return
       }
 
-      socketData.current.socket = io()
+      socket.removeAllListeners()
+      if (now == undefined) {
+        return
+      }
 
-      const channel: string = "videohubUpdate";
-      console.log(`Subscribing to channel: ${channel}`);
+      const channel: string = `videohubUpdate`
       socketData.current.socket.on(channel, (data: Videohub) => {
-        console.log("Received update.")
-
         for (let i = 0; i < socketData.current.videohubs.length; i++) {
           const videohub: Videohub = socketData.current.videohubs[i]
           if (videohub.id === data.id) {
@@ -130,14 +126,33 @@ const VideohubView = (props: VideohubViewProps) => {
         }
       })
 
-      console.log("Socket setup.")
+      const scheduledChannel:string = `${channel}_${now.id}_scheduled`
+      socketData.current.socket.on(scheduledChannel, (arr: IUpcomingPushButton[]) => {
+        setScheduledButtons(arr)
+      })
+    }
+  })
+
+  function onVideohubUpdate(hub: Videohub) {
+    setVideohub({ videohub: hub, buttons: videohub.buttons })
+    setOutputs(hub.outputs)
+  }
+
+  useEffect(() => {
+    fetch("/api/socket").then(() => {
+      if (socketData.current.socket != undefined) {
+        return
+      }
+
+      socketData.current.socket = io()
+      socketData.current.subScribeToChannels(videohub.videohub)
     })
   }, [])
 
   async function onSelectVideohub(hub: Videohub) {
-    const buttons: IPushButton[] = await retrievePushButtons(hub.id)
-    const scheduled: IUpcomingPushButton[] = await retrieveScheduledButtonsClientSide(hub.id)
-    setVideohub({ videohub: hub, buttons: buttons, scheduledButtons: scheduled })
+    setVideohub({ videohub: hub, buttons: await retrievePushButtons(hub.id) })
+    setScheduledButtons(await retrieveScheduledButtonsClientSide(hub.id))
+    socketData.current.subScribeToChannels(hub)
   }
 
   const canEdit: boolean = useClientSession(Permissions.PERMISSION_VIDEOHUB_PUSHBUTTONS_EDIT)
@@ -164,7 +179,7 @@ const VideohubView = (props: VideohubViewProps) => {
           {isDekstop &&
             <Stack.Item>
               <ScheduledButtons
-                scheduledButtons={videohub.scheduledButtons}
+                scheduledButtons={scheduledButtons}
               />
             </Stack.Item>
           }

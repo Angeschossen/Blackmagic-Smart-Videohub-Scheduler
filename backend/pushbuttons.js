@@ -1,4 +1,5 @@
 const { convert_date_to_utc } = require('../components/utils/dateutils');
+const emit = require('./socketio').emit;
 const prismadb = require('../database/prisma');
 const ICON_ERROR = "Error"
 const ICON_SUCCESS = "Accept"
@@ -26,15 +27,18 @@ class Button {
         const next = await this.retrieveUpcomingTriggers(date)
         this.info(`Retrieved ${next.length} upcoming triggers.`)
         if (next.length === 0) {
-            this.videohub.removeScheduledButton(this)
-            return
+            this.videohub.removeScheduledButton(this.id)
+            return false
         }
 
         await this.scheduleNextTrigger(next[0])
+        return true
     }
 
     async scheduleNextTrigger(trigger) {
         this.stopSchedule()
+
+        this.time = trigger.time // update
 
         const hour = trigger.time.getUTCHours()
         const minutes = trigger.time.getUTCMinutes()
@@ -62,7 +66,9 @@ class Button {
                 }
 
                 // go to next
-                await this.handleScheduleNextTrigger(new Date())
+                if (await this.handleScheduleNextTrigger(new Date())) {
+                    this.videohub.emitScheduleChange()
+                }
             })
         }, diff)
     }

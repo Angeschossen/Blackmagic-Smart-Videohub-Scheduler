@@ -36,13 +36,8 @@ export async function getServerSideProps(context: any) {
 }
 
 const PushButtonListNew = (props: { videohub: Videohub, pushbuttons: IPushButton[], user: User }) => {
-
     const [videohub, setVideohub] = React.useState(props.videohub)
     const [buttons, setButtons] = React.useState<IPushButton[]>(props.pushbuttons)
-
-    React.useEffect(() => {
-
-    }, [videohub])
 
     const onButtonUpdate = (button: IPushButton, action: "create" | "update" | "delete") => {
         const arr: IPushButton[] = [...buttons]

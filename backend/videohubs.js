@@ -275,9 +275,18 @@ class Videohub {
         this.failedButtonsCache = new TTLCacheService({ max: 100, ttl: 1000 * 60 * 10 }) // keep them 10 minutes until they expire
     }
 
-    removeScheduledButton(button) {
-        this.info(`Removing scheduled button: ${button.id}`)
-        this.scheduledButtons = this.scheduledButtons.filter(b => b.id != button.id)
+    removeScheduledButton(buttonId) {
+        this.info(`Removing scheduled button: ${buttonId}`)
+        this.scheduledButtons = this.scheduledButtons.filter(b => {
+            if (b.id === buttonId) {
+                b.stopSchedule()
+                return false
+            }
+
+            return true
+        })
+
+        this.emitScheduleChange()
     }
 
     addFailedButton(button) {
@@ -340,6 +349,7 @@ class Videohub {
             await button.handleScheduleNextTrigger(new Date())
         }
 
+        this.emitScheduleChange()
         this.info(`Buttons scheduled: ${this.scheduledButtons.length}`)
     }
 
@@ -353,31 +363,33 @@ class Videohub {
         return output.retrieveUpcomingTriggers(date)
     } */
 
-    handleButtonDeleted(buttonId) {
-        // stop and remove
-        this.scheduledButtons = this.scheduledButtons.filter(button => {
-            if (button.id === buttonId) {
-                button.stopSchedule()
-                return false
-            }
-
-            return true
-        })
+    emitScheduleChange = () => {
+        emit(`videohubUpdate_${this.data.id}_scheduled`, this.getScheduledButtons())
     }
 
     async handleButtonReSchedule(buttonId) {
+        let res = false;
         for (const button of this.scheduledButtons) {
             if (button.id === buttonId) {
                 await button.handleScheduleNextTrigger(new Date())
-                return
+                res = true
+                break
             }
         }
 
-        // not in arr yet
-        const button = await retrievescheduledButton(this, buttonId, new Date())
-        if (button != undefined) {
-            this.scheduledButtons.push(button)
-            button.handleScheduleNextTrigger(new Date())
+        if (!res) {
+            // not in arr yet
+            const button = await retrievescheduledButton(this, buttonId, new Date())
+            if (button != undefined) {
+                this.scheduledButtons.push(button)
+                if (await button.handleScheduleNextTrigger(new Date())) {
+                    res = true
+                }
+            }
+        }
+
+        if (res) {
+            this.emitScheduleChange()
         }
     }
 
@@ -436,7 +448,13 @@ class Videohub {
     }
 
     onUpdate() {
-        emit("videohubUpdate", this.data);
+        emit(`videohubUpdate`, this.data);
+    }
+
+    getScheduledButtons() {
+        return this.scheduledButtons.map(button => {
+            return { id: button.id, label: button.label, time: button.time, userId: button.userId }
+        })
     }
 
     async logActivity(description, icon) {
@@ -851,10 +869,10 @@ class Videohub {
 let cronMidnight = undefined
 function scheduleButtonsAtMidnight() {
     if (cronMidnight != undefined) {
-        throw Error("Nightly cronjob already started.")
+        throw Error("Nightly cronjob already scheduled.")
     }
 
-    cronMidnight = new CronJob('0 0 0 * * *', async function () {
+    cronMidnight = new CronJob('1 0 0 * * *', async function () {
         console.log(`${new Date().toLocaleString()} Executing nightly cronjob.`)
         for (const hub of module.exports.getClients()) {
             await hub.scheduleButtons()
@@ -864,7 +882,7 @@ function scheduleButtonsAtMidnight() {
         true // start right now
     )
 
-    console.log("Nightly cronjob started.")
+    console.log("Nightly cronjob scheduled.")
 }
 
 if (global.videohubs == undefined) {
@@ -966,7 +984,7 @@ module.exports = {
     },
     handleButtonDeletion: function (buttonId) {
         for (const client of module.exports.getClients()) {
-            client.handleButtonDeleted(buttonId)
+            client.removeScheduledButton(buttonId)
         }
     },
     getScheduledButtons: function (videohubId) {
@@ -975,9 +993,7 @@ module.exports = {
             return []
         }
 
-        return videohubClient.scheduledButtons.map(button => {
-            return { id: button.id, label: button.label, time: button.time, userId: button.userId }
-        })
+        return videohubClient.getScheduledButtons()
     }
 
     /*
