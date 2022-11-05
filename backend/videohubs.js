@@ -680,7 +680,7 @@ class Videohub {
             case PROTOCOL_PREAMPLE: {
                 lines = getCorrespondingLines(lines, index);
                 this.data.version = getConfigEntry(lines, 0);
-                await this.save()
+                //await this.save()
                 return 1;
             }
 
@@ -692,6 +692,7 @@ class Videohub {
                     const id = Number(line.substring(0, index));
                     const label = line.substring(index + 1);
 
+                    /*
                     await prismadb.input.upsert({
                         where: {
                             videohub_input: {
@@ -707,7 +708,7 @@ class Videohub {
                         update: {
                             label: label,
                         }
-                    })
+                    }) */
 
                     this.data.inputs[id].label = label
                     i++
@@ -726,7 +727,7 @@ class Videohub {
 
                     const output = this.getOutput(id)
                     this.data.outputs[id].label = label
-                    await output.save(label)
+                   // await output.save(label)
 
                     i++
                 }
@@ -776,10 +777,11 @@ class Videohub {
 
                         this.info(`Setup ${this.outputs.length} outputs.`)
 
+                        /*
                         await this.save()
                         for (const output of this.outputs) {
                             await output.save("Unknown")
-                        }
+                        } */
                     }
                 } else {
                     throw Error(`Invalid amount of outputs: ${outputs}`)
