@@ -382,6 +382,7 @@ class Videohub {
             const button = await retrievescheduledButton(this, buttonId, new Date())
             if (button != undefined) {
                 this.scheduledButtons.push(button)
+                this.onScheduledTimeChanged()
                 if (await button.handleScheduleNextTrigger(new Date())) {
                     res = true
                 }
@@ -391,6 +392,10 @@ class Videohub {
         if (res) {
             this.emitScheduleChange()
         }
+    }
+
+    onScheduledTimeChanged() {
+        this.scheduledButtons = this.scheduledButtons.sort((a, b) => a.time.getTime() - b.time.getTime())
     }
 
     sendRoutingUpdateRequest(outputs, inputs) {

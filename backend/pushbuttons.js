@@ -36,9 +36,12 @@ class Button {
     }
 
     async scheduleNextTrigger(trigger) {
-        this.stopSchedule()
-
         this.time = new Date(trigger.time) // update, wrap into new Date to prevent wrong time at client side
+        if (this.scheduledTrigger != undefined) {
+            this.videohub.onScheduledTimeChanged()
+        }
+
+        this.stopSchedule()
 
         const hour = trigger.time.getUTCHours()
         const minutes = trigger.time.getUTCMinutes()
