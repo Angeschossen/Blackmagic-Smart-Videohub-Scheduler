@@ -546,6 +546,7 @@ class Videohub {
             data = data.toString();
             this.info("Received:\n" + data)
             try {
+                // run async
                 this.handleReceivedData(data)
             } catch (ex) {
                 console.log("Failed to handle received text: " + ex)
@@ -680,7 +681,7 @@ class Videohub {
             case PROTOCOL_PREAMPLE: {
                 lines = getCorrespondingLines(lines, index)
                 this.data.version = getConfigEntry(lines, 0)
-                // dont save as we alr save below at outputs setup
+                await this.save() // save version
                 return 1
             }
 
@@ -692,7 +693,7 @@ class Videohub {
                     const id = Number(line.substring(0, index));
                     const label = line.substring(index + 1);
 
-                    // save imm
+                    // save imm.
                     await prismadb.input.upsert({
                         where: {
                             videohub_input: {
