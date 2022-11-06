@@ -140,7 +140,11 @@ module.exports = {
         }
     },
     retrieveScheduledButtonsToday: async function (videohub) {
-        const time = new Date()
+        const date = new Date()
+        date.setHours(0)
+        date.setMinutes(0)
+        date.setSeconds(0)
+        const time = date
         console.log(`Retrieving buttons for date: ${time.toLocaleString()} Day: ${time.getDay()}`)
         const res = await prismadb.pushButtonTrigger.findMany({
             where: {

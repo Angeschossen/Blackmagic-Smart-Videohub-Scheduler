@@ -880,10 +880,16 @@ function scheduleButtonsAtMidnight() {
         throw Error("Nightly cronjob already scheduled.")
     }
 
-    cronMidnight = new CronJob('1 0 0 * * *', async function () {
+    // 1 0 0 * * *
+    cronMidnight = new CronJob('* * * * * *', async function () {
         console.log(`${new Date().toLocaleString()} Executing nightly cronjob.`)
-        for (const hub of module.exports.getClients()) {
-            await hub.scheduleButtons()
+        try {
+            for (const hub of module.exports.getClients()) {
+                await hub.scheduleButtons()
+            }
+        } catch (ex) {
+            console.log("Error at nightly job.")
+            console.log(ex)
         }
     },
         null, // on stop function
