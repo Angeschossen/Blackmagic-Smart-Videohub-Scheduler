@@ -881,7 +881,7 @@ function scheduleButtonsAtMidnight() {
     }
 
     // 1 0 0 * * *
-    cronMidnight = new CronJob('* * * * * *', async function () {
+    cronMidnight = new CronJob('1 0 0 * * *', async function () {
         console.log(`${new Date().toLocaleString()} Executing nightly cronjob.`)
         try {
             for (const hub of module.exports.getClients()) {
