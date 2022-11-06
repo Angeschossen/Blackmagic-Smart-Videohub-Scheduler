@@ -158,13 +158,14 @@ module.exports = {
 
         console.log(res)
         for (const button of res) {
-            if (done.has(button.pushbutton_id)) {
+            const id =button.pushbutton_id
+            if (done.has(id)) {
                 continue
             }
 
-            const b = new Button(videohub, button.pushbutton_id, button.pushbutton.label, button.time, button.pushbutton.user_id)
+            const b = new Button(videohub, id, button.pushbutton.label, button.time, button.pushbutton.user_id)
             buttons.push(b)
-            done.add(button.id)
+            done.add(id)
         }
 
         return buttons
