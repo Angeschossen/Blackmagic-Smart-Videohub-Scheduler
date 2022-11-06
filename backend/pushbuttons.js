@@ -156,6 +156,7 @@ module.exports = {
         const buttons = []
         const done = new Set()
 
+        console.log(res)
         for (const button of res) {
             if (done.has(button.id)) {
                 continue
