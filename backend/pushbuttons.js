@@ -158,7 +158,7 @@ module.exports = {
 
         console.log(res)
         for (const button of res) {
-            if (done.has(button.id)) {
+            if (done.has(button.pushbutton_id)) {
                 continue
             }
 
