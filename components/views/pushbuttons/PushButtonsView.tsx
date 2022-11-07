@@ -16,7 +16,7 @@ interface InputProps {
 
 const useStyles = makeStyles({
   longText: {
-    width: '200px',
+    width: '180px',
     height: '80px',
   },
 });

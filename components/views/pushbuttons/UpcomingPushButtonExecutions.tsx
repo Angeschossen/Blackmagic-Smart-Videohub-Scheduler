@@ -14,6 +14,6 @@ export const ScheduledButtons = (props: { scheduledButtons: IUpcomingPushButton[
     return (
         <AlertMessage
             icon={<ClockRegular />}
-            message={`Next automated execution: ${button.label} at ${convertDateToLocal(button.time).toLocaleTimeString()}`} />
+            message={`Scheduled execution: ${button.label} at ${convertDateToLocal(button.time).toLocaleTimeString()}`} />
     )
 }
