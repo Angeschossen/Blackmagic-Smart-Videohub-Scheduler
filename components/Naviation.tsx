@@ -8,7 +8,7 @@ import { useClientSession } from "./auth/ClientAuthentication";
 // icons: https://www.flicon.io/
 const styleMobile: Partial<INavStyles> = {
     root: {
-        width: '40px',
+        width: '7vh',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
@@ -20,7 +20,7 @@ const styleMobile: Partial<INavStyles> = {
 
 const style: Partial<INavStyles> = {
     root: {
-        width: '140px',
+        width: '10vh',
         top: 0,
         bottom: 0,
         horizontal: 'strech',

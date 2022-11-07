@@ -79,7 +79,7 @@ export const PushButtonsList = (props: InputProps) => {
               request={request}
             />
           </Stack.Item>
-          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 20 }}>
+          <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 10 }}>
             {props.pushbuttons.map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>

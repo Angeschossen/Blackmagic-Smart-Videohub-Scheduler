@@ -52,9 +52,11 @@ export const Default = (props: InputProps) => {
   return (
     <Stack style={videohubPageStyle}>
       <Stack horizontal tokens={stackTokens}>
-        <SelectVideohub
-          videohubs={props.videohubs || []}
-          onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
+        <Stack.Item>
+          <SelectVideohub
+            videohubs={props.videohubs || []}
+            onSelectVideohub={(videohub: Videohub) => setVideohub(videohub)} />
+        </Stack.Item>
         <RoleModal
           roles={roles}
           trigger={
