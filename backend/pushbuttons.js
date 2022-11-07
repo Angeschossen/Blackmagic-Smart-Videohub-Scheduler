@@ -1,4 +1,4 @@
-const { convert_date_to_utc } = require('../components/utils/dateutils');
+const { convert_date_to_utc, getSecondOfDay, getSecondOfDayUTC } = require('../components/utils/dateutils');
 const emit = require('./socketio').emit;
 const prismadb = require('../database/prisma');
 const ICON_ERROR = "Error"
@@ -36,26 +36,18 @@ class Button {
     }
 
     async scheduleNextTrigger(trigger) {
-        this.time = new Date(trigger.time) // update, wrap into new Date to prevent wrong time at client side
+        this.time = trigger.time // update, wrap into new Date to prevent wrong time at client side
         if (this.scheduledTrigger != undefined) {
             this.videohub.onScheduledTimeChanged()
         }
 
         this.stopSchedule()
 
-        const hour = trigger.time.getUTCHours()
-        const minutes = trigger.time.getUTCMinutes()
-        const seconds = trigger.time.getUTCSeconds()
-
-        const now = new Date()
-        trigger.time.setTime(now.getTime())
-        trigger.time.setHours(hour)
-        trigger.time.setMinutes(minutes)
-        trigger.time.setSeconds(seconds)
-
         // diff
-        const diff = trigger.time - convert_date_to_utc(now)
-        this.info(`Next trigger is in ${diff / 1000} second(s).`)
+        const at = getSecondOfDayUTC(trigger.time)
+        const curr = getSecondOfDayUTC(new Date())
+        const diff = at - curr
+        this.info(`Next trigger (at ${at}) is in ${diff} second(s). Current second of day: ${curr}`)
 
         this.scheduledTrigger = setTimeout(async () => {
             await this.videohub.executeButton(trigger.pushbutton_id).then(async result => {
@@ -73,18 +65,18 @@ class Button {
                     this.videohub.emitScheduleChange()
                 }
             })
-        }, diff)
+        }, diff * 1000)
     }
 
     async retrieveUpcomingTriggers(date) {
         this.info("Retrieving upcoming triggers.")
 
-        const time = new Date(date)
+        const time = date
         return await prismadb.pushButtonTrigger.findMany({
             where: {
                 videohub_id: this.videohub.data.id,
                 pushbutton_id: this.id,
-                day: time.getDay(),
+                day: time.getUTCDay(),
                 time: {
                     gte: time
                 }
@@ -141,11 +133,12 @@ module.exports = {
     },
     retrieveScheduledButtonsToday: async function (videohub) {
         const time = new Date()
-        console.log(`Retrieving buttons for date: ${time.toLocaleString()} Day: ${time.getDay()}`)
+
+        console.log(`Retrieving buttons for date: ${time.toLocaleString()} Day: ${time.getUTCDay()}`)
         const res = await prismadb.pushButtonTrigger.findMany({
             where: {
                 videohub_id: videohub.data.id,
-                day: time.getDay(),
+                day: time.getUTCDay(),
                 time: {
                     gte: time
                 }
@@ -157,7 +150,7 @@ module.exports = {
         const done = new Set()
 
         for (const button of res) {
-            const id =button.pushbutton_id
+            const id = button.pushbutton_id
             if (done.has(id)) {
                 continue
             }

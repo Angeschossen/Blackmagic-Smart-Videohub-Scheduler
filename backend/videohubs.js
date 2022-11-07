@@ -881,7 +881,7 @@ function scheduleButtonsAtMidnight() {
     }
 
     // 1 0 0 * * *
-    cronMidnight = new CronJob('1 0 0 * * *', async function () {
+    cronMidnight = new CronJob('0 0 0 * * *', async function () {
         console.log(`${new Date().toLocaleString()} Executing nightly cronjob.`)
         try {
             for (const hub of module.exports.getClients()) {
@@ -893,10 +893,11 @@ function scheduleButtonsAtMidnight() {
         }
     },
         null, // on stop function
-        true // start right now
+        true, // start right now
+        "Etc/UTC" // must be run in UTC, since prisma db converts all dates to UTC
     )
 
-    console.log("Nightly cronjob scheduled.")
+    console.log(`Nightly cronjob scheduled: ${new Date(cronMidnight.nextDates())}`)
 }
 
 if (global.videohubs == undefined) {

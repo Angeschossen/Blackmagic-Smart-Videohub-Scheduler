@@ -43,6 +43,24 @@ module.exports = {
 
         return Math.floor((utc2 - utc1) / MS_PER_DAY);
     },
+    getSecondOfDay(date) {
+        return date.getSeconds() + (60 * (date.getMinutes() + (60 * date.getHours())))
+    },
+    getSecondOfDayUTC(date) {
+        return date.getUTCSeconds() + (60 * (date.getUTCMinutes() + (60 * date.getUTCHours())))
+    },
+    convertDateToLocal(date) {
+        date = new Date(date)
+        return date
+    },
+    removeSecondsFromDate(date) {
+        date.setUTCSeconds(0)
+        date.setUTCMilliseconds(0)
+    },
+    setDayOfWeekUTC: function (date, day_of_week) {
+        const dist = day_of_week - date.getUTCDay();
+        date.setDate(date.getDate() + dist);
+    },
     setDayOfWeek: function (date, day_of_week) {
         const dist = day_of_week - date.getDay();
         date.setDate(date.getDate() + dist);

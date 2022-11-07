@@ -4,11 +4,12 @@ import * as permissions from "../../../backend/authentication/Permissions";
 import { executeButton, getClient, getScheduledButtons, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { IPushButton, IPushButtonTrigger, IUpcomingPushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
+import { convert_date_to_utc, removeSecondsFromDate, setDayOfWeek, setDayOfWeekUTC } from '../../../components/utils/dateutils';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prismadb';
 
 export async function retrievePushButtonsServerSide(req: NextApiRequest, videohubId: number) {
-    return await prismadb.pushButton.findMany({
+    const res = await prismadb.pushButton.findMany({
         where: {
             videohub_id: videohubId,
             user_id: await getUserIdFromToken(req),
@@ -18,8 +19,26 @@ export async function retrievePushButtonsServerSide(req: NextApiRequest, videohu
             triggers: true,
         }
     })
+
+    for (const button of res) {
+        button.triggers.forEach(trigger => {
+            const date: Date = getTriggerExportTime(trigger.time, trigger.day)
+            trigger.time = date
+            trigger.day = date.getUTCDay()
+        })
+    }
+
+    return res
 }
 
+function getTriggerExportTime(time: Date, day: number): Date {
+    const date: Date = convert_date_to_utc(new Date())
+    date.setUTCHours(time.getUTCHours())
+    date.setUTCMinutes(time.getUTCMinutes())
+    date.setUTCSeconds(0)
+    setDayOfWeekUTC(date, day)
+    return date
+}
 
 export async function getUserFromButton(id: number): Promise<string | undefined> {
     return await prismadb.pushButton.findUnique({
@@ -196,11 +215,15 @@ export default async function handler(
 
                 for (const action of actions) {
                     days.forEach(day => {
+                        const date: Date = new Date(trigger.time)
+                        setDayOfWeek(date, day)
+                        removeSecondsFromDate(date)
+
                         const obj: PushButtonTrigger = {
                             id: "",
                             pushbutton_id: buttonId,
-                            time: new Date(trigger.time),
-                            day: day,
+                            time: date,
+                            day: date.getUTCDay(),
                             videohub_id: action.videohub_id,
                             output_id: action.output_id,
                             action_id: action.id,

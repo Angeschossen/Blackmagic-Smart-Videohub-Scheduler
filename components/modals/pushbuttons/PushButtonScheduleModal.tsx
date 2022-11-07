@@ -5,6 +5,7 @@ import { AddRegular, DeleteRegular } from "@fluentui/react-icons";
 import React from "react";
 import { InputState } from "../../input/HandledInputField";
 import { IPushButton, IPushButtonTrigger } from "../../interfaces/PushButton";
+import { convertDateToLocal } from "../../utils/dateutils";
 import { getPostHeader } from "../../utils/fetchutils";
 import { stackTokens, useInputStyles } from "../../utils/styles";
 import { InputModal } from "../InputModalNew";
@@ -123,31 +124,19 @@ function collectTriggers(button: IPushButton): IPushButtonTrigger[] {
     const triggers: Map<string, IPushButtonTrigger> = new Map()
     for (const trigger of button.triggers) {
         const tr: IPushButtonTrigger | undefined = triggers.get(trigger.id)
+        const time: Date = convertDateToLocal(trigger.time)
+        const day:number = time.getDay()
+
         if (tr == undefined) {
-            triggers.set(trigger.id, { id: trigger.id, pushbutton_id: button.id, time: trigger.time, days: [trigger.day] })
+            triggers.set(trigger.id, { id: trigger.id, pushbutton_id: button.id, time: time, days: [day] })
         } else {
-            if (tr.days.indexOf(trigger.day) === -1) {
-                tr.days.push(trigger.day) // because of (x,y,z) key (action)
+            if (tr.days.indexOf(day) === -1) {
+                tr.days.push(day) // because of (x,y,z) key (action)
             }
         }
     }
 
     return Array.from(triggers.values())
-}
-
-export function convertTriggerTime(date: string) {
-    const index: number = date.indexOf('T')
-    if (index === -1) {
-        throw Error("Time part not found.")
-    }
-
-    const parts: string[] = date.substring(index + 1, index + 6).split(':')
-
-    const d: Date = new Date()
-    d.setUTCHours(Number(parts[0]))
-    d.setUTCMinutes(Number(parts[1]))
-    d.setUTCSeconds(parts.length > 2 ? Number(parts[2]) : 0)
-    return d
 }
 
 function getDefaultDate() {
@@ -162,7 +151,7 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
 
     function createTriggerComponent(trigger: IPushButtonTrigger, index: number) {
         if (!(trigger.time instanceof Date)) {
-            trigger.time = convertTriggerTime(trigger.time)
+            trigger.time = convertDateToLocal(trigger.time)
         }
 
         return (
@@ -171,8 +160,11 @@ export const PushButtonScheduleModal = (props: { button: IPushButton, trigger: J
                 key={`trigger_${index}`}
                 trigger={trigger}
                 onSelectDay={function (value: number): void {
-                    if (trigger.days.indexOf(value) === -1) {
+                    const index: number = trigger.days.indexOf(value)
+                    if (index === -1) {
                         trigger.days.push(value)
+                    } else {
+                        trigger.days.splice(index, 1)
                     }
                 }}
                 onChangeTime={((value: string) => {

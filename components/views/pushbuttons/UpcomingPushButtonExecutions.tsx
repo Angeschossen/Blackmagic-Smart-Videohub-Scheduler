@@ -1,9 +1,8 @@
-import { Stack } from "@fluentui/react";
 import { ClockRegular } from "@fluentui/react-icons";
 import React from "react";
 import { AlertMessage } from "../../common/AlertMessage";
 import { IUpcomingPushButton } from "../../interfaces/PushButton";
-import { convertTriggerTime } from "../../modals/pushbuttons/PushButtonScheduleModal";
+import { convertDateToLocal } from "../../utils/dateutils";
 
 
 export const ScheduledButtons = (props: { scheduledButtons: IUpcomingPushButton[] }) => {
@@ -15,6 +14,6 @@ export const ScheduledButtons = (props: { scheduledButtons: IUpcomingPushButton[
     return (
         <AlertMessage
             icon={<ClockRegular />}
-            message={`Next automated execution: ${button.label} at ${convertTriggerTime(button.time).toLocaleTimeString()}`} />
+            message={`Next automated execution: ${button.label} at ${convertDateToLocal(button.time).toLocaleTimeString()}`} />
     )
 }
