@@ -178,7 +178,7 @@ const VideohubView = (props: VideohubViewProps) => {
         </Stack.Item>
       }
       <Stack.Item>
-        <Stack horizontal style={{ justifyContent: 'space-between' , verticalAlign:'center'}}>
+        <Stack horizontal verticalAlign='center' style={{ justifyContent: 'space-between' }}>
           <h1>Update Routing</h1>
           {isDekstop &&
             <Stack.Item>
