@@ -110,10 +110,10 @@ export const PushButtonsList = (props: InputProps) => {
                       setRequest(req)
 
                       const json = await (await fetch('/api/videohubs/updateRouting', getPostHeader(req))).json()
-                      const err: string = json.result;
+                      const err: string = json.error
 
                       if (err != undefined) {
-                        req.error = `Error: ${err}`
+                        req.error = `Failed: ${err}`
                       } else {
                         req.success = true
                         if (props.onRoutingUpdated != undefined) {

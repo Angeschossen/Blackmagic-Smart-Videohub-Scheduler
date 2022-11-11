@@ -2,7 +2,8 @@ import { Dropdown, Option, TableCellLayout } from "@fluentui/react-components/un
 import { userAgent } from "next/server";
 import DataTable, { DataTableColumn, DataTableItem } from "../DataTableNew";
 import { hasRoleOutput, User } from "../interfaces/User";
-import { Input, Output, Videohub } from "../interfaces/Videohub";
+import { Input, Output, RoutingUpdate, Videohub } from "../interfaces/Videohub";
+import { getRandomKey } from "../utils/commonutils";
 import { getPostHeader } from "../utils/fetchutils";
 
 
@@ -25,7 +26,7 @@ export const getInputByLabel = (videohub: Videohub, label: string): Input => {
     throw Error(`No input with label ${label} found.`)
 }
 
-export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], user: User, selectInput?: boolean }) => {
+export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], user: User, selectInput?: boolean, onRoutingUpdate?: (routing: RoutingUpdate) => void }) => {
     function buildItems(): DataTableItem[] {
         const items: DataTableItem[] = []
 
@@ -40,18 +41,25 @@ export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], use
                     </TableCellLayout>,
                     <TableCellLayout key={`${key}_input`}>
                         {output.input_id == undefined ? "Unkown" :
-                            props.selectInput ? <Dropdown disabled={!hasRoleOutput(props.user.role, videohub.id, output.id)} defaultSelectedOptions={[videohub.inputs[output.id].label]} placeholder={"Select input"}
-                                onOptionSelect={async (event: any, data: any) => {
-                                    const found: Input = getInputByLabel(videohub, data.optionValue)
-                                    await fetch('/api/videohubs/updateRouting', getPostHeader({ videohubId: videohub.id, outputs: [output.id], inputs: [found.id] })).then(res => {
-                                        console.log(res)
-                                    })
-                                }}>
-                                {videohub.inputs.map(input =>
-                                    <Option key={input.id.toString()} value={input.label}>
-                                        {input.label}
-                                    </Option>)}
-                            </Dropdown> :
+                            props.selectInput ?
+                                <Dropdown disabled={!hasRoleOutput(props.user.role, videohub.id, output.id)} defaultSelectedOptions={[videohub.inputs[output.id].label]} placeholder={"Select input"}
+                                    onOptionSelect={async (_event: any, data: any) => {
+                                        const found: Input = getInputByLabel(videohub, data.optionValue)
+                                        const routingUpdate: RoutingUpdate = { videohubId: videohub.id, outputs: [output.id], inputs: [found.id] }
+
+                                        await fetch('/api/videohubs/updateRouting', getPostHeader(routingUpdate)).then(async res => {
+                                            if (props.onRoutingUpdate != undefined) {
+                                                const json = await res.json()
+                                                routingUpdate.error = json.error
+                                                props.onRoutingUpdate(routingUpdate)
+                                            }
+                                        })
+                                    }}>
+                                    {videohub.inputs.map(input =>
+                                        <Option key={input.id.toString()} value={input.label}>
+                                            {input.label}
+                                        </Option>)}
+                                </Dropdown> :
                                 videohub.inputs[output.input_id].label}
                     </TableCellLayout>,
                 ]

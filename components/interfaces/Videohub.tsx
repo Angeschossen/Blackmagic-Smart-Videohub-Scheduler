@@ -11,6 +11,12 @@ export interface Videohub {
     lastRoutingUpdate?: Date,
 }
 
+export interface RoutingUpdate {
+    videohubId: number, 
+    outputs: number[], 
+    inputs: number[],
+    error?: string,
+}
 export interface VideohubActivity {
     id: number,
     videohub_id: number,

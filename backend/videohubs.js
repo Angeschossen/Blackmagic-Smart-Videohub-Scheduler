@@ -416,40 +416,39 @@ class Videohub {
             } */
 
             request.result = true
-            this.removeRequest(request);
-            _resolve(undefined);
-        });
+            this.removeRequest(request)
+            _resolve(undefined)
+        })
 
         // register and send
         if (!this.data.connected) {
             setTimeout(() => {
                 if (this.data.connected) {
-                    request.send(this);
+                    request.send(this)
                 } else {
-                    _resolve("Videohub isn't reachable. Is it running?");
+                    _resolve("Videohub isn't reachable. Is it running?")
                 }
-            }, REQUEST_RECONNECT_GRACE_TIME);
+            }, REQUEST_RECONNECT_GRACE_TIME)
         } else {
             request.send(this)
         }
 
         // handle res with timeout
         const promise = new Promise((resolve) => {
-            _resolve = resolve;
+            _resolve = resolve
             setTimeout(() => {
                 if (!request.result) {
-                    this.info(`Request timed out: ${outputs} ${inputs}`);
-                    resolve("Request timed out.");
+                    this.info(`Request timed out: ${outputs} ${inputs}`)
+                    resolve("Request timed out.")
                 } else {
-                    resolve(undefined);
+                    resolve(undefined)
                 }
 
-                this.removeRequest(request);
+                this.removeRequest(request)
+            }, REQUEST_TIMEOUT)
+        })
 
-            }, REQUEST_TIMEOUT);
-        });
-
-        return promise;
+        return promise
     }
 
     onUpdate() {

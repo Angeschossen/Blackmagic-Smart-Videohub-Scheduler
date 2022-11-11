@@ -82,7 +82,7 @@ export default async function handler(
                 }
             }
 
-            sendResponseValid(req, res, { result: await sendRoutingUpdate(videohubId, outputs, inputs) })
+            sendResponseValid(req, res, { error: await sendRoutingUpdate(videohubId, outputs, inputs) })
             return
         }
 
