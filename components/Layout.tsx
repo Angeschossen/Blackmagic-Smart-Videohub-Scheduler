@@ -5,7 +5,7 @@ import { Navigation, useNavViewType } from "./Naviation";
 const StackStylesDesktop: Partial<IStackStyles> = {
   root: {
     position: 'absolute',
-    left: '10vh',
+    left: '140px',
     bottom: 0,
     right: 0,
     height: '100%',

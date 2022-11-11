@@ -20,7 +20,7 @@ const styleMobile: Partial<INavStyles> = {
 
 const style: Partial<INavStyles> = {
     root: {
-        width: '10vh',
+        width: '140px',
         top: 0,
         bottom: 0,
         horizontal: 'strech',
