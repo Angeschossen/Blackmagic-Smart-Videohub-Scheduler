@@ -1,6 +1,6 @@
 import { Stack } from '@fluentui/react';
-import { Button, Tooltip } from '@fluentui/react-components';
-import { EditRegular } from '@fluentui/react-icons';
+import { Button, Switch, SwitchOnChangeData, Tooltip } from '@fluentui/react-components';
+import { DismissCircleRegular, EditRegular } from '@fluentui/react-icons';
 import Router from 'next/router';
 import React, { useEffect } from 'react';
 import { Socket } from 'socket.io';
@@ -9,9 +9,10 @@ import Permissions from '../../backend/authentication/Permissions';
 import { useClientSession, useGetClientId } from '../../components/auth/ClientAuthentication';
 import { getUserIdFromToken } from '../../components/auth/ServerAuthentication';
 import SelectVideohub from '../../components/buttons/SelectVideohubNew';
+import { AlertMessage } from '../../components/common/AlertMessage';
 import { IPushButton, IUpcomingPushButton } from '../../components/interfaces/PushButton';
 import { User } from '../../components/interfaces/User';
-import { Output, Videohub } from '../../components/interfaces/Videohub';
+import { Output, RoutingUpdate, Videohub } from '../../components/interfaces/Videohub';
 import { getPostHeader } from '../../components/utils/fetchutils';
 import { VideohubPage } from '../../components/videohub/VideohubPage';
 import { useViewType } from '../../components/views/DesktopView';
@@ -95,6 +96,9 @@ const VideohubView = (props: VideohubViewProps) => {
   const [scheduledButtons, setScheduledButtons] = React.useState(props.scheduledButtons)
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
+  const [selectInput, setSelectInput] = React.useState(false)
+  const [routingUpdate, setRoutingUpdate] = React.useState<RoutingUpdate>()
+
   const userId = useGetClientId()
 
   const socketData = React.useRef<{ socket?: any, onInit: () => void, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
@@ -169,11 +173,28 @@ const VideohubView = (props: VideohubViewProps) => {
       </Stack>
       {isDekstop &&
         <Stack.Item>
-          <h1>Routing</h1>
+          <Stack horizontal verticalAlign='center' style={{ justifyContent: 'space-between' }}>
+            <h1>Routing</h1>
+            <Switch labelPosition='before' label="Set input" onChange={(_ev, data: SwitchOnChangeData) => {
+              setSelectInput(data.checked)
+              setRoutingUpdate(undefined)
+            }} />
+          </Stack>
+          {routingUpdate != undefined && routingUpdate.error != undefined &&
+            <AlertMessage
+              intent='error'
+              action={{
+                icon: <DismissCircleRegular aria-label="dismiss message" onClick={() => setRoutingUpdate(undefined)} />
+              }}
+              message={`Routing update failed: ${routingUpdate.error}`} />}
           <OutputsView
+            selectInput={selectInput}
             outputs={outputs}
             user={props.user}
             videohub={videohub.videohub}
+            onRoutingUpdate={(update: RoutingUpdate) => {
+              setRoutingUpdate(update)
+            }}
           />
         </Stack.Item>
       }

@@ -62,7 +62,7 @@ const RoutingComponent = (props: {
                 onOptionSelect={(_event: any, data: any) => {
                     props.onSelectOutput(getIdFromValue(props.videohub.outputs, data.optionValue))
                 }}>
-                {props.videohub.outputs.filter(output => hasRoleOutput(props.user.role, props.videohub, output.id)).map(output =>
+                {props.videohub.outputs.filter(output => hasRoleOutput(props.user.role, props.videohub.id, output.id)).map(output =>
                     <Option key={`output_${output.id}`} value={output.label}>
                         {output.label}
                     </Option>)}
