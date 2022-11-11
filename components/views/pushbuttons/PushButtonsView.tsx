@@ -36,7 +36,7 @@ export interface RoutingData {
 const getRequestState = (props: { request?: RoutingRequest }): RequestState => {
   if (props.request != undefined) {
     if (props.request.success) {
-      return { state: "success", message: "Routing update was successful.", value: 1, hint: undefined }
+      return { state: "success", message: "Routing update successful.", value: 1, hint: undefined }
     } else if (props.request.error != undefined) {
       return { state: "error", message: props.request.error, value: 0, hint: undefined }
     }
@@ -100,7 +100,7 @@ export const PushButtonsList = (props: InputProps) => {
                       const req: RoutingRequest = {
                         id: getRandomKey(),
                         button: button,
-                        videohub_id: props.videohub.id,
+                        videohubId: props.videohub.id,
                         outputs: outputs,
                         inputs: inputs,
                         error: undefined,
@@ -109,7 +109,7 @@ export const PushButtonsList = (props: InputProps) => {
 
                       setRequest(req)
 
-                      const json = await (await fetch('/api/videohubs/routing', getPostHeader(req))).json()
+                      const json = await (await fetch('/api/videohubs/updateRouting', getPostHeader(req))).json()
                       const err: string = json.result;
 
                       if (err != undefined) {

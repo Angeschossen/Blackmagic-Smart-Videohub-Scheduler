@@ -22,7 +22,7 @@ export interface VideohubActivity {
 
 export interface RoutingRequest {
     id: number,
-    videohub_id: number,
+    videohubId: number,
     outputs: number[],
     button: IPushButton,
     inputs: number[],

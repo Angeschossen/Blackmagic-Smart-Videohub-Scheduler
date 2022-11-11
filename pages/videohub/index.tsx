@@ -1,5 +1,5 @@
 import { Stack } from '@fluentui/react';
-import { Button, Tooltip } from '@fluentui/react-components';
+import { Button, Switch, SwitchOnChangeData, Tooltip } from '@fluentui/react-components';
 import { EditRegular } from '@fluentui/react-icons';
 import Router from 'next/router';
 import React, { useEffect } from 'react';
@@ -95,6 +95,8 @@ const VideohubView = (props: VideohubViewProps) => {
   const [scheduledButtons, setScheduledButtons] = React.useState(props.scheduledButtons)
   const [videohub, setVideohub] = React.useState({ videohub: getVideohub(props.videohubs, props.videohub), buttons: props.pushbuttons })
   const [outputs, setOutputs] = React.useState<Output[]>(videohub.videohub == undefined ? [] : videohub.videohub.outputs)
+  const [selectInput, setSelectInput] = React.useState(false)
+
   const userId = useGetClientId()
 
   const socketData = React.useRef<{ socket?: any, onInit: () => void, onVideohubUpdate: (hub: Videohub) => void, videohubs: Videohub[], subScribeToChannels: (now?: Videohub) => void }>({
@@ -169,8 +171,14 @@ const VideohubView = (props: VideohubViewProps) => {
       </Stack>
       {isDekstop &&
         <Stack.Item>
-          <h1>Routing</h1>
+          <Stack horizontal verticalAlign='center' style={{ justifyContent: 'space-between' }}>
+            <h1>Routing</h1>
+            <Switch labelPosition='before' label="Select input" onChange={(_ev, data: SwitchOnChangeData) => {
+              setSelectInput(data.checked)
+            }} />
+          </Stack>
           <OutputsView
+            selectInput={selectInput}
             outputs={outputs}
             user={props.user}
             videohub={videohub.videohub}

@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
 import * as videohubs from '../../../backend/videohubs';
 import { sendRoutingUpdate } from '../../../backend/videohubs';
-import { checkServerPermission } from '../../../components/auth/ServerAuthentication';
+import { checkServerPermission, getUserFromToken, getUserIdFromToken } from '../../../components/auth/ServerAuthentication';
+import { hasRoleOutput, User } from '../../../components/interfaces/User';
 import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
 import { hasParams, isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prisma';
@@ -54,20 +55,34 @@ export default async function handler(
             return
         }
 
-        case "routing": {
+        case "updateRouting": {
+            const user: User | undefined = await getUserFromToken(req)
+            if (user == undefined) {
+                sendResponseInvalid(req, res, "User not provided")
+                return
+            }
+
             if (!isPost(req, res)) {
                 return
             }
 
             const body = req.body
-            const videohub_id = body.videohub_id
-            const outputs = body.outputs
-            const inputs = body.inputs
-            if (!hasParams(req, res, videohub_id, outputs, inputs)) {
+            const videohubId: number = body.videohubId
+            const outputs: number[] = body.outputs
+            const inputs: number[] = body.inputs
+            if (!hasParams(req, res, videohubId, outputs, inputs)) {
                 return
             }
 
-            sendResponseValid(req, res, { result: await sendRoutingUpdate(videohub_id, outputs, inputs) })
+            // check outputs 
+            for (const outputId of outputs) {
+                if (!hasRoleOutput(user.role, videohubId, outputId)) {
+                    sendResponseInvalid(req, res, "Contains outputs that the user's role doesn't have.")
+                    return
+                }
+            }
+
+            sendResponseValid(req, res, { result: await sendRoutingUpdate(videohubId, outputs, inputs) })
             return
         }
 

@@ -1,5 +1,6 @@
 import { getToken } from "next-auth/jwt";
 import { getRoleById } from "../../backend/backend";
+import { User } from "../interfaces/User";
 import { sendResponseInvalid } from "../utils/requestutils";
 
 
@@ -27,6 +28,11 @@ export async function checkServerPermission(req: any, res: any, permission?: str
 export async function getUserIdFromToken(req: any) {
     const token: any = await getToken({ req: req });
     return token.user.id
+}
+
+export async function getUserFromToken(req: any): Promise<User> {
+    const token: any = await getToken({ req: req });
+    return token.user
 }
 
 export function handleCheckPermission(obj: any, permission?: string) {
