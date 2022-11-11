@@ -794,7 +794,9 @@ class Videohub {
 
             case PROTOCOL_VIDEO_OUTPUT_ROUTING: {
                 let i = 0
+                console.log("GOT OUTPUT_ROUTING")
                 for (const line of getCorrespondingLines(lines, index)) {
+                    console.log("LINE: "+line)
                     const data = line.split(" ")
                     await this.updateRouting(Number(data[0]), Number(data[1]))
                     i++

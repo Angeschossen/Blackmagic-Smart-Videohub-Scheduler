@@ -19,5 +19,7 @@ function getStatusComponent(videohub?: Videohub) {
 }
 
 export const VideohubFooter = (p: InputProps) => {
-    return <Stack.Item style={{position: 'sticky', top: 0}}>{getStatusComponent(p.videohub)}</Stack.Item>
+    //return <Stack.Item style={{position: 'sticky', top: 0}}>{getStatusComponent(p.videohub)}</Stack.Item>
+    return getStatusComponent(p.videohub)
+
 }
