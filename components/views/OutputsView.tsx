@@ -42,7 +42,7 @@ export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], use
                     <TableCellLayout key={`${key}_input`}>
                         {output.input_id == undefined ? "Unkown" :
                             props.selectInput ?
-                                <Dropdown disabled={!hasRoleOutput(props.user.role, videohub.id, output.id)} defaultSelectedOptions={[videohub.inputs[output.id].label]} placeholder={"Select input"}
+                                <Dropdown disabled={!hasRoleOutput(props.user.role, videohub.id, output.id)} defaultSelectedOptions={[videohub.inputs[output.input_id].label]} placeholder={"Select input"}
                                     onOptionSelect={async (_event: any, data: any) => {
                                         const found: Input = getInputByLabel(videohub, data.optionValue)
                                         const routingUpdate: RoutingUpdate = { videohubId: videohub.id, outputs: [output.id], inputs: [found.id] }
