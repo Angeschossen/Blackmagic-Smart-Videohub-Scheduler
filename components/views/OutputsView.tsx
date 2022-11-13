@@ -34,6 +34,7 @@ export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], use
         if (videohub != undefined) {
             for (const output of props.outputs) {
                 const key: number = output.id
+                const canEditOutput: boolean = hasRoleOutput(props.user.role, videohub.id, output.id)
 
                 const cells: JSX.Element[] = [
                     <TableCellLayout key={`${key}_output`}>
@@ -41,8 +42,8 @@ export const OutputsView = (props: { videohub?: Videohub, outputs: Output[], use
                     </TableCellLayout>,
                     <TableCellLayout key={`${key}_input`}>
                         {output.input_id == undefined ? "Unkown" :
-                            props.selectInput ?
-                                <Dropdown disabled={!hasRoleOutput(props.user.role, videohub.id, output.id)} defaultSelectedOptions={[videohub.inputs[output.input_id].label]} placeholder={"Select input"}
+                            props.selectInput && canEditOutput ?
+                                <Dropdown disabled={!canEditOutput} defaultSelectedOptions={[videohub.inputs[output.input_id].label]} placeholder={"Select input"}
                                     onOptionSelect={async (_event: any, data: any) => {
                                         const found: Input = getInputByLabel(videohub, data.optionValue)
                                         const routingUpdate: RoutingUpdate = { videohubId: videohub.id, outputs: [output.id], inputs: [found.id] }
