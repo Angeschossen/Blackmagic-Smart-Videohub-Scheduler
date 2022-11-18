@@ -34,7 +34,7 @@ const Home = (p: InputProps) => {
   const user:any = session?.user
   return (
     <>
-      <Stack.Item style={{ justifyContent: 'flex-end', padding: 15 }}>
+      <Stack.Item className='' style={{ justifyContent: 'flex-end', padding: 15 }}>
         <AlertMessage
           message={`You're logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
           action={
