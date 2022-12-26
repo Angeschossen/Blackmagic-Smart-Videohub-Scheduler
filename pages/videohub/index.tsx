@@ -29,7 +29,7 @@ async function retrievePushButtons(videohub: number): Promise<IPushButton[]> {
 }
 
 async function retrieveScheduledButtonsClientSide(videohub: number): Promise<IUpcomingPushButton[]> {
-  return (await fetch('/api/pushbuttons/getScheduled', getPostHeader({ videohub_id: videohub })).then()).json()
+  return (await fetch('/api/pushbuttons/', getPostHeader({ videohub_id: videohub })).then()).json()
 }
 
 export async function getServerSideProps(context: any) {
@@ -201,9 +201,10 @@ const VideohubView = (props: VideohubViewProps) => {
       <Stack.Item>
         <Stack horizontal verticalAlign='center' style={{ justifyContent: 'space-between' }}>
           <h1>Update Routing</h1>
-          {isDekstop &&
+          {isDekstop && videohub.videohub != undefined &&
             <Stack.Item>
               <ScheduledButtons
+                videohub={videohub.videohub}
                 scheduledButtons={scheduledButtons}
               />
             </Stack.Item>
