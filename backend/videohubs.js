@@ -368,10 +368,10 @@ class Videohub {
     }
 
 
-    cancelScheduledButton(buttonId) {
+    cancelScheduledButton(buttonId, cancel) {
         const button = this.getScheduledButton(buttonId)
         if (button != undefined) {
-            button.cancel()
+            button.cancel(cancel)
             this.emitScheduleChange()
         }
     }
@@ -1007,13 +1007,13 @@ module.exports = {
 
         return videohubClient.executeButton(button_id)
     },
-    cancelScheduledButton: function (videohubId, buttonId) {
+    cancelScheduledButton: function (videohubId, buttonId, cancel) {
         const videohubClient = module.exports.getClient(videohubId);
         if (videohubClient == undefined) {
             throw Error("Client not found: " + videohubId);
         }
 
-        return videohubClient.cancelScheduledButton(buttonId)
+        return videohubClient.cancelScheduledButton(buttonId, cancel)
     },
     handleButtonReSchedule: async function (videohubId, buttonId) {
         const videohubClient = module.exports.getClient(videohubId);

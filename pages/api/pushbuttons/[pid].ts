@@ -258,8 +258,9 @@ export default async function handler(
         }
 
         case "cancel": {
-            const buttonId: number = body.buttonId;
-            if (!hasParams(req, res, buttonId, videohub_id)) {
+            const buttonId: number = body.buttonId
+            const cancel: boolean = body.cancel
+            if (!hasParams(req, res, buttonId, cancel)) {
                 return
             }
 
@@ -267,7 +268,7 @@ export default async function handler(
                 return
             }
 
-            cancelScheduledButton(videohub_id, buttonId)
+            cancelScheduledButton(videohub_id, buttonId, cancel)
             sendResponseValid(req, res, { result: true })
             break
         }

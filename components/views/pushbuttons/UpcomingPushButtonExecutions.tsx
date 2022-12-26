@@ -1,4 +1,4 @@
-import { CalendarCancel16Filled, CalendarCancelRegular, ClockRegular, DeleteRegular, DoorArrowRightFilled, TrayItemRemoveRegular } from "@fluentui/react-icons";
+import { ArrowSyncCheckmarkRegular, CalendarCancel16Filled, CalendarCancelRegular, CheckmarkRegular, CheckRegular, ClockRegular, DeleteRegular, DoorArrowRightFilled, TrayItemRemoveRegular } from "@fluentui/react-icons";
 import React from "react";
 import { AlertMessage } from "../../common/AlertMessage";
 import { IUpcomingPushButton } from "../../interfaces/PushButton";
@@ -20,9 +20,9 @@ export const ScheduledButtons = (props: { videohub: Videohub, scheduledButtons: 
             message={`${button.cancelled ? "Cancelled" : "Scheduled"}: ${button.label} at ${convertDateToLocal(button.time).toLocaleTimeString()}`}
             action={
                 {
-                    icon: <DeleteRegular />,
+                    icon: button.cancelled ? <CheckmarkRegular /> : <DeleteRegular />,
                     onClick: async () => {
-                        await fetch('/api/pushbuttons/cancel', getPostHeader({ videohub_id: props.videohub.id, buttonId: button.id }))
+                        await fetch('/api/pushbuttons/cancel', getPostHeader({ videohub_id: props.videohub.id, buttonId: button.id, cancel: !button.cancelled }))
                     }
                 }
             } />
