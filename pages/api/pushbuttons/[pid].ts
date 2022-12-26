@@ -1,7 +1,7 @@
 import { PushButton, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
-import { executeButton, getClient, getScheduledButtons, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
+import { cancelScheduledButton, executeButton, getClient, getScheduledButtons, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
 import { IPushButton, IPushButtonTrigger, IUpcomingPushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
 import { convert_date_to_utc, removeSecondsFromDate, setDayOfWeek, setDayOfWeekUTC } from '../../../components/utils/dateutils';
@@ -75,7 +75,7 @@ export default async function handler(
     }
 
     const body = req.body;
-    const videohub_id = body.videohub_id;
+    const videohub_id = body.videohub_id
     if (videohub_id === undefined) {
         sendResponseInvalid(req, res, "Parameters missing.")
         return
@@ -255,6 +255,21 @@ export default async function handler(
             await handleButtonReSchedule(videohub_id, buttonId)
             sendResponseValid(req, res)
             return
+        }
+
+        case "cancel": {
+            const buttonId: number = body.buttonId;
+            if (!hasParams(req, res, buttonId, videohub_id)) {
+                return
+            }
+
+            if (!await canEditButton(buttonId, req, res)) {
+                return
+            }
+
+            cancelScheduledButton(videohub_id, buttonId)
+            sendResponseValid(req, res, { result: true })
+            break
         }
 
         case "execute": {

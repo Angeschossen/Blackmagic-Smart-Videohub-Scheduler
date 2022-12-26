@@ -367,6 +367,23 @@ class Videohub {
         emit(`videohubUpdate_${this.data.id}_scheduled`, this.getScheduledButtons())
     }
 
+
+    cancelScheduledButton(buttonId) {
+        const button = this.getScheduledButton(buttonId)
+        if (button != undefined) {
+            button.cancel()
+            this.emitScheduleChange()
+        }
+    }
+
+    getScheduledButton(buttonId) {
+        for (const button of this.scheduledButtons) {
+            if (button.id === buttonId) {
+                return button
+            }
+        }
+    }
+
     async handleButtonReSchedule(buttonId) {
         let res = false;
         for (const button of this.scheduledButtons) {
@@ -457,7 +474,7 @@ class Videohub {
 
     getScheduledButtons() {
         return this.scheduledButtons.map(button => {
-            return { id: button.id, label: button.label, time: button.time, userId: button.userId }
+            return { id: button.id, label: button.label, time: button.time, userId: button.userId, cancelled: button.cancelled }
         })
     }
 
@@ -796,7 +813,7 @@ class Videohub {
                 let i = 0
                 console.log("GOT OUTPUT_ROUTING")
                 for (const line of getCorrespondingLines(lines, index)) {
-                    console.log("LINE: "+line)
+                    console.log("LINE: " + line)
                     const data = line.split(" ")
                     await this.updateRouting(Number(data[0]), Number(data[1]))
                     i++
@@ -989,6 +1006,14 @@ module.exports = {
         }
 
         return videohubClient.executeButton(button_id)
+    },
+    cancelScheduledButton: function (videohubId, buttonId) {
+        const videohubClient = module.exports.getClient(videohubId);
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + videohubId);
+        }
+
+        return videohubClient.cancelScheduledButton(buttonId)
     },
     handleButtonReSchedule: async function (videohubId, buttonId) {
         const videohubClient = module.exports.getClient(videohubId);

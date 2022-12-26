@@ -11,6 +11,11 @@ class Button {
         this.label = label
         this.time = time
         this.userId = userId
+        this.cancelled = false
+    }
+
+    cancel(cancel) {
+        this.cancelled = cancel
     }
 
     info(msg) {
@@ -35,6 +40,17 @@ class Button {
         return true
     }
 
+
+    async goToNext() {
+        // go to next
+        if (await this.handleScheduleNextTrigger(new Date())) {
+            this.videohub.emitScheduleChange()
+            return true
+        }
+
+        return false
+    }
+
     async scheduleNextTrigger(trigger) {
         this.time = trigger.time // update, wrap into new Date to prevent wrong time at client side
         if (this.scheduledTrigger != undefined) {
@@ -50,21 +66,24 @@ class Button {
         this.info(`Next trigger (at ${at}) is in ${diff} second(s). Current second of day: ${curr}`)
 
         this.scheduledTrigger = setTimeout(async () => {
-            await this.videohub.executeButton(trigger.pushbutton_id).then(async result => {
-                const label = await module.exports.getLabelOfButton(trigger.pushbutton_id)
+            if (!this.cancelled) {
+                await this.videohub.executeButton(trigger.pushbutton_id).then(async result => {
+                    const label = await module.exports.getLabelOfButton(trigger.pushbutton_id)
 
-                if (result != undefined) {
-                    this.videohub.addFailedButton(this)
-                    await this.videohub.logActivity(`Scheduled button failed: ${label}`, ICON_ERROR);
-                } else {
-                    await this.videohub.logActivity(`Scheduled button was successful: ${label}`, ICON_SUCCESS);
-                }
+                    if (result != undefined) {
+                        this.videohub.addFailedButton(this)
+                        await this.videohub.logActivity(`Scheduled button failed: ${label}`, ICON_ERROR);
+                    } else {
+                        await this.videohub.logActivity(`Scheduled button was successful: ${label}`, ICON_SUCCESS);
+                    }
 
+                    // go to next
+                    await this.goToNext()
+                })
+            } else {
                 // go to next
-                if (await this.handleScheduleNextTrigger(new Date())) {
-                    this.videohub.emitScheduleChange()
-                }
-            })
+                await this.goToNext()
+            }
         }, diff * 1000)
     }
 

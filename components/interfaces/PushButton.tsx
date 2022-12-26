@@ -13,6 +13,7 @@ export interface IPushButton {
 
 export interface IUpcomingPushButton {
     id: number, 
+    cancelled: boolean,
     label: string,
     time: string,
     userId: string,
