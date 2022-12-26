@@ -175,7 +175,7 @@ const VideohubView = (props: VideohubViewProps) => {
         <Stack.Item>
           <Stack horizontal verticalAlign='center' style={{ justifyContent: 'space-between' }}>
             <h1>Routing</h1>
-            <Switch labelPosition='before' label="Set input" onChange={(_ev, data: SwitchOnChangeData) => {
+            <Switch labelPosition='before' label="Set input" onChange={(_ev: any, data: SwitchOnChangeData) => {
               setSelectInput(data.checked)
               setRoutingUpdate(undefined)
             }} />

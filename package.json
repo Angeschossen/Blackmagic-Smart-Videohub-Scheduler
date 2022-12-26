@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@fluentui/react": "^8.96.2",
-    "@fluentui/react-components": "^9.5.1",
+    "@fluentui/react-components": "^9.7.4",
     "@fluentui/react-icons": "^2.0.185",
+    "@headlessui/react": "^1.7.7",
+    "@heroicons/react": "^2.0.13",
     "@isaacs/ttlcache": "^1.2.1",
     "@next-auth/prisma-adapter": "^1.0.4",
     "@prisma/client": "^4.4.0",
