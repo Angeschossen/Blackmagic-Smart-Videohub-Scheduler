@@ -38,7 +38,7 @@ const getRequestState = (props: { request?: RoutingRequest }): RequestState => {
     if (props.request.success) {
       return { state: "success", message: "Routing update successful.", value: 1, hint: undefined }
     } else if (props.request.error != undefined) {
-      return { state: "error", message: props.request.error, value: 0, hint: undefined }
+      return { state: "error", message: props.request.error, value: 1, hint: undefined }
     }
   }
 

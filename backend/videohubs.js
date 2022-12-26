@@ -443,7 +443,7 @@ class Videohub {
                 if (this.data.connected) {
                     request.send(this)
                 } else {
-                    _resolve("Videohub isn't reachable. Is it running?")
+                    _resolve("Videohub isn't reachable.")
                 }
             }, REQUEST_RECONNECT_GRACE_TIME)
         } else {
