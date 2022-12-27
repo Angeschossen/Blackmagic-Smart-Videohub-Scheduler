@@ -18,7 +18,7 @@ const columns: DataTableColumn[] = [
 
 const columnsDefault = columns.slice()
 columnsDefault.push({
-    label: 'Default'
+    label: 'Default Input'
 })
 
 const getInputByLabel = (videohub: Videohub, label: string): Input | undefined => {

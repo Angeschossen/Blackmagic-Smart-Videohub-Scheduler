@@ -69,9 +69,9 @@ export function sortButtons(a: IPushButton, b: IPushButton): number {
     }
   } else {
     if (a.display) {
-      return 1
-    } else if (b.display) {
       return -1
+    } else if (b.display) {
+      return 1
     }
   }
 
