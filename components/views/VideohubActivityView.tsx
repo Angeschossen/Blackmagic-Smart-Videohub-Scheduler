@@ -2,7 +2,6 @@ import { ActivityItem, Icon, Link, mergeStyleSets, Stack, Text } from '@fluentui
 import Router from 'next/router';
 import * as React from 'react';
 import { VideohubActivity } from '../interfaces/Videohub';
-import { videohubPageStyle } from '../videohub/VideohubPage';
 
 const classNames = mergeStyleSets({
   exampleRoot: {
@@ -16,9 +15,11 @@ const classNames = mergeStyleSets({
 export const VideohubActivityView = (p: { activityItems: VideohubActivity[] }) => {
 
   return (
-    <Stack style={videohubPageStyle}>
-      <h1>Recent Activity of Videohubs</h1>
-      <Stack>
+    <Stack>
+      <Stack.Item>
+        <h1>Recent Activity of Videohubs</h1>
+      </Stack.Item>
+      <Stack.Item>
         {p.activityItems.length == 0 ?
           <p>No activities yet.</p> :
           p.activityItems.map((item, _key) => (
@@ -35,7 +36,7 @@ export const VideohubActivityView = (p: { activityItems: VideohubActivity[] }) =
                 >{item.title}</Link>,
               ]} activityDescription={[<Text key={item.id + "_text"} className={classNames.nameText}>{item.description}</Text>]} key={item.id} className={classNames.exampleRoot} />
           ))}
-      </Stack>
+      </Stack.Item>
     </Stack>
   );
 };

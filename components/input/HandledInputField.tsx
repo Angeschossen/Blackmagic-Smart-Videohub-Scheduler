@@ -5,7 +5,7 @@ import { useInputStyles } from "../utils/styles";
 
 
 export interface InputState {
-    value: string,
+    value: any,
     validation?: {
         state: "success" | "error",
         message: string,

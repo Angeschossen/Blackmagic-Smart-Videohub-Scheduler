@@ -3,6 +3,8 @@ import { DoorArrowRightFilled, DoorArrowRightRegular } from '@fluentui/react-ico
 import { signOut, useSession } from 'next-auth/react'
 import { AlertMessage } from '../components/common/AlertMessage'
 import { VideohubActivity } from '../components/interfaces/Videohub'
+import { stackTokens } from '../components/utils/styles'
+import { videohubPageStyle } from '../components/videohub/VideohubPage'
 import { VideohubActivityView } from '../components/views/VideohubActivityView'
 import { getVideohubActivityServerSide } from './api/videohubs/[pid]'
 
@@ -33,13 +35,14 @@ const Home = (p: InputProps) => {
 
   const user:any = session?.user
   return (
-    <>
-      <Stack.Item style={{ justifyContent: 'flex-end', padding: 15 }}>
+    <Stack style={videohubPageStyle} tokens={stackTokens}>
+      <Stack.Item style={{ justifyContent: 'flex-end' }}>
         <AlertMessage
           message={`You're logged in as ${user.username}${session?.user?.email == undefined ? "" : " (" + session.user.email + ")"}.`}
           action={
             {
               icon: <DoorArrowRightFilled/>,
+
               onClick: () => {
                 signOut()
               }
@@ -50,7 +53,7 @@ const Home = (p: InputProps) => {
 
       </Stack.Item>
       <VideohubActivityView activityItems={p.videohubActivities} />
-    </>
+    </Stack>
   )
 }
 

@@ -1,7 +1,7 @@
 import { getColorFromString, Label, Stack } from "@fluentui/react";
-import { Button, InputProps, TextareaProps, useId } from "@fluentui/react-components";
+import { Accordion, AccordionHeader, AccordionItem, AccordionPanel, Button, InputProps, Switch, TextareaProps, ToggleButton, useId } from "@fluentui/react-components";
 import { Dropdown, InputField, Option, TextareaField } from "@fluentui/react-components/unstable";
-import { DeleteRegular } from "@fluentui/react-icons";
+import { CameraSwitchRegular, DatabaseSwitchRegular, DeleteRegular, RouterRegular, SlideHideRegular, TableSwitchRegular, TextboxRegular, TextFieldRegular, VideoSwitchRegular } from "@fluentui/react-icons";
 import { PushButton, PushButtonAction } from "@prisma/client";
 import React from "react";
 import { useGetClientId } from "../../auth/ClientAuthentication";
@@ -86,7 +86,9 @@ const RoutingComponent = (props: {
 
 export const EditPushButtonModal = (props: Props) => {
     const inputNameId = useId('input_name')
+    const inputSortingId = useId('input_sorting')
     const inputDescriptionId = useId('input_description')
+    const inputDisplayId = useId('display')
     const styles = useInputStyles()
     const userId = useGetClientId()
 
@@ -94,9 +96,22 @@ export const EditPushButtonModal = (props: Props) => {
     const [routings, setRoutings] = React.useState<Routing[]>(props.button?.actions.map(action => createRouting(action)) || [createRouting(undefined)])
     const [description, setDescription] = React.useState<InputState>({ value: props.button?.description || "" })
     const [color, setColor] = React.useState(props.button?.color)
+    const [sorting, setSorting] = React.useState<InputState>({ value: props.button?.sorting.toString() || "0" })
+
+    const [display, setDisplay] = React.useState(props.button == undefined ? true : props.button.display)
+    const onDisplayChange = React.useCallback(
+        (ev: { currentTarget: { checked: any; }; }) => {
+            setDisplay(ev.currentTarget.checked);
+        },
+        [setDisplay],
+    );
 
     const onChangeName: InputProps['onChange'] = (_ev, data) => {
         setName(validateLabel(data.value))
+    }
+
+    const onChangeSorting: InputProps['onChange'] = (_ev, data) => {
+        setSorting(validateSorting(data.value))
     }
 
     const onChangeDescription: TextareaProps['onChange'] = (_ev, data) => {
@@ -123,6 +138,23 @@ export const EditPushButtonModal = (props: Props) => {
         }
 
         return { value: value, validation: { state: "success", message: "Input is valid." } }
+    }
+
+    function validateSorting(value: string): InputState {
+        const sorting = Number(value)
+        return sorting < 0 ? {
+            value: 0,
+            validation: {
+                state: "error",
+                message: "Sorting can't be lower than 0."
+            }
+        } : {
+            value: sorting,
+            validation: {
+                state: "success",
+                message: "Input is valid"
+            }
+        }
     }
 
     function validateLabel(name: string): InputState {
@@ -179,6 +211,8 @@ export const EditPushButtonModal = (props: Props) => {
                         videohub_id: props.videohub.id,
                         label: name.value,
                         actions: actions,
+                        sorting: sorting.value,
+                        display: display,
                         color: color,
                         description: description.value,
                         user_id: userId,
@@ -204,60 +238,96 @@ export const EditPushButtonModal = (props: Props) => {
                 return Promise.resolve("Please specify at leat one complete routing with an input and output.")
             }}>
             <Stack horizontal tokens={stackTokens}>
+                <Accordion multiple collapsible defaultOpenItems={[1, 3]}>
+                    <AccordionItem value={1}>
+                        <AccordionHeader size="large" icon={<TextboxRegular />}>General</AccordionHeader>
+                        <AccordionPanel>
+                            <div className={styles.root}>
+                                <Label htmlFor={inputNameId}>Name</Label>
+                                <InputField
+                                    required
+                                    input={{ style: { width: 248 } }}
+                                    value={name.value as string}
+                                    onChange={onChangeName}
+                                    id={inputNameId}
+                                    validationState={name.validation?.state}
+                                    validationMessage={name.validation?.message}
+                                />
+                                <Label htmlFor={inputDescriptionId}>Description</Label>
+                                <TextareaField
+                                    textarea={{ style: { width: 268 } }}
+                                    size="small"
+                                    value={description.value as string}
+                                    onChange={onChangeDescription}
+                                    id={inputDescriptionId}
+                                    validationState={description.validation?.state}
+                                    validationMessage={description.validation?.message}
+                                />
+                            </div>
+                        </AccordionPanel>
+                    </AccordionItem>
+                    <AccordionItem value={2}>
+                        <AccordionHeader size="large" icon={<SlideHideRegular />}>Display</AccordionHeader>
+                        <AccordionPanel>
+                            <div className={styles.root}>
+                                <Label htmlFor={inputDisplayId}>Display</Label>
+                                <Switch
+                                    checked={display}
+                                    id={inputDisplayId}
+                                    onChange={onDisplayChange}
+                                />
+                                <Label htmlFor={inputSortingId}>Sorting</Label>
+                                <InputField
+                                    required
+                                    type="number"
+                                    value={sorting.value}
+                                    onChange={onChangeSorting}
+                                    id={inputSortingId}
+                                    validationState={sorting.validation?.state}
+                                    validationMessage={sorting.validation?.message}
+                                />
+                                <Label>Color</Label>
+                                <PickColor
+                                    color={color == undefined ? undefined : getColorFromString(color)}
+                                    onChange={(color) => {
+                                        setColor(color.str)
+                                    }}
+                                />
+                            </div>
+                        </AccordionPanel>
+                    </AccordionItem>
+                    <AccordionItem value={3}>
+                        <AccordionHeader size="large" icon={<VideoSwitchRegular />}>Routings</AccordionHeader>
+                        <AccordionPanel>
+                            <Stack tokens={stackTokens}>
+                                {routings.map((routing, index) =>
+                                    <RoutingComponent
+                                        user={props.user}
+                                        key={`routing_${index}`}
+                                        videohub={props.videohub}
+                                        routing={routing}
+                                        onSelectOutput={function (index?: number | undefined): void {
+                                            updateRouting(routing, index, routing.input)
+                                        }} onSelectInput={function (index?: number | undefined): void {
+                                            updateRouting(routing, routing.output, index)
+                                        }} />
+                                )}
+                                <Button
+                                    onClick={() => {
+                                        const arr = [...routings]
+                                        arr.push(createRouting(undefined))
+                                        setRoutings(arr)
+                                    }}>
+                                    Add routing
+                                </Button>
+                            </Stack>
+                        </AccordionPanel>
+                    </AccordionItem>
+                </Accordion>
                 <Stack.Item>
-                    <div className={styles.root}>
-                        <Label htmlFor={inputNameId}>Name</Label>
-                        <InputField
-                            required
-                            input={{ style: { width: 248 } }}
-                            value={name.value}
-                            onChange={onChangeName}
-                            id={inputNameId}
-                            validationState={name.validation?.state}
-                            validationMessage={name.validation?.message}
-                        />
-                        <Label htmlFor={inputDescriptionId}>Description</Label>
-                        <TextareaField
-                            textarea={{ style: { width: 268 } }}
-                            size="small"
-                            value={description.value}
-                            onChange={onChangeDescription}
-                            id={inputDescriptionId}
-                            validationState={description.validation?.state}
-                            validationMessage={description.validation?.message}
-                        />
-                        <Label>Color</Label>
-                        <PickColor
-                            color={color == undefined ? undefined : getColorFromString(color)}
-                            onChange={(color) => {
-                                setColor(color.str)
-                            }}
-                        />
-                    </div>
+
                 </Stack.Item>
                 <Stack.Item>
-                    <Stack tokens={stackTokens}>
-                        {routings.map((routing, index) =>
-                            <RoutingComponent
-                                user={props.user}
-                                key={`routing_${index}`}
-                                videohub={props.videohub}
-                                routing={routing}
-                                onSelectOutput={function (index?: number | undefined): void {
-                                    updateRouting(routing, index, routing.input)
-                                }} onSelectInput={function (index?: number | undefined): void {
-                                    updateRouting(routing, routing.output, index)
-                                }} />
-                        )}
-                        <Button
-                            onClick={() => {
-                                const arr = [...routings]
-                                arr.push(createRouting(undefined))
-                                setRoutings(arr)
-                            }}>
-                            Add routing
-                        </Button>
-                    </Stack>
                 </Stack.Item>
             </Stack>
         </InputModal>

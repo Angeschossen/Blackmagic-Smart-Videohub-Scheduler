@@ -12,16 +12,16 @@ datasource db {
 }
 
 model Videohub {
-  id                Int                 @id @default(autoincrement())
-  ip                String              @unique
-  name              String              @unique
-  version           String
-  inputs            Input[]
-  outputs           Output[]
-  pushbuttons       PushButton[]
-  pushbuttonactions PushButtonAction[]
-  activity          VideohubActivity[]
-  roleoutputs       RoleOutput[]
+  id                 Int                 @id @default(autoincrement())
+  ip                 String              @unique
+  name               String              @unique
+  version            String
+  inputs             Input[]
+  outputs            Output[]
+  pushbuttons        PushButton[]
+  pushbuttonactions  PushButtonAction[]
+  activity           VideohubActivity[]
+  roleoutputs        RoleOutput[]
   pushbuttontriggers PushButtonTrigger[]
 
   @@map("videohubs")
@@ -92,6 +92,8 @@ model PushButton {
   videohub_id Int
   label       String              @unique
   description String
+  display     Boolean             @default(true)
+  sorting     Int              @default(0)
   actions     PushButtonAction[]
   color       String?
   user        User                @relation(fields: [user_id], references: [id], onDelete: Cascade)

@@ -4,6 +4,8 @@ export interface IPushButton {
     id: number,
     videohub_id: number,
     label: string,
+    sorting: number,
+    display: boolean,
     description: string,
     actions: PushbuttonAction[],
     color?: string

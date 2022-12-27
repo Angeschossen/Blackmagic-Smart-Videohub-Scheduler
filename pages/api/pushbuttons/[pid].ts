@@ -105,6 +105,7 @@ export default async function handler(
             }
 
             let pushButton: IPushButton = body;
+            const sorting: number = Number(pushButton.sorting)
             if (pushButton.id == -1) { // create
                 const result: any = await prismadb.pushButton.create({
                     data: {
@@ -112,6 +113,8 @@ export default async function handler(
                         label: pushButton.label,
                         color: pushButton.color,
                         description: pushButton.description,
+                        display: pushButton.display,
+                        sorting: sorting,
                         user_id: await getUserIdFromToken(req),
                     }
                 })
@@ -148,6 +151,8 @@ export default async function handler(
                     data: {
                         label: pushButton.label,
                         color: pushButton.color,
+                        display: pushButton.display,
+                        sorting: sorting,
                         description: pushButton.description,
                     }
                 })

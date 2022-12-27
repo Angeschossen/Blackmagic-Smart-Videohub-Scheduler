@@ -136,7 +136,6 @@ const VideohubView = (props: VideohubViewProps) => {
 
       const scheduledChannel: string = `${channel}_${now.id}_scheduled`
       socketData.current.socket.on(scheduledChannel, (arr: IUpcomingPushButton[]) => {
-        console.log(arr)
         setScheduledButtons(arr.filter(button => button.userId === userId))
       })
     }
@@ -233,7 +232,7 @@ const VideohubView = (props: VideohubViewProps) => {
           </Stack.Item>}
         <Stack.Item>
           <PushButtonsList
-            pushbuttons={videohub.buttons}
+            pushbuttons={videohub.buttons.filter(button => button.display)}
             videohub={videohub.videohub}
           />
         </Stack.Item>
