@@ -1,12 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
 import * as videohubs from '../../../backend/videohubs';
-import { sendRoutingUpdate } from '../../../backend/videohubs';
+import { sendRoutingUpdate, updateDefaultInput } from '../../../backend/videohubs';
 import { checkServerPermission, getUserFromToken, getUserIdFromToken } from '../../../components/auth/ServerAuthentication';
 import { hasRoleOutput, User } from '../../../components/interfaces/User';
 import { RoutingRequest, Videohub, VideohubActivity } from '../../../components/interfaces/Videohub';
 import { hasParams, isPost, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prisma';
+import prisma from '../../../database/prismadb';
 
 export function retrieveVideohubsServerSide() {
     return videohubs.getVideohubs() as Videohub[]
@@ -55,14 +56,15 @@ export default async function handler(
             return
         }
 
+        case "setDefaultInput":
         case "updateRouting": {
-            const user: User | undefined = await getUserFromToken(req)
-            if (user == undefined) {
-                sendResponseInvalid(req, res, "User not provided")
+            if (!isPost(req, res)) {
                 return
             }
 
-            if (!isPost(req, res)) {
+            const user: User | undefined = await getUserFromToken(req)
+            if (user == undefined) {
+                sendResponseInvalid(req, res, "User not provided")
                 return
             }
 
@@ -82,7 +84,31 @@ export default async function handler(
                 }
             }
 
-            sendResponseValid(req, res, { error: await sendRoutingUpdate(videohubId, outputs, inputs) })
+            if (pid === "setDefaultInput") {
+                for (let i = 0; i < outputs.length; i++) {
+                    const input = inputs[i] < 0 ? undefined : inputs[i]
+                    const output = outputs[i]
+                    await prisma.output.update({
+                        where: {
+                            videohub_output: {
+                                id: output,
+                                videohub_id: videohubId,
+                            }
+                        },
+                        data: {
+                            input_default_id: input,
+                        }
+                    })
+
+                    updateDefaultInput(videohubId, output, input)
+                }
+
+                sendResponseValid(req, res)
+
+            } else {
+                sendResponseValid(req, res, { error: await sendRoutingUpdate(videohubId, outputs, inputs) })
+            }
+
             return
         }
 

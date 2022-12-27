@@ -186,7 +186,7 @@ const VideohubView = (props: VideohubViewProps) => {
               action={{
                 icon: <DismissCircleRegular aria-label="dismiss message" onClick={() => setRoutingUpdate(undefined)} />
               }}
-              message={`Routing update failed: ${routingUpdate.error}`} />}
+              message={`${routingUpdate.error}`} />}
           <OutputsView
             selectInput={selectInput}
             outputs={outputs}
