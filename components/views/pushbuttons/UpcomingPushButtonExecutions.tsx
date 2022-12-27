@@ -13,7 +13,6 @@ export const ScheduledButtons = (props: { videohub: Videohub, scheduledButtons: 
     }
 
     const button: IUpcomingPushButton = props.scheduledButtons[0]
-    console.log(button)
     return (
         <AlertMessage
             icon={<ClockRegular />}

@@ -5,6 +5,7 @@ export const desktopMinWidth = '600px';
 export const dropdownStyles: Partial<IDropdownStyles> = {
   dropdown: { width: 150 },
 };
+
 export const stackTokens: IStackTokens = { childrenGap: 20 };
 export const stackStyles: Partial<IStackStyles> = {
   root: {

@@ -17,6 +17,5 @@ export interface Role {
 
 export function hasRoleOutput(role: Role | undefined, videohub: number, output_id: number): boolean {
     const res = role != undefined && role.outputs.find(output => output.videohub_id === videohub && output.output_id === output_id) != undefined
-    console.log(res)
     return res;
 }

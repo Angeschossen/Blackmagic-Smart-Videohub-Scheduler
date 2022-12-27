@@ -72,7 +72,7 @@ export const PushButtonsList = (props: InputProps) => {
   return (
     <>
       {props.pushbuttons.length == 0 ?
-        <p>No buttons setup yet.</p> :
+        <p>No buttons to display.</p> :
         <>
           <Stack.Item style={{ paddingTop: 10, paddingBottom: 10 }}>
             <RequestStatus
@@ -80,7 +80,15 @@ export const PushButtonsList = (props: InputProps) => {
             />
           </Stack.Item>
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 10 }}>
-            {props.pushbuttons.map((button, key) => {
+            {props.pushbuttons.sort((a: IPushButton, b: IPushButton) => {
+              if (a.sorting < b.sorting) {
+                return 1
+              } else if (a.sorting > b.sorting) {
+                return -1
+              } else {
+                return a.label.localeCompare(b.label)
+              }
+            }).map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>
                   <CompoundButton className={styles.longText} disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
