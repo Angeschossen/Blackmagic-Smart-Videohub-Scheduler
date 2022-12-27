@@ -28,12 +28,13 @@ model Videohub {
 }
 
 model Input {
-  id                Int
-  videohub          Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
-  videohub_id       Int
-  label             String
-  outputs           Output[]
-  pushbuttonactions PushButtonAction[]
+  id                    Int
+  videohub              Videohub           @relation(fields: [videohub_id], references: [id], onDelete: Cascade)
+  videohub_id           Int
+  label                 String
+  outputs               Output[]
+  pushbuttonactions     PushButtonAction[]
+  outputs_default_input Output[]           @relation("defaultInput")
 
   @@id([videohub_id, id], name: "videohub_input")
   @@map("inputs")
@@ -45,6 +46,8 @@ model Output {
   videohub_id       Int
   input             Input?              @relation(fields: [videohub_id, input_id], references: [videohub_id, id], onDelete: Cascade)
   input_id          Int?
+  input_default     Input?              @relation("defaultInput", fields: [videohub_id, input_default_id], references: [videohub_id, id], onDelete: Cascade)
+  input_default_id  Int?
   label             String
   pushbuttonactions PushButtonAction[]
   roleoutputs       RoleOutput[]
@@ -93,7 +96,7 @@ model PushButton {
   label       String              @unique
   description String
   display     Boolean             @default(true)
-  sorting     Int              @default(0)
+  sorting     Int                 @default(0)
   actions     PushButtonAction[]
   color       String?
   user        User                @relation(fields: [user_id], references: [id], onDelete: Cascade)

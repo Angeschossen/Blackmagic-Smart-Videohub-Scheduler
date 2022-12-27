@@ -44,5 +44,6 @@ export interface Input {
 export interface Output {
     id: number,
     input_id: number | null,
+    input_default_id: number | null,
     label: string,
 }

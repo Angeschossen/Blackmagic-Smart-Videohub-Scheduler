@@ -61,13 +61,21 @@ const RequestStatus = (props: { request?: RoutingRequest }) => {
 }
 
 export function sortButtons(a: IPushButton, b: IPushButton): number {
-  if (a.sorting < b.sorting) {
-    return -1
-  } else if (a.sorting > b.sorting) {
-    return 1
+  if (a.display && b.display) {
+    if (a.sorting < b.sorting) {
+      return -1
+    } else if (a.sorting > b.sorting) {
+      return 1
+    }
   } else {
-    return a.label.localeCompare(b.label)
+    if (a.display) {
+      return 1
+    } else if (b.display) {
+      return -1
+    }
   }
+
+  return a.label.localeCompare(b.label)
 }
 
 export const PushButtonsList = (props: InputProps) => {

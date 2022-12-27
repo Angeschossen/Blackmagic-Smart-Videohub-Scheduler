@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 export function sendResponseInvalid(req: NextApiRequest, res: NextApiResponse, msg: string) {
-    res.status(405).json({ message: 'Invalid request.' });
+    res.status(405).json({ message: 'Invalid request.', error: 'Invalid request' });
     console.log("Invalid request: " + msg + " Request: " + req)
 }
 

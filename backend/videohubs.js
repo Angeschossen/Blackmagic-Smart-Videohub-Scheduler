@@ -478,6 +478,12 @@ class Videohub {
         })
     }
 
+    updateDefaultInput(outputId, inputId) {
+        if (outputId != undefined) {
+            this.data.outputs[outputId].input_default_id = inputId
+        }
+    }
+
     async logActivity(description, icon) {
         await prismadb.videohubActivity.create({
             data: {
@@ -530,6 +536,21 @@ class Videohub {
         }
     }
 
+    async sendDefaultRouting() {
+        console.log("Sending default routing...")
+        const outputs = []
+        const inputs = []
+
+        this.data.outputs.forEach(output => {
+            if (output.input_default_id != undefined) {
+                outputs.push(output.id)
+                inputs.push(output.input_default_id)
+            }
+        })
+
+        return await this.sendRoutingUpdateRequest(outputs, inputs)
+    }
+
     async onClose() {
         clearTimeout(this.checkConnectionHealthId);
         this.clearReconnect();
@@ -556,8 +577,11 @@ class Videohub {
             this.scheduleCheckConnectionHealth()
             this.onUpdate()
 
+            setTimeout(async () =>
+                await this.sendDefaultRouting(), 10000)
+
             if (!isInitial) {
-                await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS);
+                await this.logActivity("Connection established.", ICON_CONNECTION_SUCCESS)
             }
 
             await this.retryFailedButtons()
@@ -786,11 +810,11 @@ class Videohub {
                             this.outputs[i] = output
 
                             if (setOutputs) {
-                                this.data.outputs[i] = { id: i, label: "Unkown", input_id: undefined }
+                                this.data.outputs[i] = { id: i, label: "Unknown", input_id: undefined }
                             }
 
                             if (setInputs) {
-                                this.data.inputs[i] = { id: i, label: "Unkown" }
+                                this.data.inputs[i] = { id: i, label: "Unknown" }
                             }
                         }
 
@@ -969,7 +993,7 @@ module.exports = {
             // turn into objects
             for (let i = 0; i < e.outputs.length; i++) {
                 const output = e.outputs[i]
-                e.outputs[i] = { id: output.id, label: output.label, input_id: output.input_id }
+                e.outputs[i] = { id: output.id, label: output.label, input_id: output.input_id, input_default_id: output.input_default_id || undefined }
                 const input = e.inputs[i];
                 e.inputs[i] = { id: input.id, label: input.label }
             }
@@ -1033,6 +1057,14 @@ module.exports = {
         }
 
         return videohubClient.getScheduledButtons()
+    },
+    updateDefaultInput: function (videohubId, outputId, inputId) {
+        const videohubClient = module.exports.getClient(videohubId)
+        if (videohubClient == undefined) {
+            throw Error("Client not found: " + videohubId)
+        }
+
+        return videohubClient.updateDefaultInput(outputId, inputId)
     }
 
     /*
