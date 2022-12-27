@@ -418,6 +418,11 @@ class Videohub {
     sendRoutingUpdateRequest(outputs, inputs) {
         this.info(`Trying to send routing update: ${outputs} - ${inputs}`)
 
+        if (outputs.length == 0 || outputs.length != inputs.length) {
+            this.info("Request was empty or length mismatch.")
+            return Promise.resolve("Invalid routing update.")
+        }
+
         // prepare
         let _resolve;
         let request;
