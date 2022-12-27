@@ -82,9 +82,9 @@ export const PushButtonsList = (props: InputProps) => {
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 10 }}>
             {props.pushbuttons.sort((a: IPushButton, b: IPushButton) => {
               if (a.sorting < b.sorting) {
-                return 1
-              } else if (a.sorting > b.sorting) {
                 return -1
+              } else if (a.sorting > b.sorting) {
+                return 1
               } else {
                 return a.label.localeCompare(b.label)
               }
