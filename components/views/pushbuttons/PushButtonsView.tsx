@@ -60,6 +60,16 @@ const RequestStatus = (props: { request?: RoutingRequest }) => {
   />
 }
 
+export function sortButtons(a: IPushButton, b: IPushButton): number {
+  if (a.sorting < b.sorting) {
+    return -1
+  } else if (a.sorting > b.sorting) {
+    return 1
+  } else {
+    return a.label.localeCompare(b.label)
+  }
+}
+
 export const PushButtonsList = (props: InputProps) => {
   const isDekstop = useViewType()
   const [request, setRequest] = useState<RoutingRequest>()
@@ -80,15 +90,7 @@ export const PushButtonsList = (props: InputProps) => {
             />
           </Stack.Item>
           <Stack wrap horizontalAlign={isDekstop ? "start" : "center"} horizontal tokens={{ childrenGap: 10 }}>
-            {props.pushbuttons.sort((a: IPushButton, b: IPushButton) => {
-              if (a.sorting < b.sorting) {
-                return -1
-              } else if (a.sorting > b.sorting) {
-                return 1
-              } else {
-                return a.label.localeCompare(b.label)
-              }
-            }).map((button, key) => {
+            {props.pushbuttons.sort(sortButtons).map((button, key) => {
               return (
                 <Stack.Item key={"pushbutton_" + key}>
                   <CompoundButton className={styles.longText} disabled={!isRequestComplete()} key={key} secondaryContent={button.description || `Click to execute ${button.actions.length} action(s).`} style={{ backgroundColor: button.color }}
