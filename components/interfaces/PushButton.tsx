@@ -7,7 +7,7 @@ export interface IPushButton {
     sorting: number,
     display: boolean,
     description: string,
-    actions: PushbuttonAction[],
+    actions: IPushbuttonAction[],
     color?: string
     user_id: string,
     triggers: PushButtonTrigger[],
@@ -28,7 +28,7 @@ export interface IPushButtonTrigger {
     days: number[]
 }
 
-export interface PushbuttonAction {
+export interface IPushbuttonAction {
     id: number,
     pushbutton_id: number,
     videohub_id: number,

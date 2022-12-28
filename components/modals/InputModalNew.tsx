@@ -66,7 +66,7 @@ export const InputModal = (props: InputProps) => {
                     <DialogBody>
                         <DialogTitle>{props.title}</DialogTitle>
                         <DialogContent className={styles.content}>
-                            <Stack style={{ marginBottom: 8 }}>
+                            <Stack horizontalAlign="center" style={{ marginBottom: 8 }}>
                                 {props.description}
                                 <Stack tokens={stackTokens}>
                                     {props.children}

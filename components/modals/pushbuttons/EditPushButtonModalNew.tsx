@@ -7,7 +7,7 @@ import React from "react";
 import { useGetClientId } from "../../auth/ClientAuthentication";
 import { PickColor } from "../../input/ColorPicker";
 import { InputState } from "../../input/HandledInputField";
-import { IPushButton, PushbuttonAction } from "../../interfaces/PushButton";
+import { IPushButton, IPushbuttonAction } from "../../interfaces/PushButton";
 import { hasRoleOutput, User } from "../../interfaces/User";
 import { Videohub } from "../../interfaces/Videohub";
 import { getRandomKey } from "../../utils/commonutils";
@@ -41,10 +41,12 @@ function getIdFromValue(ids: { label: string, id: number }[], value: string) {
 }
 
 const RoutingComponent = (props: {
+    num: number,
     videohub: Videohub,
     routing: Routing,
     onSelectOutput: (index?: number) => void,
     onSelectInput: (index?: number) => void,
+    onDelete: () => void,
     user: User,
 }) => {
     const key: string | number = props.routing.actionId?.toString() || getRandomKey()
@@ -54,6 +56,7 @@ const RoutingComponent = (props: {
 
     return (
         <div className={styles.root}>
+            <h3>#{props.num}</h3>
             <Label htmlFor={outputKey}>Output</Label>
             <Dropdown
                 key={outputKey}
@@ -80,6 +83,11 @@ const RoutingComponent = (props: {
                         {input.label}
                     </Option>)}
             </Dropdown>
+            <Button
+                size="small"
+                icon={<DeleteRegular />}
+                onClick={() => props.onDelete()}
+            />
         </div>
     )
 }
@@ -129,6 +137,12 @@ export const EditPushButtonModal = (props: Props) => {
     function updateRouting(routing: Routing, output?: number, input?: number) {
         const arr = [...routings]
         arr[arr.indexOf(routing)] = { actionId: routing.actionId, output: output, input: input }
+        setRoutings(arr)
+    }
+
+    function removeRouting(routing: Routing) {
+        const arr = [...routings]
+        arr.splice(arr.indexOf(routing), 1)
         setRoutings(arr)
     }
 
@@ -191,7 +205,7 @@ export const EditPushButtonModal = (props: Props) => {
                 </Button>
                 : undefined}
             handleSubmit={async () => {
-                const actions: PushbuttonAction[] = []
+                const actions: IPushbuttonAction[] = []
                 for (const action of routings) {
                     if (action.input == undefined || action.output == undefined) {
                         continue
@@ -302,6 +316,7 @@ export const EditPushButtonModal = (props: Props) => {
                             <Stack tokens={stackTokens}>
                                 {routings.map((routing, index) =>
                                     <RoutingComponent
+                                        num={index + 1}
                                         user={props.user}
                                         key={`routing_${index}`}
                                         videohub={props.videohub}
@@ -310,7 +325,11 @@ export const EditPushButtonModal = (props: Props) => {
                                             updateRouting(routing, index, routing.input)
                                         }} onSelectInput={function (index?: number | undefined): void {
                                             updateRouting(routing, routing.output, index)
-                                        }} />
+                                        }}
+                                        onDelete={() => {
+                                            removeRouting(routing)
+                                        }}
+                                    />
                                 )}
                                 <Button
                                     onClick={() => {
@@ -324,11 +343,6 @@ export const EditPushButtonModal = (props: Props) => {
                         </AccordionPanel>
                     </AccordionItem>
                 </Accordion>
-                <Stack.Item>
-
-                </Stack.Item>
-                <Stack.Item>
-                </Stack.Item>
             </Stack>
         </InputModal>
     );

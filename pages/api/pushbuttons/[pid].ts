@@ -1,9 +1,10 @@
 import { PushButton, PushButtonAction, PushButtonTrigger } from '@prisma/client';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as permissions from "../../../backend/authentication/Permissions";
+import pushbuttons from '../../../backend/pushbuttons';
 import { cancelScheduledButton, executeButton, getClient, getScheduledButtons, handleButtonDeletion, handleButtonReSchedule, retrieveUpcomingTriggers } from '../../../backend/videohubs';
 import { checkServerPermission, getUserIdFromToken, isUser } from '../../../components/auth/ServerAuthentication';
-import { IPushButton, IPushButtonTrigger, IUpcomingPushButton, PushbuttonAction } from '../../../components/interfaces/PushButton';
+import { IPushButton, IPushButtonTrigger, IUpcomingPushButton, IPushbuttonAction } from '../../../components/interfaces/PushButton';
 import { convert_date_to_utc, removeSecondsFromDate, setDayOfWeek, setDayOfWeekUTC } from '../../../components/utils/dateutils';
 import { hasParams, sendResponseInvalid, sendResponseValid } from '../../../components/utils/requestutils';
 import prismadb from '../../../database/prismadb';
@@ -120,7 +121,7 @@ export default async function handler(
                 })
 
                 // adjust ids
-                const arr: PushbuttonAction[] = [];
+                const arr: IPushbuttonAction[] = [];
                 for (const action of pushButton.actions) {
                     const create = {
                         pushbutton_id: result.id,
@@ -129,7 +130,7 @@ export default async function handler(
                         output_id: action.output_id,
                     } as PushButtonAction
 
-                    const res: PushbuttonAction = await prismadb.pushButtonAction.create({
+                    const res: IPushbuttonAction = await prismadb.pushButtonAction.create({
                         data: create
                     })
 
@@ -164,24 +165,27 @@ export default async function handler(
                     color: r.color || undefined,
                 }
 
+                // delete all
+                await prismadb.pushButtonAction.deleteMany({
+                    where: {
+                        pushbutton_id: pushButton.id,
+                    }
+                })
+
+                // set all
                 for (const action of pushButton.actions) {
-                    const res: PushbuttonAction = await prismadb.pushButtonAction.upsert({
-                        where: {
-                            id: action.id,
-                        },
-                        update: {
-                            input_id: action.input_id,
-                            output_id: action.output_id,
-                        },
-                        create: {
-                            pushbutton_id: pushButton.id,
-                            videohub_id: videohub_id,
-                            input_id: action.input_id,
-                            output_id: action.output_id,
-                        }
+                    const create = {
+                        pushbutton_id: result.id,
+                        videohub_id: videohub_id,
+                        input_id: action.input_id,
+                        output_id: action.output_id,
+                    } as PushButtonAction
+
+                    const rr: IPushbuttonAction = await prismadb.pushButtonAction.create({
+                        data: create
                     })
 
-                    result.actions.push(res)
+                    result.actions.push(rr)
                 }
 
                 sendResponseValid(req, res, result)
@@ -197,7 +201,7 @@ export default async function handler(
 
             const buttonId = body.pushbutton_id
             const triggers: IPushButtonTrigger[] = body.triggers
-            const actions: PushbuttonAction[] = body.actions
+            const actions: IPushbuttonAction[] = body.actions
             if (!hasParams(req, res, buttonId, triggers, actions)) {
                 return
             }

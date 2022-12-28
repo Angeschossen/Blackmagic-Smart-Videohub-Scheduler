@@ -107,14 +107,12 @@ const Trigger = (props: {
                                 {day.label}
                             </Option>)}
                     </Dropdown>
+                    <Button
+                        size="small"
+                        icon={<DeleteRegular />}
+                        onClick={() => props.onDelete()}
+                    />
                 </div>
-            </Stack.Item>
-            <Stack.Item>
-                <Button
-                    size="small"
-                    icon={<DeleteRegular />}
-                    onClick={() => props.onDelete()}
-                />
             </Stack.Item>
         </Stack>
     )
@@ -125,7 +123,7 @@ function collectTriggers(button: IPushButton): IPushButtonTrigger[] {
     for (const trigger of button.triggers) {
         const tr: IPushButtonTrigger | undefined = triggers.get(trigger.id)
         const time: Date = convertDateToLocal(trigger.time)
-        const day:number = time.getDay()
+        const day: number = time.getDay()
 
         if (tr == undefined) {
             triggers.set(trigger.id, { id: trigger.id, pushbutton_id: button.id, time: time, days: [day] })
