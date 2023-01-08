@@ -46,6 +46,18 @@ const days: Day[] = [
     }
 ]
 
+/**
+ * Assure format hh:mm not h:mm etc.
+ * @param i value
+ * @returns at least two 
+ */
+function correctTime(i: any): number {
+    if (i < 10) {
+        i = "0" + i;
+    }
+    return i;
+}
+
 const Trigger = (props: {
     trigger: IPushButtonTrigger,
     num: number,
@@ -53,7 +65,7 @@ const Trigger = (props: {
     onChangeTime: (value: string) => void,
     onDelete: () => void,
 }) => {
-    const [time, setTime] = React.useState<InputState>({ value: props.trigger.time.toLocaleTimeString() })
+    const [time, setTime] = React.useState<InputState>({ value: correctTime(props.trigger.time.getHours()) + ":" + correctTime(props.trigger.time.getMinutes()) })
     const inputDaysId = useId('input_days')
     const inputTimeId = useId('input_time')
     const styles = useInputStyles()

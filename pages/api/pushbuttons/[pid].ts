@@ -165,28 +165,63 @@ export default async function handler(
                     color: r.color || undefined,
                 }
 
-                // delete all
-                await prismadb.pushButtonAction.deleteMany({
+                // check actions
+                const existingActions: PushButtonAction[] = await prismadb.pushButtonAction.findMany({
                     where: {
                         pushbutton_id: pushButton.id,
                     }
                 })
 
-                // set all
-                for (const action of pushButton.actions) {
-                    const create = {
-                        pushbutton_id: result.id,
-                        videohub_id: videohub_id,
-                        input_id: action.input_id,
-                        output_id: action.output_id,
-                    } as PushButtonAction
+                const del: number[] = []
+                existingActions.forEach(action => {
+                    if (pushButton.actions.find(a => a.id === action.id) == undefined) {
+                        del.push(action.id)
+                    }
+                })
 
-                    const rr: IPushbuttonAction = await prismadb.pushButtonAction.create({
-                        data: create
+                // delete no longer existing ones
+                await prismadb.pushButtonAction.deleteMany({
+                    where: {
+                        id: {
+                            in: del
+                        }
+                    }
+                })
+
+                // update
+                for (const a of existingActions.filter(a => {
+                    return del.indexOf(a.id) === -1 && pushButton.actions.find(aa => aa.id === a.id)
+                })) {
+                    const r: IPushbuttonAction = await prismadb.pushButtonAction.update({
+                        where: {
+                            id: a.id,
+                        },
+                        data: {
+                            input_id: a.input_id,
+                            output_id: a.output_id,
+                        }
                     })
 
-                    result.actions.push(rr)
+                    result.actions.push(r)
                 }
+
+                // create
+                pushButton.actions
+                    .filter(a => a.id == -1 && result.actions.find(aa => aa.id === a.id) == undefined) // double check is creation (-1) and make sure it's not update
+                    .forEach(async action => {
+                        const create = {
+                            pushbutton_id: result.id,
+                            videohub_id: videohub_id,
+                            input_id: action.input_id,
+                            output_id: action.output_id,
+                        } as PushButtonAction
+
+                        const rr: IPushbuttonAction = await prismadb.pushButtonAction.create({
+                            data: create
+                        })
+
+                        result.actions.push(rr)
+                    })
 
                 sendResponseValid(req, res, result)
             }
