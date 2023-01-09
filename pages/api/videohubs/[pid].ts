@@ -89,7 +89,7 @@ export default async function handler(
                     const input = inputs[i] < 0 ? undefined : inputs[i]
                     const output = outputs[i]
                     await prisma.output.update({
-                        where: {
+                        where: {//g
                             videohub_output: {
                                 id: output,
                                 videohub_id: videohubId,
